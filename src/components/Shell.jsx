@@ -6,7 +6,7 @@ import { brandPresets } from "../config/brand";
 import s from "../App.module.css";
 const tabs = [
   { path: "/", label: "Home", icon: "home-2" },
-  { path: "/appointments", label: "Visits", icon: "calendar-1" },
+  { path: "/appointments", label: "Visits", icon: "calendar-2" },
   { path: "/records", label: "Records", icon: "document-text" },
   { path: "/family", label: "Family", icon: "people" },
   { path: "/more", label: "More", icon: "category" },
@@ -23,9 +23,11 @@ export default function Shell() {
     location.pathname,
   )
     ? "/appointments"
-    : location.pathname === "/profile"
-      ? "/family"
-      : null;
+    : ["/link-records", "/abha"].includes(location.pathname)
+      ? "/records"
+      : location.pathname === "/profile"
+        ? "/family"
+        : null;
   const active =
     parentTab ||
     tabs.find((t) => t.path !== "/" && location.pathname.startsWith(t.path))
@@ -78,7 +80,7 @@ export default function Shell() {
               size="sm"
               onClick={() => navigate("/branding")}
             >
-              Customise <Icon name="arrow-right" size={16} />
+              Customise <Icon name="chevron-right" size={16} />
             </Button>
           </div>
           <span>One configuration. Your brand, everywhere.</span>
@@ -105,6 +107,7 @@ export default function Shell() {
             <nav className={s.navbar} aria-label="Main navigation">
               {tabs.map((tab) => (
                 <Button
+                  asChild
                   key={tab.path}
                   className={s.navItem}
                   variant="ghost"
@@ -113,8 +116,16 @@ export default function Shell() {
                   data-active={active === tab.path}
                   onClick={() => navigate(tab.path)}
                 >
-                  <Icon name={tab.icon} size={22} bulk={active === tab.path} />
-                  {active === tab.path && <span>{tab.label}</span>}
+                  <button type="button">
+                    <span className={s.navIcon}>
+                      <Icon
+                        name={tab.icon}
+                        size={22}
+                        bulk={active === tab.path}
+                      />
+                    </span>
+                    <span className={s.navLabel}>{tab.label}</span>
+                  </button>
                 </Button>
               ))}
             </nav>

@@ -369,7 +369,7 @@ export function initialState() {
         body: "Your appointment with Dr. Meera Iyer is at 10:30 AM. Please arrive 15 minutes early.",
         date: "3 hours ago",
         route: "/appointments",
-        icon: "calendar-1",
+        icon: "calendar-2",
         read: false,
         memberId: "self",
       },
@@ -420,6 +420,6 @@ export function initialState() {
     ],
     preferences: { reminders: true, reports: true, promotions: false },
     feedback: [],
-    abha: {},
+    healthLinks: {},
   };
 }

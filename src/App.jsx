@@ -14,6 +14,7 @@ import { AppProvider, useApp } from "./state/AppContext";
 import Shell from "./components/Shell";
 import Home from "./pages/Home";
 import { Doctors, Booking, Appointments, Queue } from "./pages/Appointments";
+import LinkRecords from "./pages/LinkRecords";
 import Records from "./pages/Records";
 import Family, { Profile } from "./pages/Family";
 import {
@@ -30,7 +31,6 @@ import {
   Settings,
   Branding,
   Emergency,
-  Abha,
   Feedback,
 } from "./pages/Account";
 import { Welcome, Login } from "./pages/Auth";
@@ -67,7 +67,7 @@ function ThemedApp() {
         accent: brand.accent,
         fontBody: brand.fontBody,
         fontHeading: brand.fontHeading,
-        radius: 12,
+        radius: 20,
       }),
     [brand],
   );
@@ -121,7 +121,11 @@ function ThemedApp() {
               <Route path="settings" element={<Settings />} />
               <Route path="branding" element={<Branding />} />
               <Route path="emergency" element={<Emergency />} />
-              <Route path="abha" element={<Abha />} />
+              <Route
+                path="abha"
+                element={<LinkRecords initialMethod="abha" />}
+              />
+              <Route path="link-records" element={<LinkRecords />} />
               <Route path="feedback" element={<Feedback />} />
               <Route path="assistant" element={<Assistant />} />
             </Route>

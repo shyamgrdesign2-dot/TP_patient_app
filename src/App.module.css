@@ -210,41 +210,44 @@
   bottom: var(--tesseract-space-5);
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
+  width: calc(100% - 32px);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
-  gap: var(--tesseract-space-0-5);
-  padding: var(--tesseract-space-1-5);
+  padding: var(--tesseract-space-2);
+  gap: var(--tesseract-space-1);
   border: 1px solid
-    color-mix(in srgb, var(--tesseract-slate-0) 80%, var(--tesseract-blue-200));
-  background: color-mix(in srgb, var(--tesseract-slate-0) 74%, transparent);
+    color-mix(in srgb, var(--tesseract-slate-0) 90%, var(--tesseract-blue-100));
+  background: color-mix(in srgb, var(--tesseract-bg-surface) 88%, transparent);
   box-shadow:
-    var(--tesseract-shadow-lg),
+    0 8px 32px -8px
+      color-mix(in srgb, var(--tesseract-slate-900) 20%, transparent),
     inset 0 1px 0 var(--tesseract-slate-0);
   border-radius: var(--tesseract-radius-full);
-  backdrop-filter: blur(24px) saturate(1.8);
-  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
   z-index: 20;
   transition:
-    opacity 0.2s,
-    transform 0.2s;
+    opacity 0.25s,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .navItem {
-  height: var(--tesseract-patient-touch) !important;
-  min-width: var(--tesseract-patient-touch) !important;
-  padding: 0 var(--tesseract-space-3) !important;
-  color: var(--tesseract-fg-tertiary) !important;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 56px !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  gap: 4px !important;
+  color: var(--tesseract-fg-secondary) !important;
+  background: transparent !important;
+  border: 0 !important;
   border-radius: var(--tesseract-radius-full) !important;
-  gap: var(--tesseract-space-1-5) !important;
-  font-size: var(--tesseract-text-body-xs) !important;
-}
-.navItem[data-active="true"] {
-  color: var(--tesseract-fg-inverse) !important;
-  background: linear-gradient(
-    135deg,
-    var(--tesseract-blue-400),
-    var(--tesseract-blue-600)
-  ) !important;
-  box-shadow: var(--tesseract-shadow-sm);
+  transition:
+    background 0.22s,
+    color 0.22s,
+    transform 0.22s;
 }
 :global(body[data-sheet-open="true"]) .navbar {
   opacity: 0;
@@ -293,37 +296,20 @@
   background: var(--tesseract-bg-page);
 }
 .homeTop {
-  padding: var(--tesseract-space-4) var(--tesseract-space-5)
-    var(--tesseract-space-5);
-  background: radial-gradient(
-    ellipse at 85% 75%,
-    var(--tesseract-blue-100),
-    transparent 65%
-  );
-}
-.greeting {
-  display: flex;
-  align-items: center;
-  gap: var(--tesseract-space-3);
-}
-.greeting .eyebrow {
-  color: var(--tesseract-fg-tertiary);
-  font-size: var(--tesseract-text-micro);
-  letter-spacing: 0.1em;
+  padding: var(--tesseract-space-5);
+  background: transparent;
 }
 .greetingName {
   display: flex;
-  gap: var(--tesseract-space-2);
   align-items: center;
+  gap: var(--tesseract-space-2);
+  min-height: 28px;
   padding: 0;
   border: 0;
   background: none;
-  font-size: var(--tesseract-text-h3);
-  font-family: var(--tesseract-font-heading);
-  font-weight: 800;
+  font: 800 var(--tesseract-text-h4)/1.3 var(--tesseract-font-heading);
   color: var(--tesseract-fg-heading);
-  line-height: 1.4;
-  min-height: var(--tesseract-size-32);
+  letter-spacing: -0.025em;
 }
 .avatarButton {
   border: 0;
@@ -340,201 +326,34 @@
   display: flex;
   align-items: center;
   gap: var(--tesseract-space-1-5);
-  text-align: left;
-  width: 100%;
-  background: none;
+  padding: 0;
   border: 0;
-  padding: var(--tesseract-space-2) 0 var(--tesseract-space-4);
-  font-size: var(--tesseract-text-body-xs);
+  background: none;
+  min-height: 32px;
+  text-align: left;
   color: var(--tesseract-fg-secondary);
-  min-height: var(--tesseract-patient-touch);
+  font-size: var(--tesseract-text-body-xs);
 }
 .locationButton > span:first-child {
   color: var(--tesseract-blue-500);
 }
 .locationButton > span:nth-child(2) {
-  flex: 1;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
-}
-.healthCard {
-  position: relative;
-  border: 1px solid
-    color-mix(in srgb, var(--tesseract-blue-200) 36%, transparent);
-  padding: var(--tesseract-space-5);
-  width: 100%;
-  height: var(--tesseract-patient-hero-height);
-  text-align: left;
-  background:
-    radial-gradient(
-      ellipse at 15% 0%,
-      var(--tesseract-blue-500),
-      transparent 75%
-    ),
-    linear-gradient(
-      130deg,
-      var(--tesseract-blue-700),
-      var(--tesseract-blue-900)
-    );
-  border-radius: var(--tesseract-radius-20);
-  color: var(--tesseract-slate-0);
-  box-shadow:
-    0 12px 24px -8px
-      color-mix(in srgb, var(--tesseract-blue-700) 45%, transparent),
-    0 8px 0 -3px var(--tesseract-blue-200);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  isolation: isolate;
-  transition: transform 0.2s;
-}
-.healthCard:active {
-  transform: scale(0.985);
-}
-.cardTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--tesseract-space-4);
-  position: relative;
-  z-index: 1;
-}
-.cardTop [role="img"] {
-  max-width: 55%;
-}
-.cardTop [role="img"] > span {
-  max-width: 100%;
-}
-.cardChip {
-  display: flex;
-  align-items: center;
-  gap: var(--tesseract-space-1);
-  font-size: var(--tesseract-text-micro);
-  font-weight: 500;
-  letter-spacing: 0.06em;
   white-space: nowrap;
-  background: color-mix(in srgb, var(--tesseract-slate-0) 12%, transparent);
-  border: 1px solid
-    color-mix(in srgb, var(--tesseract-slate-0) 20%, transparent);
-  border-radius: var(--tesseract-radius-6);
-  padding: var(--tesseract-space-1) var(--tesseract-space-1-5);
+  max-width: 160px;
 }
-.cardPatient {
-  position: relative;
-  z-index: 1;
-}
-.cardPatient > span {
-  font-size: var(--tesseract-text-micro);
-  letter-spacing: 0.16em;
-  color: var(--tesseract-blue-100);
-}
-.cardPatient > h2 {
-  color: var(--tesseract-slate-0);
-  font-size: var(--tesseract-text-h3);
-  font-weight: 700;
-  margin-top: var(--tesseract-space-1);
-}
-.cardPatient > p {
-  color: var(--tesseract-blue-100);
-  font-size: var(--tesseract-text-body-xs);
-  margin-top: var(--tesseract-space-1);
-}
-.cardPatient > p > strong {
-  color: var(--tesseract-slate-0);
-  margin-left: var(--tesseract-space-1);
-  font-weight: 500;
-  letter-spacing: 0.04em;
-}
-.cardBottom {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: var(--tesseract-text-body-xs);
-}
-.cardBottom > span {
-  display: flex;
-  align-items: center;
-  gap: var(--tesseract-space-1-5);
-}
-.cardBottom > span:last-child {
-  font-size: var(--tesseract-text-micro);
-  color: var(--tesseract-blue-100);
-}
-.cardBottom i,
 .appointmentDate i,
 .recordCard i {
-  height: var(--tesseract-size-2);
-  width: var(--tesseract-size-2);
+  height: 2px;
+  width: 2px;
   border-radius: 50%;
   background: currentColor;
   display: inline-block;
   margin: 0 var(--tesseract-space-1);
 }
-.cardOrb,
-.cardOrb2 {
-  position: absolute;
-  z-index: 0;
-  border: 1px solid
-    color-mix(in srgb, var(--tesseract-blue-200) 20%, transparent);
-  border-radius: 50%;
-  width: 290px;
-  height: 290px;
-  right: -150px;
-  top: -52px;
-  background: radial-gradient(
-    circle at 20% 20%,
-    color-mix(in srgb, var(--tesseract-blue-300) 22%, transparent),
-    transparent 70%
-  );
-  box-shadow:
-    0 0 0 24px color-mix(in srgb, var(--tesseract-blue-300) 4%, transparent),
-    0 0 0 48px color-mix(in srgb, var(--tesseract-blue-300) 4%, transparent);
-}
-.cardOrb2 {
-  width: 160px;
-  height: 160px;
-  right: -30px;
-  top: 110px;
-  box-shadow: none;
-  background: none;
-}
-.cardCaption {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--tesseract-space-1-5);
-  position: relative;
-  color: var(--tesseract-fg-secondary);
-  font-size: var(--tesseract-text-micro);
-  margin-top: var(--tesseract-space-4);
-}
-.miniDot {
-  background: var(--tesseract-blue-400);
-  width: var(--tesseract-size-4);
-  height: var(--tesseract-size-4);
-}
-.carouselDots {
-  display: none;
-}
 .homePanel {
-  position: relative;
-  margin-top: var(--tesseract-space-0-5);
-  background: var(--tesseract-bg-surface);
-  border-radius: var(--tesseract-radius-24) var(--tesseract-radius-24) 0 0;
-  border-top: 1px solid var(--tesseract-border-soft);
-  box-shadow: 0 -8px 24px -16px var(--tesseract-blue-300);
   padding: 0 var(--tesseract-space-5) var(--tesseract-patient-bottom-space);
-}
-.sheetHandle {
-  width: var(--tesseract-size-28);
-  height: var(--tesseract-size-4);
-  background: var(--tesseract-slate-200);
-  border-radius: var(--tesseract-radius-full);
-  margin: var(--tesseract-space-2) auto var(--tesseract-space-4);
 }
 .quickActions {
   display: grid;
@@ -554,23 +373,23 @@
   font-weight: 500;
 }
 .quickIcon {
-  width: 100%;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--tesseract-radius-16);
-  border: 1px solid var(--tesseract-blue-50);
+  border-radius: var(--tesseract-radius-24);
+  border: 1px solid var(--tesseract-slate-0);
   background: linear-gradient(
     150deg,
-    var(--tesseract-blue-50),
-    var(--tesseract-slate-0) 76%
+    var(--tesseract-blue-100),
+    var(--tesseract-blue-50) 70%
   );
-  color: var(--tesseract-blue-500);
+  color: var(--tesseract-blue-600);
   box-shadow:
-    var(--tesseract-shadow-sm),
+    0 4px 12px -6px var(--tesseract-blue-200),
     inset 0 1px 0 var(--tesseract-slate-0);
-  transition: transform 0.15s;
+  transition: transform 0.2s;
 }
 .quickActions > button:active .quickIcon {
   transform: scale(0.94);
@@ -580,20 +399,20 @@
   display: flex;
   align-items: center;
   gap: var(--tesseract-space-3);
-  padding: var(--tesseract-space-3);
-  margin-top: var(--tesseract-space-5);
+  padding: var(--tesseract-space-4);
+  margin-top: var(--tesseract-space-6);
+  border: 1px solid var(--tesseract-blue-100);
+  border-radius: var(--tesseract-radius-24);
   background: linear-gradient(
-    110deg,
-    var(--tesseract-violet-50),
-    var(--tesseract-slate-0)
+    115deg,
+    var(--tesseract-blue-50),
+    var(--tesseract-bg-surface) 90%
   );
-  border: 1px solid var(--tesseract-violet-100);
-  border-radius: var(--tesseract-radius-14);
-  color: var(--tesseract-violet-600);
+  color: var(--tesseract-blue-600);
   text-align: left;
 }
 .agentStrip strong {
-  font-size: var(--tesseract-text-body-xs);
+  font-size: var(--tesseract-text-body-sm);
   color: var(--tesseract-fg-heading);
   display: block;
   font-weight: 600;
@@ -604,32 +423,33 @@
   margin-top: var(--tesseract-space-0-5);
 }
 .agentIcon {
-  width: var(--tesseract-patient-touch);
-  height: var(--tesseract-patient-touch);
-  border-radius: var(--tesseract-radius-12);
+  width: 48px;
+  height: 48px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+  border-radius: var(--tesseract-radius-16);
   background: linear-gradient(
-    145deg,
-    var(--tesseract-violet-100),
-    var(--tesseract-slate-0)
+    135deg,
+    var(--tesseract-blue-500),
+    var(--tesseract-blue-700)
   );
-  border: 1px solid var(--tesseract-violet-100);
-  color: var(--tesseract-violet-600);
+  color: var(--tesseract-slate-0);
+  box-shadow: 0 4px 12px -4px var(--tesseract-blue-300);
 }
 .sectionTitle {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--tesseract-space-3);
-  margin: var(--tesseract-space-6) 0 var(--tesseract-space-3);
-  min-height: var(--tesseract-size-28);
+  margin: var(--tesseract-space-8) 0 var(--tesseract-space-4);
+  min-height: 32px;
 }
 .sectionTitle h2 {
-  font-size: var(--tesseract-text-h5);
+  font-size: var(--tesseract-text-h4);
   font-weight: 800;
+  letter-spacing: -0.025em;
 }
 .sectionTitle button {
   font-size: var(--tesseract-text-body-xs) !important;
@@ -639,7 +459,7 @@
 }
 .appointmentCard {
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
   overflow: hidden;
   background: var(--tesseract-bg-surface);
   box-shadow: var(--tesseract-shadow-xs);
@@ -648,11 +468,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--tesseract-space-2);
-  padding: var(--tesseract-space-3) var(--tesseract-space-4);
-  background: var(--tesseract-bg-page);
+  padding: var(--tesseract-space-4) var(--tesseract-space-5);
+  background: linear-gradient(
+    110deg,
+    var(--tesseract-blue-50),
+    var(--tesseract-bg-surface)
+  );
   border-bottom: 1px solid var(--tesseract-border-soft);
   font-size: var(--tesseract-text-body-xs);
+  color: var(--tesseract-blue-700);
 }
 .appointmentDate > span:first-child {
   display: flex;
@@ -679,14 +505,14 @@
   margin-top: var(--tesseract-space-1);
 }
 .appointmentCard > .doctorRow {
-  padding: var(--tesseract-space-4);
+  padding: var(--tesseract-space-5);
 }
 .appointmentBottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--tesseract-space-2);
-  padding: 0 var(--tesseract-space-4) var(--tesseract-space-3);
+  gap: var(--tesseract-space-3);
+  padding: 0 var(--tesseract-space-5) var(--tesseract-space-5);
 }
 .appointmentBottom > span {
   font-size: var(--tesseract-text-body-xs);
@@ -697,9 +523,8 @@
 }
 .appointmentBottom > button {
   font-size: var(--tesseract-text-body-xs) !important;
-  min-height: var(--tesseract-size-32) !important;
-  gap: var(--tesseract-space-1) !important;
-  padding: 0 var(--tesseract-space-2) !important;
+  min-height: 40px !important;
+  padding: 0 var(--tesseract-space-3) !important;
 }
 .packageBanner {
   position: relative;
@@ -708,7 +533,7 @@
   width: 100%;
   padding: var(--tesseract-space-5) var(--tesseract-space-4);
   border: 1px solid var(--tesseract-blue-100);
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
   background: linear-gradient(
     120deg,
     var(--tesseract-blue-50),
@@ -768,7 +593,7 @@
 .rowCard {
   background: var(--tesseract-bg-surface);
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
   overflow: hidden;
 }
 .row {
@@ -805,7 +630,7 @@
   justify-content: center;
   width: var(--tesseract-size-40);
   height: var(--tesseract-size-40);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   background: var(--tesseract-blue-50);
   color: var(--tesseract-blue-500);
   flex-shrink: 0;
@@ -824,7 +649,7 @@
   gap: var(--tesseract-space-1);
   flex: 1;
   padding: var(--tesseract-space-2) var(--tesseract-space-1);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   font-size: var(--tesseract-text-body-xs);
   color: var(--tesseract-fg-primary);
 }
@@ -883,9 +708,9 @@
   margin-bottom: var(--tesseract-space-1);
 }
 .pageHeader h1 {
-  font-size: var(--tesseract-text-h4);
+  font-size: var(--tesseract-text-h3);
   font-weight: 800;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.03em;
 }
 .pageHeader p {
   font-size: var(--tesseract-text-body-xs);
@@ -901,16 +726,17 @@
 .memberContext {
   display: flex;
   align-items: center;
-  gap: var(--tesseract-space-2);
+  gap: var(--tesseract-space-3);
   width: 100%;
   padding: var(--tesseract-space-2) var(--tesseract-space-3);
-  background: var(--tesseract-blue-50);
-  border: 1px solid var(--tesseract-blue-100);
-  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-surface);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-full);
   text-align: left;
   font-size: var(--tesseract-text-body-xs);
-  color: var(--tesseract-blue-700);
-  min-height: var(--tesseract-patient-touch);
+  color: var(--tesseract-fg-secondary);
+  min-height: 48px;
+  box-shadow: var(--tesseract-shadow-xs);
 }
 .memberContext > span:nth-child(2) {
   flex: 1;
@@ -972,7 +798,7 @@
   display: flex;
   gap: var(--tesseract-space-2);
   padding: var(--tesseract-space-3);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   font-size: var(--tesseract-text-body-xs);
   line-height: 1.7;
   color: var(--tesseract-fg-secondary);
@@ -1010,9 +836,12 @@
   ) !important;
   max-height: calc(var(--tesseract-patient-phone-height) - 64px) !important;
   height: auto !important;
-  border-radius: var(--tesseract-radius-24) var(--tesseract-radius-24)
-    var(--tesseract-radius-24) var(--tesseract-radius-24) !important;
-  animation: sheetIn 0.22s ease-out !important;
+  border-radius: var(--tesseract-patient-sheet-radius) !important;
+  animation: none !important;
+  overflow: hidden;
+  background: var(--tesseract-bg-page) !important;
+  border: 1px solid var(--tesseract-slate-0) !important;
+  box-shadow: var(--tesseract-shadow-2xl) !important;
 }
 .sheetBody {
   padding: var(--tesseract-space-5) !important;
@@ -1034,7 +863,7 @@
   text-align: left;
   padding: var(--tesseract-space-4);
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   background: var(--tesseract-bg-surface);
   color: var(--tesseract-fg-primary);
 }
@@ -1078,7 +907,7 @@
 .detailCard {
   padding: var(--tesseract-space-5);
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
   background: var(--tesseract-bg-surface);
   display: flex;
   flex-direction: column;
@@ -1115,15 +944,15 @@
 }
 .doctorCard {
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
   background: var(--tesseract-bg-surface);
   overflow: hidden;
 }
 .doctorProfileButton {
   display: flex;
   align-items: center;
-  gap: var(--tesseract-space-3);
-  padding: var(--tesseract-space-4);
+  gap: var(--tesseract-space-4);
+  padding: var(--tesseract-space-5);
   background: none;
   border: 0;
   text-align: left;
@@ -1235,7 +1064,7 @@
   flex: 1;
   padding: var(--tesseract-space-2) var(--tesseract-space-1);
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   background: var(--tesseract-bg-surface);
   display: flex;
   align-items: center;
@@ -1434,7 +1263,7 @@
   align-items: center;
   padding: var(--tesseract-space-4);
   border: 1px solid var(--tesseract-blue-100);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   background: var(--tesseract-blue-50);
   color: var(--tesseract-blue-600);
 }
@@ -1453,7 +1282,7 @@
   padding: var(--tesseract-space-4);
   width: 100%;
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-14);
+  border-radius: var(--tesseract-radius-24);
   background: var(--tesseract-bg-surface);
   text-align: left;
   color: var(--tesseract-fg-primary);
@@ -1475,7 +1304,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   background: var(--tesseract-blue-50);
   color: var(--tesseract-blue-500);
   flex-shrink: 0;
@@ -1509,7 +1338,7 @@
   padding: var(--tesseract-space-5);
   background: var(--tesseract-bg-surface);
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   display: flex;
   flex-direction: column;
   gap: var(--tesseract-space-3);
@@ -1561,7 +1390,7 @@
   gap: var(--tesseract-space-2);
   padding: var(--tesseract-space-6) var(--tesseract-space-3);
   border: 1px dashed var(--tesseract-blue-300);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   background: var(--tesseract-blue-50);
   color: var(--tesseract-blue-600);
   cursor: pointer;
@@ -1586,7 +1415,7 @@
     var(--tesseract-blue-100),
     transparent 80%
   );
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
 }
 .familyHero p {
   font-size: var(--tesseract-text-body-xs);
@@ -1603,7 +1432,7 @@
 }
 .familyCard {
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-14);
+  border-radius: var(--tesseract-radius-24);
   background: var(--tesseract-bg-surface);
   padding: var(--tesseract-space-4);
 }
@@ -1649,7 +1478,7 @@
   gap: var(--tesseract-space-3);
   padding: var(--tesseract-space-5) var(--tesseract-space-4);
   border: 1px solid var(--tesseract-blue-100);
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
   background: linear-gradient(
     135deg,
     var(--tesseract-blue-50),
@@ -1671,7 +1500,7 @@
 .balanceCard {
   position: relative;
   padding: var(--tesseract-space-6);
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
   background: linear-gradient(
     130deg,
     var(--tesseract-blue-600),
@@ -1705,7 +1534,7 @@
   gap: var(--tesseract-space-4);
   padding: var(--tesseract-space-4);
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-14);
+  border-radius: var(--tesseract-radius-24);
   background: var(--tesseract-bg-surface);
   text-align: left;
   color: var(--tesseract-fg-primary);
@@ -1736,7 +1565,7 @@
 .packageCard {
   background: var(--tesseract-bg-surface);
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
   padding: var(--tesseract-space-5);
   display: flex;
   flex-direction: column;
@@ -1805,7 +1634,7 @@
   width: 100%;
   height: 180px;
   object-fit: cover;
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
 }
 .hospitalHero {
   padding: var(--tesseract-space-8) var(--tesseract-space-4);
@@ -1814,7 +1643,7 @@
   align-items: center;
   text-align: center;
   gap: var(--tesseract-space-4);
-  border-radius: var(--tesseract-radius-16);
+  border-radius: var(--tesseract-radius-24);
   background: radial-gradient(
     ellipse at top,
     var(--tesseract-blue-100),
@@ -1829,7 +1658,7 @@
   gap: var(--tesseract-space-3);
   padding: var(--tesseract-space-4);
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-14);
+  border-radius: var(--tesseract-radius-24);
   background: var(--tesseract-bg-surface);
   text-align: left;
   color: var(--tesseract-fg-primary);
@@ -1896,7 +1725,7 @@
   background: var(--tesseract-bg-surface);
   border: 1px solid var(--tesseract-border-neutral);
   padding: var(--tesseract-space-3) var(--tesseract-space-2);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   color: var(--tesseract-fg-primary);
 }
 .brandPresets > button[data-selected="true"] {
@@ -1920,29 +1749,6 @@
   height: var(--tesseract-size-16);
   border-radius: 50%;
   border: 1px solid var(--tesseract-border-neutral);
-}
-.abhaHero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--tesseract-space-4);
-  text-align: center;
-  padding: var(--tesseract-space-6) 0;
-}
-.abhaHero > span:first-child {
-  color: var(--tesseract-blue-500);
-}
-.abhaHero .eyebrow {
-  color: var(--tesseract-blue-600);
-}
-.abhaHero h1 {
-  font-size: var(--tesseract-text-h2);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-}
-.abhaHero p {
-  font-size: var(--tesseract-text-body-sm);
-  line-height: 1.75;
 }
 .feedbackHero {
   display: flex;
@@ -2002,7 +1808,7 @@
   align-items: center;
   gap: var(--tesseract-space-2);
   padding: var(--tesseract-space-3);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   border: 1px solid var(--tesseract-bg-surface);
   background: color-mix(in srgb, var(--tesseract-slate-0) 85%, transparent);
   backdrop-filter: blur(16px);
@@ -2137,7 +1943,7 @@
   padding: var(--tesseract-space-4);
   background: var(--tesseract-violet-50);
   border: 1px solid var(--tesseract-violet-100);
-  border-radius: var(--tesseract-radius-14);
+  border-radius: var(--tesseract-radius-24);
 }
 .chatBubble p {
   font-size: var(--tesseract-text-body-sm);
@@ -2154,7 +1960,7 @@
   padding: var(--tesseract-space-3) var(--tesseract-space-4);
   background: var(--tesseract-blue-500);
   color: var(--tesseract-slate-0);
-  border-radius: var(--tesseract-radius-14);
+  border-radius: var(--tesseract-radius-24);
   font-size: var(--tesseract-text-body-sm);
   overflow-wrap: anywhere;
 }
@@ -2165,7 +1971,7 @@
   text-align: left;
   padding: var(--tesseract-space-3);
   border: 1px solid var(--tesseract-border-neutral);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   background: var(--tesseract-bg-surface);
   color: var(--tesseract-fg-primary);
 }
@@ -2189,7 +1995,7 @@
   border: 1px solid var(--tesseract-success-200);
   background: var(--tesseract-success-50);
   color: var(--tesseract-success-800);
-  border-radius: var(--tesseract-radius-12);
+  border-radius: var(--tesseract-radius-16);
   box-shadow: var(--tesseract-shadow-lg);
   font-size: var(--tesseract-text-body-xs);
   z-index: 50;
@@ -2211,16 +2017,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-@keyframes sheetIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 24px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
   }
 }
 @media (max-width: 1100px) {
@@ -2258,7 +2054,8 @@
     bottom: calc(var(--tesseract-space-4) + env(safe-area-inset-bottom));
   }
   .sheet {
-    border-radius: var(--tesseract-radius-24) var(--tesseract-radius-24) 0 0 !important;
+    border-radius: var(--tesseract-patient-sheet-radius)
+      var(--tesseract-patient-sheet-radius) 0 0 !important;
     bottom: 0 !important;
     max-height: 92dvh !important;
     padding-bottom: env(safe-area-inset-bottom);
@@ -2287,23 +2084,11 @@
   .greetingName {
     font-size: var(--tesseract-text-h4);
   }
-  .greeting {
-    gap: var(--tesseract-space-2);
-  }
   .quickActions {
     gap: var(--tesseract-space-2);
   }
   .quickActions > button {
     font-size: var(--tesseract-text-micro);
-  }
-  .cardTop [role="img"] {
-    max-width: 50%;
-  }
-  .cardChip {
-    font-size: var(--tesseract-text-micro);
-  }
-  .healthCard {
-    padding: var(--tesseract-space-4);
   }
   .navItem {
     padding: 0 var(--tesseract-space-2) !important;
@@ -2325,18 +2110,6 @@
 .selectionCard[data-selected="true"] small {
   color: var(--tesseract-fg-secondary);
 }
-.navItem[data-active="true"] {
-  background: linear-gradient(
-    135deg,
-    var(--tesseract-blue-500),
-    var(--tesseract-blue-600)
-  ) !important;
-}
-.navItem > span {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--tesseract-space-1-5);
-}
 @media (max-width: 360px) {
   .horizontalChips {
     margin-left: calc(-1 * var(--tesseract-space-4));
@@ -2345,7 +2118,351 @@
     padding-right: var(--tesseract-space-4);
   }
 }
-.cardTop > .customBrand {
-  max-width: 55%;
-  font-size: var(--tesseract-text-h5);
+
+/* Patient surfaces share a quiet tonal hierarchy; glass is reserved for floating controls. */
+.button {
+  min-height: var(--tesseract-patient-touch);
+}
+.button[data-variant="solid"][data-theme="primary"] {
+  background: linear-gradient(
+    135deg,
+    var(--tesseract-blue-500),
+    var(--tesseract-blue-600)
+  );
+  box-shadow: 0 4px 10px -6px var(--tesseract-blue-500);
+}
+.button[data-variant="link"] {
+  min-height: 36px !important;
+}
+.patientHeader {
+  margin-bottom: var(--tesseract-space-5);
+}
+.patientIdentity {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+}
+.patientIdentity > .iconButton {
+  flex-shrink: 0;
+}
+.patientIdentity .avatarButton {
+  padding: 3px;
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+}
+.careHero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 224px;
+  border-radius: var(--tesseract-patient-sheet-radius);
+  background: var(--tesseract-blue-50);
+  border: 1px solid var(--tesseract-slate-0);
+}
+.careHeroCopy {
+  position: relative;
+  z-index: 2;
+  padding: var(--tesseract-space-5);
+  background: linear-gradient(
+    90deg,
+    var(--tesseract-blue-50) 40%,
+    color-mix(in srgb, var(--tesseract-blue-50) 92%, transparent) 54%,
+    transparent 88%
+  );
+}
+.careHeroCopy h1 {
+  font-size: var(--tesseract-text-h2);
+  letter-spacing: -0.04em;
+  line-height: 1.16;
+  margin: var(--tesseract-space-3) 0 var(--tesseract-space-2);
+}
+.careHeroCopy p {
+  font-size: var(--tesseract-text-body-xs);
+  color: var(--tesseract-fg-secondary);
+  line-height: 1.65;
+}
+.careHeroCopy .button {
+  margin-top: var(--tesseract-space-4);
+  font-size: var(--tesseract-text-body-xs);
+}
+.careHeroPhoto {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 52%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% center;
+}
+.heroPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+  color: var(--tesseract-blue-700);
+  font-size: var(--tesseract-text-micro);
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.navItem[data-active="true"] {
+  color: var(--tesseract-blue-700) !important;
+  background: linear-gradient(
+    135deg,
+    var(--tesseract-blue-100),
+    var(--tesseract-blue-50)
+  ) !important;
+  box-shadow: inset 0 1px 0 var(--tesseract-slate-0);
+}
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+}
+.navLabel {
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.navItem:active {
+  transform: scale(0.95);
+}
+.quickActions > button:nth-child(2) .quickIcon {
+  background: linear-gradient(
+    145deg,
+    var(--tesseract-success-100),
+    var(--tesseract-success-50)
+  );
+  color: var(--tesseract-success-700);
+}
+.quickActions > button:nth-child(3) .quickIcon {
+  background: linear-gradient(
+    145deg,
+    var(--tesseract-warning-100),
+    var(--tesseract-warning-50)
+  );
+  color: var(--tesseract-warning-700);
+}
+.quickActions > button:nth-child(4) .quickIcon {
+  background: linear-gradient(
+    145deg,
+    var(--tesseract-slate-200),
+    var(--tesseract-slate-50)
+  );
+  color: var(--tesseract-slate-700);
+}
+.appointmentCard,
+.doctorCard,
+.recordCard,
+.familyCard,
+.billCard,
+.packageCard,
+.rowCard,
+.detailCard {
+  border-color: color-mix(
+    in srgb,
+    var(--tesseract-border-neutral) 65%,
+    var(--tesseract-bg-surface)
+  );
+  box-shadow: 0 4px 16px -12px
+    color-mix(in srgb, var(--tesseract-slate-900) 30%, transparent);
+}
+.row {
+  padding: var(--tesseract-space-5) var(--tesseract-space-4);
+  gap: var(--tesseract-space-4);
+}
+.rowIcon {
+  width: 44px;
+  height: 44px;
+}
+.row strong,
+.recordTitle {
+  color: var(--tesseract-fg-heading);
+  line-height: 1.45;
+}
+.recordCard {
+  padding: var(--tesseract-space-5);
+}
+.doctorMeta {
+  padding-left: var(--tesseract-space-5);
+  padding-right: var(--tesseract-space-5);
+}
+.doctorBooking {
+  padding: var(--tesseract-space-4) var(--tesseract-space-5);
+  background: var(--tesseract-bg-page);
+  gap: var(--tesseract-space-3);
+}
+.familyCard {
+  padding: var(--tesseract-space-5);
+}
+.sectionTitle button {
+  flex-shrink: 0;
+}
+.page > section > .sectionTitle {
+  margin-top: var(--tesseract-space-3);
+}
+.page > section > .sectionTitle h2 {
+  font-size: var(--tesseract-text-body-xs);
+  letter-spacing: 0.08em;
+  color: var(--tesseract-fg-secondary);
+}
+.sheetHeader {
+  flex-shrink: 0;
+  padding: var(--tesseract-space-3) var(--tesseract-space-5)
+    var(--tesseract-space-4);
+  touch-action: none;
+  cursor: grab;
+}
+.sheetHeader:active {
+  cursor: grabbing;
+}
+.sheetGrip {
+  display: block;
+  margin: 0 auto var(--tesseract-space-5);
+  width: 40px;
+  height: 4px;
+  background: var(--tesseract-slate-300);
+  border-radius: var(--tesseract-radius-full);
+}
+.sheetHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+}
+.sheetHeading h2 {
+  font-size: var(--tesseract-text-h4);
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+.sheetHeading p {
+  margin-top: var(--tesseract-space-1);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: 1.5;
+  color: var(--tesseract-fg-secondary);
+}
+.sheetBody {
+  padding-top: 0 !important;
+  overscroll-behavior: contain;
+}
+.notificationCard {
+  gap: var(--tesseract-space-3);
+}
+.notificationCard strong {
+  color: var(--tesseract-fg-heading);
+}
+.notice {
+  align-items: flex-start;
+}
+@media (max-width: 360px) {
+  .careHeroCopy {
+    padding: var(--tesseract-space-4);
+  }
+  .careHeroCopy h1 {
+    font-size: var(--tesseract-text-h3);
+  }
+  .quickIcon {
+    width: 56px;
+    height: 56px;
+  }
+  .sectionTitle h2 {
+    font-size: var(--tesseract-text-h5);
+  }
+  .greetingName {
+    font-size: var(--tesseract-text-h5);
+  }
+  .patientIdentity {
+    gap: var(--tesseract-space-2);
+  }
+  .locationButton > span:nth-child(2) {
+    max-width: 112px;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .navbar {
+    background: var(--tesseract-bg-surface);
+    backdrop-filter: none;
+  }
+}
+.linkRecordsBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-blue-100);
+  border-radius: var(--tesseract-radius-24);
+  background: linear-gradient(
+    120deg,
+    var(--tesseract-blue-50),
+    var(--tesseract-bg-surface)
+  );
+  text-align: left;
+  color: var(--tesseract-blue-600);
+}
+.linkRecordsBanner strong {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+  color: var(--tesseract-fg-heading);
+}
+.linkRecordsBanner small {
+  display: block;
+  margin-top: var(--tesseract-space-1);
+}
+.linkIntro,
+.linkSuccess {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  text-align: center;
+  padding: var(--tesseract-space-5) 0;
+}
+.linkIntro h2,
+.linkSuccess h2 {
+  font-size: var(--tesseract-text-h4);
+  letter-spacing: -0.025em;
+}
+.linkIntro p,
+.linkSuccess p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: 1.7;
+  max-width: 280px;
+}
+.linkEmblem {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--tesseract-radius-24);
+  color: var(--tesseract-blue-600);
+  background: linear-gradient(
+    135deg,
+    var(--tesseract-blue-100),
+    var(--tesseract-blue-50)
+  );
+  border: 1px solid var(--tesseract-slate-0);
+}
+.identityCard {
+  padding: var(--tesseract-space-5);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-24);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-4);
+}
+.identityCard p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: 1.7;
+}
+.identityPatient {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  padding-bottom: var(--tesseract-space-2);
+}
+.identityPatient strong,
+.identityPatient small {
+  display: block;
 }

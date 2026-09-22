@@ -57,7 +57,7 @@ export function Billing() {
         <span className={s.eyebrow}>TOTAL OUTSTANDING</span>
         <h1>{money(due)}</h1>
         <p>{due ? "Pay at your convenience." : "You’re all caught up."}</p>
-        <Icon name="receipt-2" size={64} bulk />
+        <Icon name="bill" size={64} bulk />
       </div>
       <ChoiceGroup
         label="Payment status"
@@ -92,14 +92,14 @@ export function Billing() {
               </div>
               <span className={s.inlineLink}>
                 {b.status === "Paid" ? "View receipt" : "Review & pay"}
-                <Icon name="arrow-right" size={16} />
+                <Icon name="chevron-right" size={16} />
               </span>
             </button>
           ))}
       </div>
       {!bills.filter((b) => tab === "All" || b.status === tab).length && (
         <Empty
-          icon="receipt-2"
+          icon="bill"
           title="No bills to show"
           description="Bills shared by your hospital will appear here."
         />
@@ -583,7 +583,7 @@ export function Hospital() {
       <div className={s.rowCard}>
         {[
           ["Reception & appointments", "call"],
-          ["Billing & insurance", "receipt-2"],
+          ["Billing & insurance", "bill"],
           ["Patient support", "message-question"],
           ["Ambulance desk", "health"],
         ].map(([title, icon]) => (

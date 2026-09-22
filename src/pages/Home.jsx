@@ -1,150 +1,62 @@
-import { useState } from "react";
+import PatientHeader from "../components/PatientHeader";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../state/AppContext";
-import { locations, distanceKm } from "../config/brand";
-import { doctors, formatDate, packages } from "../services/data";
+import { locations } from "../config/brand";
+import { doctors, formatDate } from "../services/data";
 import {
   Button,
   Badge,
   Avatar,
   Icon,
-  IconButton,
   SectionTitle,
   BrandLogo,
-  Sheet,
   Row,
-  Notice,
-  ErrorText,
 } from "../components/ui";
 import s from "../App.module.css";
 export default function Home() {
   const { state, activeMember, brand, dispatch } = useApp();
   const navigate = useNavigate();
-  const [locationOpen, setLocationOpen] = useState(false);
-  const [familyOpen, setFamilyOpen] = useState(false);
-  const [locationError, setLocationError] = useState("");
-  const [locating, setLocating] = useState(false);
-  const [nearest, setNearest] = useState(null);
-  const hospital = locations.find((l) => l.id === state.location);
   const appointment = state.appointments
     .filter((a) => a.memberId === activeMember.id && a.status === "Confirmed")
     .sort((a, b) => a.date.localeCompare(b.date))[0];
   const doctor = doctors.find((d) => d.id === appointment?.doctorId);
   const records = state.records.filter((r) => r.memberId === activeMember.id);
-  const unread = state.notifications.filter(
-    (n) => !n.read && (!n.memberId || n.memberId === activeMember.id),
-  ).length;
   const firstName = activeMember.name.split(" ")[0];
   const quick = [
     ["calendar-add", "Book a visit", "/doctors"],
     ["document-text", "My records", "/records"],
     ["timer", "My queue", "/queue"],
-    ["receipt-2", "Pay bills", "/billing"],
+    ["bill", "Pay bills", "/billing"],
   ];
-  function findNearest() {
-    setLocating(true);
-    setLocationError("");
-    if (!navigator.geolocation) {
-      setLocationError("Location is unavailable. Choose your hospital below.");
-      setLocating(false);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        const closest = [...locations].sort(
-          (a, b) =>
-            distanceKm({ lat: p.coords.latitude, lng: p.coords.longitude }, a) -
-            distanceKm({ lat: p.coords.latitude, lng: p.coords.longitude }, b),
-        )[0];
-        setNearest(closest.id);
-        setLocating(false);
-      },
-      () => {
-        setLocationError(
-          "Could not access your location. You can choose a hospital below.",
-        );
-        setLocating(false);
-      },
-      { timeout: 10000 },
-    );
-  }
   return (
     <div className={s.home}>
       <div className={s.homeTop}>
-        <header className={s.greeting}>
-          <div className={s.grow}>
-            <span className={s.eyebrow}>A LITTLE CARE, EVERY DAY</span>
-            <button
-              onClick={() => setFamilyOpen(true)}
-              className={s.greetingName}
-            >
-              Hello, {firstName} <Icon name="chevron-down" size={16} />
-            </button>
-          </div>
-          <IconButton
-            name="notification"
-            label="Notifications"
-            badge={unread}
-            onClick={() => navigate("/notifications")}
-          />
-          <button
-            className={s.avatarButton}
-            aria-label="Switch family profile"
-            onClick={() => setFamilyOpen(true)}
-          >
-            <Avatar name={activeMember.name} size={40} color="primary" />
-          </button>
-        </header>
-        <button
-          className={s.locationButton}
-          onClick={() => setLocationOpen(true)}
-        >
-          <Icon name="location" size={16} bulk />
-          <span>
-            {brand.hospitalName}, <strong>{hospital.name}</strong>
-          </span>
-          <Icon name="chevron-down" size={12} />
-        </button>
-        <button
-          className={s.healthCard}
-          onClick={() => navigate("/profile")}
-          aria-label="View your health card"
-        >
-          <div className={s.cardTop}>
-            <BrandLogo light />
-            <span className={s.cardChip}>
-              <Icon name="shield-tick" size={14} /> HEALTH CARD
+        <PatientHeader />
+        <section className={s.careHero} aria-label="Your care overview">
+          <div className={s.careHeroCopy}>
+            <span className={s.heroPill}>
+              <Icon name="health" size={16} bulk /> YOUR EVERYDAY CARE
             </span>
-          </div>
-          <div className={s.cardPatient}>
-            <span>CARE THAT KNOWS YOU</span>
-            <h2>{activeMember.name}</h2>
+            <h1>
+              A little care.
+              <br />A healthier you.
+            </h1>
             <p>
-              Patient ID <strong>{activeMember.mrn}</strong>
+              The right doctor, whenever
+              <br />
+              you need one.
             </p>
+            <Button
+              onClick={() => navigate("/doctors")}
+              rightIcon={<Icon name="chevron-right" size={16} />}
+            >
+              Find a doctor
+            </Button>
           </div>
-          <div className={s.cardBottom}>
-            <span>
-              <Icon name="heart" size={16} bulk /> {activeMember.blood || "—"}{" "}
-              <i /> {activeMember.relation}
-            </span>
-            <span>
-              View health profile <Icon name="arrow-right" size={16} />
-            </span>
-          </div>
-          <div className={s.cardOrb} aria-hidden="true" />
-          <div className={s.cardOrb2} aria-hidden="true" />
-        </button>
-        <div className={s.cardCaption}>
-          <span className={s.miniDot} /> Your care, all together{" "}
-          <span className={s.carouselDots}>
-            <i />
-            <i />
-          </span>
-        </div>
+          <img src="/images/care.jpg" alt="" className={s.careHeroPhoto} />
+        </section>
       </div>
       <div className={s.homePanel}>
-        <div className={s.sheetHandle} />
         <div className={s.quickActions}>
           {quick.map(([icon, label, path]) => (
             <button key={path} onClick={() => navigate(path)}>
@@ -160,22 +72,22 @@ export default function Home() {
             <Icon name="magic-star" size={24} bulk />
           </span>
           <span className={s.grow}>
-            <strong>Not sure where to start?</strong>
-            <small>Let your care assistant help you book.</small>
+            <strong>Let’s find your next step</strong>
+            <small>Talk to your care assistant</small>
           </span>
-          <Icon name="arrow-right" size={20} />
+          <Icon name="chevron-right" size={20} />
         </button>
         <SectionTitle
           action="View all"
           onAction={() => navigate("/appointments")}
         >
-          Your next visit
+          Coming up
         </SectionTitle>
         {appointment ? (
           <div className={s.appointmentCard}>
             <div className={s.appointmentDate}>
               <span>
-                <Icon name="calendar-1" size={16} />
+                <Icon name="calendar-2" size={16} />
                 {formatDate(appointment.date, { weekday: "short" })} <i />{" "}
                 {appointment.time}
               </span>
@@ -214,7 +126,7 @@ export default function Home() {
                 }
               >
                 {appointment.queue ? "View queue" : "View appointment"}
-                <Icon name="arrow-right" size={14} />
+                <Icon name="chevron-right" size={14} />
               </Button>
             </div>
           </div>
@@ -228,7 +140,7 @@ export default function Home() {
           </div>
         )}
         <SectionTitle action="Explore" onAction={() => navigate("/packages")}>
-          Make time for your health
+          Stay a step ahead
         </SectionTitle>
         <button
           className={s.packageBanner}
@@ -242,7 +154,7 @@ export default function Home() {
             </h3>
             <p>Health checks from ₹1,499</p>
             <span className={s.inlineLink}>
-              Explore packages <Icon name="arrow-right" size={16} />
+              Explore packages <Icon name="chevron-right" size={16} />
             </span>
           </div>
           <div className={s.packageArt}>
@@ -253,7 +165,7 @@ export default function Home() {
           </div>
         </button>
         <SectionTitle action="View all" onAction={() => navigate("/records")}>
-          Latest health records
+          Your latest records
         </SectionTitle>
         <div className={s.rowCard}>
           {records.slice(0, 2).map((record) => (
@@ -272,7 +184,7 @@ export default function Home() {
           ))}
         </div>
         <SectionTitle action="Manage" onAction={() => navigate("/family")}>
-          Care for your people
+          Your family
         </SectionTitle>
         <div className={s.familyMini}>
           {state.members.map((m) => (
@@ -306,85 +218,6 @@ export default function Home() {
           <small>Interactive demo · Sample data</small>
         </div>
       </div>
-      <Sheet
-        open={locationOpen}
-        onClose={() => setLocationOpen(false)}
-        title="Your hospital"
-        description="Choose where you’d like to receive care."
-      >
-        <Button
-          variant="tonal"
-          leftIcon={<Icon name="gps" />}
-          loading={locating}
-          onClick={findNearest}
-        >
-          Find nearest location
-        </Button>
-        <ErrorText>{locationError}</ErrorText>
-        {locations.map((l) => (
-          <button
-            className={s.selectionCard}
-            key={l.id}
-            data-selected={state.location === l.id}
-            onClick={() => {
-              dispatch({ type: "LOCATION", id: l.id });
-              setLocationOpen(false);
-            }}
-          >
-            <span className={s.rowIcon}>
-              <Icon name="hospital" bulk />
-            </span>
-            <span className={s.grow}>
-              <strong>
-                {l.name}
-                {nearest === l.id ? " · Nearest" : ""}
-              </strong>
-              <small>{l.address}</small>
-              <small>{l.hours}</small>
-            </span>
-            <Icon
-              name={state.location === l.id ? "tick-circle" : "chevron-right"}
-            />
-          </button>
-        ))}
-        <Notice>Locations shown are examples for this hospital preview.</Notice>
-      </Sheet>
-      <Sheet
-        open={familyOpen}
-        onClose={() => setFamilyOpen(false)}
-        title="Who are we caring for?"
-        description="Appointments and records follow the selected profile."
-      >
-        {state.members.map((m) => (
-          <button
-            className={s.selectionCard}
-            key={m.id}
-            data-selected={m.id === activeMember.id}
-            onClick={() => {
-              dispatch({ type: "SELECT_MEMBER", id: m.id });
-              setFamilyOpen(false);
-            }}
-          >
-            <Avatar name={m.name} size={44} />
-            <span className={s.grow}>
-              <strong>{m.name}</strong>
-              <small>
-                {m.relation} · {m.mrn}
-              </small>
-            </span>
-            {m.id === activeMember.id && <Icon name="tick-circle" bulk />}
-          </button>
-        ))}
-        <Button
-          variant="outline"
-          onClick={() => {
-            setFamilyOpen(false);
-            navigate("/family?add=1");
-          }}
-        >
-          Manage family members
-        </Button>
-      </Sheet>
     </div>
   );
 }

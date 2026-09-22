@@ -45,8 +45,8 @@ export function More() {
     [
       "YOUR ACCOUNT",
       [
-        ["receipt-2", "Bills & payment history", "/billing"],
-        ["shield-tick", "ABHA health account", "/abha"],
+        ["bill", "Bills & payment history", "/billing"],
+        ["link", "Link UHID / ABHA", "/link-records"],
         ["call-calling", "Emergency contacts", "/emergency"],
         ["location", "Hospital & directions", "/hospital"],
       ],
@@ -156,7 +156,7 @@ export function Notifications() {
         ))
       ) : (
         <Empty
-          icon="notification"
+          icon="notification-2"
           title="You’re all caught up"
           description="Appointment reminders and hospital updates will appear here."
         />
@@ -614,145 +614,6 @@ export function Emergency() {
           />
           <ErrorText>{error}</ErrorText>
           <Button type="submit">Save contact</Button>
-        </form>
-      </Sheet>
-    </div>
-  );
-}
-export function Abha() {
-  const { state, activeMember, dispatch, notify } = useApp();
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState(0);
-  const [number, setNumber] = useState("12-3456-7890-1234");
-  const [otp, setOtp] = useState("");
-  const { error, run } = useAction();
-  const linked = state.abha[activeMember.id];
-  return (
-    <div className={s.page}>
-      <PageHeader title="Your ABHA account" />
-      <MemberContext />
-      <div className={s.abhaHero}>
-        <Icon name="shield-tick" size={56} bulk />
-        <span className={s.eyebrow}>AYUSHMAN BHARAT HEALTH ACCOUNT</span>
-        <h1>
-          Your health identity.
-          <br />
-          Connected to your care.
-        </h1>
-        <p>
-          Link your ABHA to access and share health records with your consent.
-        </p>
-      </div>
-      {linked ? (
-        <div className={s.detailCard}>
-          <Badge color="success">Demo link complete</Badge>
-          <h3>{activeMember.name}</h3>
-          <p>{linked.number}</p>
-          <small>This is a simulated ABHA link, not a verified account.</small>
-          <Button
-            variant="outline"
-            onClick={() => {
-              dispatch({
-                type: "ABHA_DEMO",
-                memberId: activeMember.id,
-                linked: null,
-              });
-              notify("Demo ABHA link removed.");
-            }}
-          >
-            Remove demo link
-          </Button>
-        </div>
-      ) : (
-        <Button
-          fullWidth
-          onClick={() => {
-            setOpen(true);
-            setStep(0);
-          }}
-        >
-          Explore ABHA linking
-        </Button>
-      )}
-      <div className={s.rowCard}>
-        <Row
-          icon="document-text"
-          title="Records that stay with you"
-          subtitle="Keep your health history connected across care providers."
-        />
-        <Row
-          icon="shield-tick"
-          title="Sharing is your choice"
-          subtitle="You decide who can access your linked records."
-        />
-      </div>
-      <Notice>
-        ABHA is a health identity. UPI is a separate payment system. Live ABHA
-        linking requires the ABDM consent and verification flow.
-      </Notice>
-      <Button
-        href="https://abha.abdm.gov.in/abha/v3/"
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="link"
-      >
-        Visit the official ABHA portal <Icon name="export" size={16} />
-      </Button>
-      <Sheet
-        open={open}
-        onClose={() => setOpen(false)}
-        title={step ? "Verify demo code" : "Link your ABHA"}
-      >
-        <Notice>
-          Simulation only. Use the sample number and demo code. No request is
-          sent to ABDM.
-        </Notice>
-        <form
-          className={s.stack}
-          onSubmit={(e) => {
-            e.preventDefault();
-            run(() => {
-              if (!step) {
-                if (number.replace(/\D/g, "").length !== 14)
-                  throw new Error("An ABHA number has 14 digits.");
-                setStep(1);
-              } else {
-                if (otp !== "123456")
-                  throw new Error("Use the demo code 123456.");
-                dispatch({
-                  type: "ABHA_DEMO",
-                  memberId: activeMember.id,
-                  linked: { number, demo: true },
-                });
-                setOpen(false);
-                notify("Demo ABHA linking completed.");
-              }
-            });
-          }}
-        >
-          {!step ? (
-            <Field
-              label="Sample ABHA number"
-              value={number}
-              onChange={(e) => setNumber(e.target.value)}
-              required
-            />
-          ) : (
-            <Field
-              label="Demo verification code"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="123456"
-              helperText="Demo code: 123456"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-            />
-          )}
-          <ErrorText>{error}</ErrorText>
-          <Button type="submit">
-            {step ? "Complete demo link" : "Continue with sample number"}
-          </Button>
         </form>
       </Sheet>
     </div>

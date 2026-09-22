@@ -1,21 +1,21 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-test("home follows the mobile reference and switches family context", async ({
+test("home uses a care overview and switches family context", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("button", { name: "View your health card" }),
-  ).toContainText("Aarav Sharma");
+    page.getByRole("button", { name: "Hello, Aarav" }),
+  ).toContainText("Aarav");
   await page.getByRole("button", { name: "Switch family profile" }).click();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: /Rajesh Sharma/ })
     .click();
   await expect(
-    page.getByRole("button", { name: "View your health card" }),
-  ).toContainText("Rajesh Sharma");
+    page.getByRole("button", { name: "Hello, Rajesh" }),
+  ).toContainText("Rajesh");
   await page
     .getByRole("navigation")
     .getByRole("button", { name: "Records", exact: true })
@@ -237,6 +237,7 @@ test("all screens render without crashes or horizontal overflow", async ({
     "/branding",
     "/emergency",
     "/abha",
+    "/link-records",
     "/feedback",
     "/assistant",
     "/welcome",
@@ -290,4 +291,166 @@ test("doctor and record filters stay within narrow phone screens", async ({
       ).toBe(true);
     }
   }
+});
+
+test("header sheets select a hospital, show updates, and dismiss with a gesture", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Change location/ }).click();
+  let dialog = page.getByRole("dialog");
+  await expect(dialog).toHaveAccessibleName("Your hospital");
+  await dialog.getByRole("button", { name: /Whitefield/ }).click();
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: /Change location/ }),
+  ).toContainText("Whitefield");
+  await page
+    .getByRole("button", { name: "Notifications", exact: true })
+    .click();
+  await expect(dialog).toHaveAccessibleName("Your updates");
+  await dialog.getByRole("button", { name: "Mark all as read" }).click();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Notifications", exact: true }),
+  ).toBeFocused();
+  await page.getByRole("button", { name: "Switch family profile" }).click();
+  await dialog.evaluate(async (node) => {
+    await Promise.all(node.getAnimations().map((a) => a.finished));
+  });
+  const grip = await dialog.locator('[class*="sheetGrip"]').boundingBox();
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + 125, { steps: 8 });
+  await page.mouse.up();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("navigation")).toBeVisible();
+});
+
+test("bottom navigation keeps equal cells and centered icon-label pairs on each tab", async ({
+  page,
+}) => {
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const path of ["/", "/appointments", "/records", "/family", "/more"]) {
+      await page.goto(path);
+      const items = page.getByRole("navigation").getByRole("button");
+      await expect(items).toHaveCount(5);
+      const geometry = await items.evaluateAll((buttons) =>
+        buttons.map((button) => {
+          const icon = button
+            .querySelector("[data-tp-icon]")
+            .getBoundingClientRect();
+          const label = button
+            .querySelector('[class*="navLabel"]')
+            .getBoundingClientRect();
+          return {
+            width: button.getBoundingClientRect().width,
+            offset: Math.abs(
+              icon.x + icon.width / 2 - label.x - label.width / 2,
+            ),
+            text: label.height,
+          };
+        }),
+      );
+      expect(
+        Math.max(...geometry.map((g) => g.width)) -
+          Math.min(...geometry.map((g) => g.width)),
+      ).toBeLessThan(1);
+      expect(geometry.every((g) => g.offset < 1 && g.text > 0)).toBe(true);
+    }
+  }
+});
+
+test("patients link UHID and ABHA with verification and consent, persist and unlink", async ({
+  page,
+}) => {
+  await page.goto("/records");
+  await page.getByRole("button", { name: /Link your health records/ }).click();
+  for (const [method, value] of [
+    ["UHID", "TP-10482"],
+    ["ABHA", "12-3456-7890-1234"],
+  ]) {
+    await page
+      .getByRole("button", { name: `Link ${method}`, exact: true })
+      .click();
+    const dialog = page.getByRole("dialog");
+    await dialog
+      .getByLabel(method === "UHID" ? "UHID" : "ABHA number", { exact: true })
+      .fill(value);
+    await dialog
+      .getByRole("button", { name: "Continue to demo verification" })
+      .click();
+    await dialog
+      .getByLabel("Demo verification code", { exact: true })
+      .fill("000000");
+    await dialog
+      .getByRole("button", { name: "Verify demo code", exact: true })
+      .click();
+    await expect(dialog.getByRole("alert")).toContainText("Incorrect");
+    await dialog
+      .getByLabel("Demo verification code", { exact: true })
+      .fill("123456");
+    await dialog
+      .getByRole("button", { name: "Verify demo code", exact: true })
+      .click();
+    await dialog
+      .getByRole("button", { name: "Confirm demo link", exact: true })
+      .click();
+    await expect(dialog.getByRole("alert")).toContainText("consent");
+    await dialog.getByRole("checkbox").check();
+    await dialog
+      .getByRole("button", { name: "Confirm demo link", exact: true })
+      .click();
+    await expect(dialog).toContainText(
+      "No new medical records have been imported",
+    );
+    await dialog.getByRole("button", { name: "Done", exact: true }).click();
+    await expect(dialog).toBeHidden();
+  }
+  await page.reload();
+  await expect(page.getByText("Demo linked", { exact: true })).toHaveCount(2);
+  await page.getByRole("button", { name: /For Aarav Sharma/ }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /Rajesh Sharma/ })
+    .click();
+  await expect(page.getByText("Demo linked", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: /For Rajesh Sharma/ }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /Aarav Sharma/ })
+    .click();
+  await page
+    .getByRole("button", { name: "Unlink", exact: true })
+    .first()
+    .click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Unlink identity", exact: true })
+    .click();
+  await expect(page.getByText("Demo linked", { exact: true })).toHaveCount(1);
+  await expect(
+    page.getByRole("button", { name: "Link UHID", exact: true }),
+  ).toBeVisible();
+});
+
+test("direct ABHA entry and reduced-motion sheets remain accessible", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/abha");
+  await expect(page.getByRole("dialog")).toHaveAccessibleName("Link your ABHA");
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(
+    results.violations.filter((v) =>
+      ["serious", "critical"].includes(v.impact),
+    ),
+  ).toEqual([]);
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toBeHidden();
 });

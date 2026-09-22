@@ -150,3 +150,39 @@ test("one family member cannot book different doctors for the same time", () => 
     /already has an appointment/,
   );
 });
+
+test("identity linking requires profile match, consent and unexpired demo verification", () => {
+  const action = {
+    type: "LINK_IDENTITY_DEMO",
+    memberId: "self",
+    method: "uhid",
+    identifier: "TP-10482",
+    hospitalId: "tatva-demo",
+    consent: true,
+    otp: "123456",
+    sentAt: Date.now(),
+  };
+  for (const [change, expected] of [
+    [{ consent: false }, /consent/],
+    [{ memberId: "father" }, /does not match/],
+    [{ otp: "000000" }, /Verification/],
+    [{ sentAt: Date.now() - 121000 }, /expired/],
+    [{ sentAt: Date.now() + 60000 }, /expired/],
+  ]) {
+    assert.throws(
+      () => updateState(initialState(), { ...action, ...change }),
+      expected,
+    );
+  }
+  const state = updateState(initialState(), action);
+  assert.equal(state.healthLinks.self.uhid.identifier, "TP-10482");
+  assert.equal(state.healthLinks.father, undefined);
+  assert.equal(state.records.length, initialState().records.length);
+  const unlinked = updateState(state, {
+    type: "UNLINK_IDENTITY_DEMO",
+    memberId: "self",
+    method: "uhid",
+  });
+  assert.equal(unlinked.healthLinks.self.uhid, null);
+  assert.deepEqual(unlinked.records, state.records);
+});

@@ -94,7 +94,7 @@ export function Welcome() {
         onClick={() => (slide < 2 ? setSlide(slide + 1) : navigate("/login"))}
       >
         {slide < 2 ? "Continue" : "Get started"}
-        <Icon name="arrow-right" />
+        <Icon name="chevron-right" />
       </Button>
       <Button
         variant="ghost"
@@ -221,7 +221,7 @@ export function Login() {
           {method === "Mobile OTP" && !sent
             ? "Continue with mobile number"
             : "Sign in to demo"}
-          <Icon name="arrow-right" />
+          <Icon name="chevron-right" />
         </Button>
         {sent && (
           <div className={s.inlineMeta}>

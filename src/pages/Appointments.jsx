@@ -114,7 +114,7 @@ export function Doctors() {
                 <small>Consultation fee</small>
               </div>
               <Button onClick={() => navigate(`/book/${d.id}`)}>
-                Book a visit <Icon name="arrow-right" size={16} />
+                Book a visit <Icon name="chevron-right" size={16} />
               </Button>
             </div>
           </article>
@@ -446,7 +446,7 @@ export function Booking() {
           }}
         >
           {step === 2 ? "Confirm demo appointment" : "Continue"}
-          <Icon name="arrow-right" size={18} />
+          <Icon name="chevron-right" size={18} />
         </Button>
       </div>
     </div>
@@ -501,7 +501,7 @@ export function Appointments() {
             <article className={s.appointmentCard} key={a.id}>
               <div className={s.appointmentDate}>
                 <span>
-                  <Icon name="calendar-1" size={16} />
+                  <Icon name="calendar-2" size={16} />
                   {formatDate(a.date)} · {a.time}
                 </span>
                 <Status status={a.status} />
@@ -547,7 +547,7 @@ export function Appointments() {
       </div>
       {!items.length && (
         <Empty
-          icon="calendar-1"
+          icon="calendar-2"
           title={`No ${tab.toLowerCase()} appointments`}
           description={`Your ${tab.toLowerCase()} visits for ${activeMember.name.split(" ")[0]} will appear here.`}
           action="Find a doctor"

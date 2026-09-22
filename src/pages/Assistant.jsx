@@ -76,7 +76,7 @@ export default function Assistant() {
             )}
           </div>
           <Button disabled={!symptoms.trim()} onClick={() => setStep(1)}>
-            Continue <Icon name="arrow-right" />
+            Continue <Icon name="chevron-right" />
           </Button>
         </>
       ) : (
@@ -141,7 +141,7 @@ export default function Assistant() {
                       <strong>{d.name}</strong>
                       <small>{d.specialty}</small>
                     </span>
-                    <Icon name="arrow-right" />
+                    <Icon name="chevron-right" />
                   </button>
                 ))}
               <Button variant="ghost" onClick={() => setStep(0)}>

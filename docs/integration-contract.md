@@ -83,3 +83,11 @@ Events carry immutable event IDs, resolved tenant ID, patient ID, entity ID/vers
 6. Destination GitHub repository; native app IDs, signing and store accounts.
 
 Store publication, live health-data handling and production readiness cannot be validated from a local sample app. The present deliverable is the functional design foundation plus native project scaffolding.
+
+## Patient-led UHID / ABHA connection
+
+`/link-records` is the entry point; `/abha` opens the ABHA sheet directly. Demo state is `healthLinks[memberId]`, with separate `uhid` and `abha` entries. Hospital UHID links include `hospitalId`. No record is imported, relabelled or exposed by the demo link operation. Unlinking removes the connection, not the patient’s records.
+
+The live adapter must replace the entire sample verification path with server-issued transactions. The server must resolve the supplied UHID within the authenticated hospital, deliver verification to the already registered channel, bind the transaction to patient + hospital + session, enforce rate/attempt/expiry limits, verify family delegation, and return only the minimum matching identity information. An entered UHID or a local profile name is not proof of ownership. Unknown identifiers must not disclose whether a patient exists.
+
+ABHA identity verification must use the approved ABDM integration. Identity linking is distinct from record discovery, care-context linking and consent to share records. Display the real requested data, recipient, purpose, duration and revocation controls before sharing. The current checkbox demonstrates the interaction only; it does not create valid ABDM consent. Link status and revocation must be confirmed by the server and audited.

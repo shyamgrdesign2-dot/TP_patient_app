@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "../state/AppContext";
 import { formatDate, dateKey } from "../services/data";
 import { getFile, saveFile, download } from "../services/files";
@@ -28,6 +28,7 @@ const categories = [
 ];
 export default function Records() {
   const { state, activeMember, dispatch, notify, brand } = useApp();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All records");
@@ -159,14 +160,22 @@ export default function Records() {
           </Button>
         ))}
       </div>
-      <div className={s.recordsSummary}>
-        <Icon name="shield-tick" size={24} bulk />
-        <div>
-          <strong>One profile. Every record.</strong>
-          <small>
-            {records.length} records for {activeMember.name.split(" ")[0]}
-          </small>
-        </div>
+      <button
+        className={s.linkRecordsBanner}
+        onClick={() => navigate("/link-records")}
+      >
+        <span className={s.rowIcon}>
+          <Icon name="link" size={24} />
+        </span>
+        <span className={s.grow}>
+          <strong>Link your health records</strong>
+          <small>Connect with your UHID or ABHA</small>
+        </span>
+        <Icon name="chevron-right" size={18} />
+      </button>
+      <div className={s.listMeta}>
+        {filtered.length} records{" "}
+        <span>For {activeMember.name.split(" ")[0]}</span>
       </div>
       <div className={s.stack}>
         {filtered.map((r) => (

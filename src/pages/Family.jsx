@@ -287,9 +287,9 @@ export function Profile() {
       <div className={s.rowCard}>
         <Row
           icon="shield-tick"
-          title="ABHA health account"
-          subtitle="Connect your digital health identity"
-          onClick={() => navigate("/abha")}
+          title="Link UHID / ABHA"
+          subtitle="Connect hospital and health identities"
+          onClick={() => navigate("/link-records")}
         />
         <Row
           icon="call-calling"

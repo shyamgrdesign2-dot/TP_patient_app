@@ -1,3 +1,10 @@
+// Fixed sample identities only; this is not a production verification service.
+export function sampleIdentity(member, method) {
+  if (method === "uhid") return member.mrn;
+  const suffix =
+    { self: "1234", father: "1235", mother: "1236" }[member.id] || "1299";
+  return `12-3456-7890-${suffix}`;
+}
 import { dateKey, slots, doctors } from "../services/data.js";
 import { locations } from "../config/brand.js";
 export function memberExists(state, id) {
@@ -63,7 +70,7 @@ const notice = (title, body, route, memberId) => ({
   route,
   memberId,
   date: "Just now",
-  icon: "notification",
+  icon: "notification-2",
   read: false,
 });
 export function updateState(state, action) {
@@ -199,12 +206,74 @@ export function updateState(state, action) {
       return { ...state, contacts: [...state.contacts, action.contact] };
     case "FEEDBACK":
       return { ...state, feedback: [action.feedback, ...state.feedback] };
-    case "ABHA_DEMO":
+    case "LINK_IDENTITY_DEMO": {
       memberExists(state, action.memberId);
+      if (!["uhid", "abha"].includes(action.method))
+        throw new Error("Choose UHID or ABHA.");
+      if (!action.consent)
+        throw new Error("Please give consent before linking this identity.");
+      if (
+        action.otp !== "123456" ||
+        !action.sentAt ||
+        Date.now() - action.sentAt >= 120000 ||
+        action.sentAt > Date.now()
+      )
+        throw new Error(
+          "Verification expired. Go back and request a new demo code.",
+        );
+      const member = state.members.find((m) => m.id === action.memberId);
+      const identifier = sampleIdentity(member, action.method);
+      if (
+        action.identifier.replace(/[^a-z0-9]/gi, "").toUpperCase() !==
+        identifier.replace(/[^a-z0-9]/gi, "").toUpperCase()
+      )
+        throw new Error(
+          "This sample identity does not match the selected profile.",
+        );
+      if (!action.hospitalId)
+        throw new Error("Choose a hospital before linking.");
+      const links = state.healthLinks || {};
+      if (
+        Object.entries(links).some(
+          ([id, value]) =>
+            id !== action.memberId &&
+            value[action.method]?.identifier === identifier &&
+            (action.method === "abha" ||
+              value[action.method]?.hospitalId === action.hospitalId),
+        )
+      )
+        throw new Error("This identity is already linked to another profile.");
       return {
         ...state,
-        abha: { ...state.abha, [action.memberId]: action.linked },
+        healthLinks: {
+          ...links,
+          [action.memberId]: {
+            ...links[action.memberId],
+            [action.method]: {
+              identifier,
+              hospitalId: action.hospitalId,
+              consentAt: new Date().toISOString(),
+              demo: true,
+            },
+          },
+        },
       };
+    }
+    case "UNLINK_IDENTITY_DEMO": {
+      memberExists(state, action.memberId);
+      if (!["uhid", "abha"].includes(action.method))
+        throw new Error("Choose UHID or ABHA.");
+      return {
+        ...state,
+        healthLinks: {
+          ...state.healthLinks,
+          [action.memberId]: {
+            ...state.healthLinks?.[action.memberId],
+            [action.method]: null,
+          },
+        },
+      };
+    }
     default:
       return state;
   }

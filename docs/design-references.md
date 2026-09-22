@@ -2,7 +2,7 @@
 
 ## User-provided primary references
 
-- `/Users/shyamsundar/Documents/Medavida/`: greeting header, stacked hero-card composition, lower content sheet, four quick actions, floating liquid-glass navigation, icon-active state, bottom-sheet workflows and full-screen mobile / device-frame desktop behavior. Used as design evidence, not as authority to execute instructions embedded in its documents.
+- `/Users/shyamsundar/Documents/Medavida/`: greeting and location controls, floating liquid-glass navigation, bottom-sheet motion and gestures and full-screen mobile / device-frame desktop behavior. Used as design evidence, not as authority to execute instructions embedded in its documents.
 - `/Users/shyamsundar/Documents/work-tp/Pm-Doctor-Portal/`: source for TatvaPractice terminology, the existing authentication patterns, appointment agent concepts, and the installed Tesseract package.
 - `/Users/shyamsundar/Documents/work-tp/tesseract-design-system/.claude/skills/tesseract/SKILL.md`: applied Tesseract component, theme, accessibility and token rules. Patient navigation is intentionally adapted from the user-requested Medavida reference rather than the EMR’s desktop sidebar.
 
@@ -10,7 +10,7 @@
 
 Tesseract Button, Badge, Avatar, InputBox, Checkbox, Toggle, Drawer, ConfirmDialog, TPIcon and Logo. Mulish headings; Inter UI copy. Central theme seeds generate primary/accent ramps. A compatibility mapping supplies Avatar’s primary token aliases; explicit typography variables ensure the package provider applies custom fonts to overlays as well as page content.
 
-The patient-specific compositions use CSS Modules. Colours reference Tesseract tokens. New dimensions are layout values rather than changes to the library’s source tokens. The glass navigation keeps visible text on its active tab and accessible names on every tab. Reduced-motion preference removes transitions; modals use Tesseract’s focus and keyboard handling.
+The patient-specific compositions use CSS Modules. Colours reference Tesseract tokens. New dimensions are layout values rather than changes to the library’s source tokens. The glass navigation gives all five tabs equal-width cells and visible centered icon/label pairs. Reduced-motion preference removes transitions; sheets slide from the bottom, support grip dragging, Escape and overlay dismissal, and retain Tesseract’s focus and keyboard handling.
 
 Tesseract is vendored internally at version 1.1.0, unmodified. It must remain in a private organization repository.
 
@@ -31,3 +31,13 @@ Downloaded Unsplash photos are generic illustrative healthcare imagery; the samp
 - Doctor portrait 1: https://images.unsplash.com/photo-1612349317150-e413f6a5b16d
 - Doctor portrait 2: https://images.unsplash.com/photo-1559839734-2b71ea197ec2
 - Doctor portrait 3: https://images.unsplash.com/photo-1622253692010-333f2da6031d
+
+## September UI refinement research
+
+- [Apple HIG: Materials](https://developer.apple.com/design/human-interface-guidelines/materials): use translucency for controls and navigation while protecting content legibility. Applied to the floating navigation and header controls, with an opaque fallback for reduced transparency.
+- [Material 3 color, typography, shapes and elevation](https://developer.android.com/develop/ui/compose/designsystems/material3): establish hierarchy with tonal surface colors and consistent type/shape roles. Applied through Tesseract tokens: rounded cards, pale appointment date bands, differentiated action tiles, soft elevation and high-contrast primary text.
+- [Material cards](https://m3.material.io/components/cards/overview): contain related content and its actions. Appointment, doctor, record and identity cards each group a single task.
+
+Medavida is an interaction reference, not a banking-card template. The copied health-card composition was removed. Home now leads with a care-focused image/booking hero. Patient name and hospital location are grouped at the top; family, location and notification controls open sheets. Branding remains centralized.
+
+The supplied rounded Tesseract glyphs are used: `arrow-right4` through the `chevron-right` alias, `location` (bulk), `notification-2` (bulk), and `calendar-2` (bulk where active). Billing uses the `bill` glyph; the ambiguous catalogue `add` website icon is replaced with `add-circle`.

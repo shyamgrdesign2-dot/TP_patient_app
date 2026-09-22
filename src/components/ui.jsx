@@ -1,24 +1,55 @@
-import { useEffect, useState } from "react";
+import { Children, isValidElement, useEffect, useRef, useState } from "react";
 import {
-  Button,
+  Button as TesseractButton,
   TPIcon,
   Badge,
   Avatar,
   Drawer,
   DrawerContent,
+  DrawerTitle,
+  DrawerDescription,
   InputBox,
   Logo,
 } from "@dhspl-tatvacare/tesseract-ui";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../state/AppContext";
 import s from "../App.module.css";
-export { Button, Badge, Avatar, InputBox };
-export function Icon({ name, size = 20, bulk = false, ...props }) {
+export { Badge, Avatar, InputBox };
+// Keep icons in the library's dedicated slots, out of its clipped text label.
+export function Button({
+  children,
+  leftIcon,
+  rightIcon,
+  className = "",
+  ...props
+}) {
+  const content = Children.toArray(children);
+  const isIcon = (child) => isValidElement(child) && child.type === Icon;
+  if (!leftIcon && isIcon(content[0])) leftIcon = content.shift();
+  if (!rightIcon && isIcon(content.at(-1))) rightIcon = content.pop();
+  return (
+    <TesseractButton
+      radius="pill"
+      className={`${s.button} ${className}`}
+      leftIcon={leftIcon}
+      rightIcon={rightIcon}
+      {...props}
+    >
+      {props.asChild ? children : content.length ? content : undefined}
+    </TesseractButton>
+  );
+}
+export function Icon({ name, size = 20, bulk, ...props }) {
   return (
     <TPIcon
-      name={name}
+      name={name === "add" ? "add-circle" : name}
       size={size}
-      variant={bulk ? "bulk" : "linear"}
+      variant={
+        (bulk ??
+        ["location", "notification-2", "calendar-2", "bill"].includes(name))
+          ? "bulk"
+          : "linear"
+      }
       {...props}
     />
   );
@@ -77,7 +108,7 @@ export function PageHeader({ title, subtitle, back = true, action }) {
     <header className={s.pageHeader}>
       {back && (
         <IconButton
-          name="arrow-left"
+          name="chevron-left"
           label="Go back"
           onClick={() => navigate(-1)}
         />
@@ -109,26 +140,168 @@ export function Empty({
   );
 }
 export function Sheet({ open, onClose, title, description, children, footer }) {
+  const [present, setPresent] = useState(open);
+  const panel = useRef(null);
+  const gesture = useRef(null);
+  const animation = useRef(null);
+  const reduced = () =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   useEffect(() => {
-    if (!open) return;
+    if (open) setPresent(true);
+  }, [open]);
+  useEffect(() => {
+    if (!present || !panel.current) return;
+    const node = panel.current;
+    animation.current?.cancel();
+    const from = open ? "0 105%" : node.style.translate || "0 0";
+    const motion = node.animate(
+      [{ translate: from }, { translate: open ? "0 0" : "0 105%" }],
+      {
+        duration: reduced() ? 0 : open ? 420 : 220,
+        easing: open ? "cubic-bezier(.22,1,.36,1)" : "cubic-bezier(.4,0,1,1)",
+        fill: "forwards",
+      },
+    );
+    animation.current = motion;
+    motion.onfinish = () => {
+      if (!open) setPresent(false);
+    };
+    return () => motion.cancel();
+  }, [open, present]);
+  useEffect(() => {
+    if (!present) return;
     document.body.dataset.sheetOpen = "true";
     return () => {
       delete document.body.dataset.sheetOpen;
     };
-  }, [open]);
+  }, [present]);
+  function startDrag(event) {
+    if (event.target.closest("button")) return;
+    animation.current?.cancel();
+    gesture.current = {
+      start: event.clientY,
+      time: performance.now(),
+      offset: 0,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function moveDrag(event) {
+    if (!gesture.current) return;
+    gesture.current.offset = Math.max(0, event.clientY - gesture.current.start);
+    panel.current.style.translate = `0 ${gesture.current.offset}px`;
+  }
+  function endDrag(event) {
+    if (!gesture.current) return;
+    const { offset, time } = gesture.current;
+    gesture.current = null;
+    if (
+      event.type !== "pointercancel" &&
+      (offset > 90 ||
+        (offset > 20 && offset / (performance.now() - time) > 0.5))
+    )
+      onClose();
+    else {
+      animation.current = panel.current.animate(
+        [{ translate: `0 ${offset}px` }, { translate: "0 0" }],
+        { duration: reduced() ? 0 : 280, easing: "cubic-bezier(.22,1,.36,1)" },
+      );
+      panel.current.style.translate = "0 0";
+    }
+  }
   return (
-    <Drawer open={open} onOpenChange={(value) => !value && onClose()}>
+    <Drawer open={present} onOpenChange={(value) => !value && onClose()}>
       <DrawerContent
+        ref={panel}
         side="bottom"
-        title={title}
-        description={description}
         className={s.sheet}
         footer={footer}
         bodyClassName={s.sheetBody}
+        aria-describedby={description ? undefined : null}
+        header={
+          <div
+            className={s.sheetHeader}
+            onPointerDown={startDrag}
+            onPointerMove={moveDrag}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+          >
+            <span className={s.sheetGrip} aria-hidden="true" />
+            <div className={s.sheetHeading}>
+              <div className={s.grow}>
+                <DrawerTitle>{title}</DrawerTitle>
+                {description && (
+                  <DrawerDescription>{description}</DrawerDescription>
+                )}
+              </div>
+              <IconButton name="close-circle" label="Close" onClick={onClose} />
+            </div>
+          </div>
+        }
       >
         <div className={s.stack}>{children}</div>
       </DrawerContent>
     </Drawer>
+  );
+}
+export function FamilySheet({ open, onClose }) {
+  const { state, activeMember, dispatch } = useApp();
+  const navigate = useNavigate();
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Who are we caring for?"
+      description="Choose a profile to see their care."
+    >
+      {state.members.map((member) => (
+        <button
+          key={member.id}
+          className={s.selectionCard}
+          data-selected={member.id === activeMember.id}
+          onClick={() => {
+            dispatch({ type: "SELECT_MEMBER", id: member.id });
+            onClose();
+          }}
+        >
+          <Avatar
+            name={member.name}
+            size={48}
+            color={member.id === activeMember.id ? "primary" : "slate"}
+          />
+          <span className={s.grow}>
+            <strong>{member.name}</strong>
+            <small>
+              {member.relation} · {member.mrn}
+            </small>
+          </span>
+          <Icon
+            name={
+              member.id === activeMember.id ? "tick-circle" : "chevron-right"
+            }
+            bulk={member.id === activeMember.id}
+          />
+        </button>
+      ))}
+      <Button
+        variant="outline"
+        leftIcon={<Icon name="people" />}
+        onClick={() => {
+          onClose();
+          navigate("/family");
+        }}
+      >
+        Manage family members
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() => {
+          onClose();
+          navigate("/profile");
+        }}
+      >
+        View health profile
+      </Button>
+    </Sheet>
   );
 }
 export function Field({ label, ...props }) {
@@ -217,15 +390,23 @@ export function Status({ status }) {
 }
 export function MemberContext() {
   const { activeMember } = useApp();
-  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
   return (
-    <button className={s.memberContext} onClick={() => navigate("/family")}>
-      <Avatar name={activeMember.name} size={28} color="primary" />
-      <span>
-        For <strong>{activeMember.name}</strong>
-      </span>
-      <Icon name="chevron-down" size={14} />
-    </button>
+    <>
+      <button
+        className={s.memberContext}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+      >
+        <Avatar name={activeMember.name} size={28} color="primary" />
+        <span>
+          For <strong>{activeMember.name}</strong>
+        </span>
+        <Icon name="chevron-down" size={14} />
+      </button>
+      <FamilySheet open={open} onClose={() => setOpen(false)} />
+    </>
   );
 }
 export function ErrorText({ children }) {

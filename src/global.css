@@ -9,7 +9,7 @@
   --tesseract-patient-control-height: 48px;
   --tesseract-patient-border-width: 10px;
   --tesseract-patient-device-radius: 48px;
-  --tesseract-patient-hero-height: 200px;
+  --tesseract-patient-sheet-radius: 32px;
 }
 * {
   box-sizing: border-box;
