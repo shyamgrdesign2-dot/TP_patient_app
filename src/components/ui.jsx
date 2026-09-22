@@ -243,6 +243,7 @@ export function Empty({
     </div>
   );
 }
+let openSheetCount = 0;
 export function Sheet({
   open,
   onClose,
@@ -283,9 +284,11 @@ export function Sheet({
   }, [open, present]);
   useEffect(() => {
     if (!present) return;
+    openSheetCount += 1;
     document.body.dataset.sheetOpen = "true";
     return () => {
-      delete document.body.dataset.sheetOpen;
+      openSheetCount -= 1;
+      if (!openSheetCount) delete document.body.dataset.sheetOpen;
     };
   }, [present]);
   function startDrag(event) {
@@ -445,6 +448,7 @@ export function ChoiceGroup({ label, options, value, onChange }) {
               key={v}
               variant={value === v ? "tonal" : "outline"}
               theme={value === v ? "primary" : "neutral"}
+              leftIcon={typeof option === "object" ? option.icon : undefined}
               aria-pressed={value === v}
               onClick={() => onChange(v)}
             >

@@ -25,7 +25,7 @@ Open **http://127.0.0.1:5178/**. Desktop shows a phone preview with hospital-bra
 
 ## Home, arrival and PWA
 
-The [care-card contract](docs/home-card-contract.md) defines event visibility, ranking, colour, first-visit and empty states. After booking, symptom questions and a reviewed visit summary lead into hospital check-in (with an explicit skip option). Hospital check-in requires a same-day in-person appointment and a fresh, accurate geolocation within the configured site radius before allocating a **local demo token**. Coordinates are demonstration locations; verify actual hospital entrances before integration. A live backend must allocate tokens, verify arrival and publish wait estimates.
+The [care-card contract](docs/home-card-contract.md) defines event visibility, ranking, colour, first-visit and empty states. After booking, symptom questions and a reviewed visit summary lead into hospital check-in (with an explicit skip option). Hospital check-in requires a same-day in-clinic appointment and a fresh, accurate geolocation within the configured site radius before allocating a **local demo token**. Coordinates are demonstration locations; verify actual hospital entrances before integration. A live backend must allocate tokens, verify arrival and publish wait estimates.
 
 The production build includes a standalone web manifest, app icons and a versioned service worker. Its allowlist caches bundled UI assets only. Browser install availability varies; native OS installation has not been validated. Live patient APIs and uploaded files are excluded from service-worker caching. The development server deliberately does not register a service worker.
 
@@ -71,3 +71,5 @@ The Capacitor CLI’s `xcode` dependency is overridden to use UUID 11’s patche
 ## Verified build
 
 See [verification results](docs/verification.md) for the checks performed, platform limitations, and the distinction between working demo flows and live services. The iOS Simulator Debug build succeeds; Android needs a local JDK/SDK before build validation.
+
+Booking is manual, with slot selection → existing/new family member → review → confirmation. The full-page symptom collector follows confirmation; no reason field or voice-booking picker is shown. Pending symptoms remain available after check-in, through the Home appointment banner and inline visit/queue actions. The UI uses the Tesseract AI gradient for symptom entry points.

@@ -1,4 +1,5 @@
 import { dateKey, doctors, formatDate, money } from "./data.js";
+import { needsSymptoms } from "./symptomReminders.js";
 import { locations } from "../config/brand.js";
 
 // Stable categories, conditional visibility. Priority is part of the client contract.
@@ -115,6 +116,7 @@ export function selectCareUpdates(
       description: doctor?.specialty || "Hospital consultation",
       image: doctor?.image,
       entityId: visit.id,
+      visitType: visit.type,
       detail: `${visit.date === today ? "Today" : formatDate(visit.date)} · ${visit.time}`,
       meta:
         hospitalLocations.find((item) => item.id === visit.location)?.name ||
@@ -152,9 +154,18 @@ export function selectCareUpdates(
         priority: 0,
         title: `Token ${upcoming.queue.token}`,
         description: `${content.appointments.title} · ${upcoming.queue.ahead} ahead`,
-        detail: `~${upcoming.queue.minutes} min wait`,
+        detail: `${formatDate(upcoming.date)} · ${upcoming.time}`,
+        wait: `~${upcoming.queue.minutes} min wait`,
         meta: content.appointments.meta,
-        action: { label: "View queue", path: "/queue" },
+        action: needsSymptoms(upcoming)
+          ? {
+              label: "Add symptoms",
+              path: `/assistant?appointment=${encodeURIComponent(upcoming.id)}`,
+            }
+          : {
+              label: "Review symptoms",
+              path: `/assistant?appointment=${encodeURIComponent(upcoming.id)}`,
+            },
       };
     else if (upcoming.date === today && upcoming.type === "In-person") {
       const prepared =
@@ -167,7 +178,7 @@ export function selectCareUpdates(
             path: `/queue?visit=${encodeURIComponent(upcoming.id)}`,
           }
         : {
-            label: "Share symptoms",
+            label: "Add symptoms",
             path: `/assistant?appointment=${encodeURIComponent(upcoming.id)}&return=queue`,
           };
     }

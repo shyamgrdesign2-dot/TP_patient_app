@@ -4,16 +4,16 @@
 
 ## Eligibility and precedence
 
-| Priority | Event                  | Visibility                                      | Appearance and action                                                                                                    |
-| -------- | ---------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| 0        | Checked-in appointment | Confirmed, today, check-in complete             | Deep green token banner; amber with “Longer wait” above the supplied expected wait, or 30 minutes if absent. View queue. |
-| 10       | Appointment today      | Confirmed, same day                             | Brand gradient, doctor and time. Share symptoms, then check in for in-person visits; view details for video visits.      |
-| 15       | Overdue bill           | Unpaid with a past due date                     | Amber payment banner. View bills.                                                                                        |
-| 20       | New hospital record    | Released, unseen, published in last 7 days      | Blue-tonal report banner. Open that document.                                                                            |
-| 30       | Upcoming appointment   | Confirmed within next 30 days                   | Brand gradient, nearest date/time first. Open visit details.                                                             |
-| 40       | Recent hospital record | Released within last 7 days, already seen       | Blue-tonal report banner. Open document.                                                                                 |
-| 50       | New bill               | Unpaid, issued within last 14 days or due today | Amber payment banner. View bills.                                                                                        |
-| 60       | Latest completed visit | Completed within last 30 days                   | Deep green banner. Open completed-visit details.                                                                         |
+| Priority | Event                  | Visibility                                      | Appearance and action                                                                                                                                                 |
+| -------- | ---------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0        | Checked-in appointment | Confirmed, today, check-in complete             | Deep green token banner; amber with “Longer wait” above the supplied expected wait, or 30 minutes if absent. Add symptoms while pending; review symptoms once shared. |
+| 10       | Appointment today      | Confirmed, same day                             | Brand gradient, doctor and time. Share symptoms, then check in for in-clinic visits; view details for video visits.                                                   |
+| 15       | Overdue bill           | Unpaid with a past due date                     | Amber payment banner. View bills.                                                                                                                                     |
+| 20       | New hospital record    | Released, unseen, published in last 7 days      | Blue-tonal report banner. Open that document.                                                                                                                         |
+| 30       | Upcoming appointment   | Confirmed within next 30 days                   | Brand gradient, nearest date/time first. Open visit details.                                                                                                          |
+| 40       | Recent hospital record | Released within last 7 days, already seen       | Blue-tonal report banner. Open document.                                                                                                                              |
+| 50       | New bill               | Unpaid, issued within last 14 days or due today | Amber payment banner. View bills.                                                                                                                                     |
+| 60       | Latest completed visit | Completed within last 30 days                   | Deep green banner. Open completed-visit details.                                                                                                                      |
 
 One card per category (appointments, records, payments, completed). Multiple relevant bills are summed; paid bills disappear. Recent means today through the inclusive day boundary. Unreleased records and patient uploads do not trigger a hospital-update banner. Unseen records rank ahead of seen ones. Other family members’ events never enter this selection.
 
@@ -40,3 +40,9 @@ Use validated appointment/record/invoice entities and inject tenant doctor/locat
 Live APIs must distinguish loading, error and verified-empty results so a failed fetch does not masquerade as a first-time user. Use hospital timezone, authoritative balances/currency, released-record permissions and expected-wait estimates. These asynchronous states are not implemented in the synchronous local demo.
 
 Tests exercise all 16 event combinations, priority, first-time/returning states, inclusive windows, video appointments, profile isolation, wait thresholds and geofence boundaries.
+
+## Symptom reminders
+
+Home has no separate symptom strip or floating symptom carousel. The appointment/queue banner is the Home entry; upcoming visit cards and queue details also offer Add symptoms while intake is pending. Skipping intake or checking in does not complete it. The queue hero retains date, appointment time, wait estimate and a location icon alongside the hospital. All symptom actions use a pale Tesseract AI gradient, darker gradient text and a plus icon, and open the full-page collector directly.
+
+The visible visit type is In clinic (hospital bulk icon) or Video consultation (video bulk icon). The existing internal In-person enum is retained for stored demo appointments and check-in compatibility.

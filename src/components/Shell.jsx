@@ -4,6 +4,7 @@ import { useApp } from "../state/AppContext";
 import { Button, Icon, BrandLogo } from "./ui";
 import { brandPresets } from "../config/brand";
 import s from "../App.module.css";
+import AgentNavigation from "./AgentNavigation";
 const tabs = [
   { path: "/", label: "Home", icon: "home-2" },
   { path: "/appointments", label: "Calendar", icon: "calendar-2" },
@@ -15,6 +16,7 @@ export default function Shell() {
   const location = useLocation();
   const navigate = useNavigate();
   const scroll = useRef(null);
+  const dock = useRef(null);
   useEffect(() => {
     scroll.current?.scrollTo({ top: 0 });
   }, [location.pathname]);
@@ -38,6 +40,19 @@ export default function Shell() {
       location.pathname,
     ) &&
     !location.pathname.startsWith("/book");
+  useEffect(() => {
+    const node = dock.current;
+    if (!node) return;
+    const update = () =>
+      node.parentElement.style.setProperty(
+        "--patient-dock-space",
+        `${node.getBoundingClientRect().height}px`,
+      );
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    update();
+    return () => observer.disconnect();
+  }, [showNav]);
   return (
     <div className={s.previewStage}>
       <aside className={s.previewIntro}>
@@ -96,7 +111,10 @@ export default function Shell() {
           <main className={s.scrollArea} ref={scroll} id="app-content">
             <Outlet />
           </main>
-          <div id="page-action" className={s.floatingActionSlot} />
+          <div ref={dock} className={s.careDock}>
+            <div id="page-action" className={s.floatingActionSlot} />
+          </div>
+          <AgentNavigation />
           {showNav && (
             <nav className={s.navbar} aria-label="Main navigation">
               {tabs.map((tab) => (

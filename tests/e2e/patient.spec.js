@@ -54,9 +54,9 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
   await page
     .getByRole("button", { name: "Rajesh (Father)", exact: true })
     .click();
-  await page
-    .getByLabel("Reason for your visit (optional)")
-    .fill("Routine review");
+  await expect(page.getByLabel("Reason for your visit (optional)")).toHaveCount(
+    0,
+  );
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
     .getByRole("button", { name: "Confirm demo appointment", exact: true })
@@ -73,7 +73,7 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
     .getByRole("button", { name: "Calendar", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "View details", exact: true })
+    .getByRole("button", { name: /View appointment with/ })
     .first()
     .click();
   await page.getByRole("button", { name: "Reschedule visit" }).click();
@@ -82,7 +82,7 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByText(/09:30 AM/).first()).toBeVisible();
   await page
-    .getByRole("button", { name: "View details", exact: true })
+    .getByRole("button", { name: /View appointment with/ })
     .first()
     .click();
   await page
@@ -754,18 +754,12 @@ test("symptom collector reviews and edits a summary then hands it to booking", a
   expect(page.url()).not.toContain("Headache");
   await page.getByRole("button", { name: "09:00 AM", exact: true }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByLabel("Reason for your visit (optional)")).toHaveValue(
-    /Symptoms: Headache/,
+  await expect(page.getByLabel("Reason for your visit (optional)")).toHaveCount(
+    0,
   );
-  await expect(page.getByLabel("Reason for your visit (optional)")).toHaveValue(
-    /triggers/,
-  );
-  await page
-    .getByRole("button", { name: "Rajesh (Father)", exact: true })
-    .click();
-  await expect(page.getByLabel("Reason for your visit (optional)")).toHaveValue(
-    "",
-  );
+  await expect(
+    page.getByRole("button", { name: "Add a new family member" }),
+  ).toBeVisible();
 });
 
 test("four-tab navigation keeps family in More and inputs use the new shared geometry", async ({
@@ -928,7 +922,7 @@ test("arrival validates location then shows a persistent green token on Home", a
   await expect(banner).toHaveAttribute("data-tone", "warning");
   await expect(banner).toContainText("Longer wait");
   await banner.getByRole("heading").click();
-  await expect(page).toHaveURL(/\/queue$/);
+  await expect(page).toHaveURL(/\/assistant\?appointment=TP-24091/);
 });
 
 test("denied location does not create a token", async ({ page }) => {
@@ -1181,7 +1175,8 @@ test("booked visits collect symptoms, retain the reviewed note and reject anothe
 }) => {
   await page.goto("/appointments?visit=TP-24091");
   await page
-    .getByRole("button", { name: "Share symptoms before your visit" })
+    .getByRole("region", { name: "Symptoms not shared" })
+    .getByRole("button", { name: "Add symptoms" })
     .click();
   await page.getByRole("button", { name: "Start symptom collection" }).click();
   await page.getByLabel("Symptoms", { exact: true }).fill("Headache");
@@ -1254,4 +1249,88 @@ test("symptom collection leads into location-verified check-in and a queue token
     "data-state",
     "queue",
   );
+});
+
+test("booking adds and selects a family member without losing the chosen slot", async ({
+  page,
+}) => {
+  await page.goto("/book/meera");
+  await expect(page.getByText("Book with voice")).toHaveCount(0);
+  await page.getByRole("button", { name: "09:00 AM", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Add a new family member" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Full name", { exact: true }).fill("Nisha Sharma");
+  await dialog.getByLabel("Date of birth", { exact: true }).fill("1990-06-15");
+  await dialog.getByLabel("Mobile number", { exact: true }).fill("9876543210");
+  await dialog.getByRole("checkbox").check();
+  await dialog
+    .getByRole("button", { name: "Add family member", exact: true })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByText("Nisha Sharma", { exact: true })).toBeVisible();
+  await expect(page.getByText("09:00 AM IST", { exact: true })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Confirm demo appointment", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Share symptoms before your visit" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Tell us how you’re feeling." }),
+  ).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("queue banner keeps appointment context and symptoms without redundant Home reminders", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    const state = JSON.parse(localStorage.getItem("tatva-patient-demo-v1"));
+    state.appointments.find((v) => v.id === "TP-24091").queue = {
+      checkedIn: true,
+      token: "A-012",
+      ahead: 3,
+      minutes: 18,
+    };
+    localStorage.setItem("tatva-patient-demo-v1", JSON.stringify(state));
+  });
+  await page.reload();
+  const hero = page.locator('[data-category="appointments"]:not([inert])');
+  await expect(hero).toContainText("10:30 AM");
+  await expect(hero).toContainText("min wait");
+  await expect(hero).toContainText("Indiranagar");
+  await expect(
+    hero.getByRole("button", { name: "Add symptoms", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Pending symptom reminders" }),
+  ).toHaveCount(0);
+  await expect(page.locator('[class*="agentStrip"]')).toHaveCount(0);
+  await page.setViewportSize({ width: 320, height: 720 });
+  const symptomButton = hero.getByRole("button", {
+    name: "Add symptoms",
+    exact: true,
+  });
+  await expect(symptomButton.locator("[data-tp-icon]")).toHaveCSS(
+    "color",
+    "rgb(112, 66, 147)",
+  );
+  const labelFits = await symptomButton.evaluate((node) => {
+    const label = node.querySelector('[class*="_content_"] > span:last-child');
+    return label.scrollWidth <= label.clientWidth + 1;
+  });
+  expect(labelFits).toBe(true);
+  await page
+    .getByRole("navigation")
+    .getByRole("button", { name: "Calendar", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Add symptoms", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add symptoms", exact: true }).click();
+  await expect(page).toHaveURL(/assistant\?appointment=TP-24091/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });

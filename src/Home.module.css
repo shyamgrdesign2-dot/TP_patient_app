@@ -404,53 +404,6 @@
 .quickActions > button:active {
   background: none;
 }
-.agentStrip {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 14px 0 0;
-  padding: 16px;
-  border: 1px solid var(--tesseract-blue-100);
-  border-radius: 14px;
-  background: linear-gradient(
-    120deg,
-    var(--tesseract-blue-50),
-    var(--tesseract-bg-surface)
-  );
-  color: var(--tesseract-blue-600);
-  text-align: left;
-  --tesseract-spotlight-color: color-mix(
-    in srgb,
-    var(--tesseract-blue-200) 25%,
-    transparent
-  );
-}
-.agentIcon {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  background: linear-gradient(
-    145deg,
-    var(--tesseract-blue-500),
-    var(--tesseract-blue-700)
-  );
-  color: var(--tesseract-slate-0);
-  border-radius: 14px;
-}
-.agentStrip strong {
-  display: block;
-  color: var(--tesseract-fg-primary);
-  font-size: 12px;
-  font-weight: 600;
-}
-.agentStrip small {
-  display: block;
-  font-size: 11px;
-  margin-top: 2px;
-}
 .sectionHeading {
   margin: 22px 0 10px;
   min-height: 28px;
@@ -928,17 +881,11 @@
   margin-top: 4px;
 }
 
-:is(.careBanner, .agentStrip, .recordsList, .homeIdentityCard, .wellnessCard) {
+:is(.careBanner, .recordsList, .homeIdentityCard, .wellnessCard) {
   position: relative;
   border-color: transparent;
 }
-:is(
-  .careBanner,
-  .agentStrip,
-  .recordsList,
-  .homeIdentityCard,
-  .wellnessCard
-)::after {
+:is(.careBanner, .recordsList, .homeIdentityCard, .wellnessCard)::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -1107,4 +1054,28 @@
     inset 0 1px 0 white,
     0 12px 28px -22px
       color-mix(in srgb, var(--tesseract-blue-800) 25%, transparent);
+}
+
+.categoryLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bannerWait {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.careBanner .bannerBottom > button[data-ai="true"] {
+  padding-inline: 8px !important;
+  max-width: 56%;
+}
+@media (max-width: 360px) {
+  .careBanner .bannerBottom > button[data-ai="true"] {
+    font-size: 10px !important;
+  }
 }

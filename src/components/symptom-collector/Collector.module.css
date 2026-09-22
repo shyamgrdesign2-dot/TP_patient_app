@@ -5,11 +5,8 @@
   padding: 28px 20px 20px;
   border: 1px solid var(--tesseract-blue-100);
   border-radius: 14px;
-  background: linear-gradient(
-    145deg,
-    var(--tesseract-blue-50),
-    var(--tesseract-bg-surface)
-  );
+  background:
+    linear-gradient(#ffffffeb, #ffffffeb), var(--tesseract-gradient-ai-card);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -31,11 +28,7 @@
   height: 72px;
   border-radius: 14px;
   color: white;
-  background: linear-gradient(
-    135deg,
-    var(--tesseract-blue-400),
-    var(--tesseract-blue-800)
-  );
+  background: var(--tesseract-gradient-ai-hero);
   box-shadow: 0 8px 28px -12px var(--tesseract-blue-600);
 }
 .eyebrow {
@@ -173,4 +166,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.collector button[data-variant="solid"],
+.embedded button[data-variant="solid"] {
+  background: linear-gradient(#0004, #0004), var(--tesseract-gradient-ai-hero);
+  border-color: transparent;
 }

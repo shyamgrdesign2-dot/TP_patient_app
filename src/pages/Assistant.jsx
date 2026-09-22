@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import EmbeddedCollector from "../components/symptom-collector/EmbeddedCollector";
 import { useApp } from "../state/AppContext";
 import { doctors } from "../services/data";
 import {
@@ -16,6 +15,7 @@ import {
   Empty,
 } from "../components/ui";
 import SpotlightCard from "../components/effects/SpotlightCard";
+import EmbeddedCollector from "../components/symptom-collector/EmbeddedCollector";
 import ChatBubble from "../components/symptom-collector/ChatBubble";
 import {
   intake,

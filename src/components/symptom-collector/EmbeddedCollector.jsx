@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, PageHeader, Notice, ErrorText, Icon } from "../ui";
-import { openCollectorSession } from "../../services/collectorSession";
+import { openAgentSession, readAgentStatus } from "../../services/agentSession";
+import { useApp } from "../../state/AppContext";
 import shared from "../../App.module.css";
 import s from "./Collector.module.css";
 
 export default function EmbeddedCollector({ appointment }) {
   const navigate = useNavigate();
+  const { dispatch } = useApp();
+  const [statusUrl, setStatusUrl] = useState(null);
+  const origin =
+    import.meta.env.VITE_PATIENT_AGENT_ORIGIN ||
+    import.meta.env.VITE_SYMPTOM_COLLECTOR_ORIGIN;
   const [link, setLink] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -18,18 +24,30 @@ export default function EmbeddedCollector({ appointment }) {
     setBusy(true);
     setError("");
     try {
-      const next = await openCollectorSession({
+      const next = await openAgentSession({
+        kind: "symptoms",
+        mode: "chat",
         endpoint: import.meta.env.VITE_SYMPTOM_COLLECTOR_SESSION_ENDPOINT,
-        origin: import.meta.env.VITE_SYMPTOM_COLLECTOR_ORIGIN,
+        origin,
         appointment,
         signal: controller.current.signal,
       });
-      setLink(next);
+      setLink(next.url);
+      setStatusUrl(next.statusUrl);
     } catch (cause) {
       if (cause.name !== "AbortError") setError(cause.message);
     } finally {
       setBusy(false);
     }
+  }
+  async function finish() {
+    try {
+      if (await readAgentStatus(statusUrl, appointment.externalId))
+        dispatch({ type: "SYNC_SYMPTOM_STATUS", id: appointment.id });
+    } catch {
+      /* Keep pending until verified by the hospital. */
+    }
+    navigate(`/appointments?visit=${encodeURIComponent(appointment.id)}`);
   }
   return (
     <div className={`${shared.page} ${s.embedded}`}>
@@ -40,7 +58,7 @@ export default function EmbeddedCollector({ appointment }) {
             title="Hospital symptom collector"
             src={link}
             referrerPolicy="no-referrer"
-            allow={`microphone ${import.meta.env.VITE_SYMPTOM_COLLECTOR_ORIGIN}`}
+            allow={`microphone ${origin}`}
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
           />
           <div className={s.embedActions}>
@@ -52,21 +70,14 @@ export default function EmbeddedCollector({ appointment }) {
             >
               Open separately
             </Button>
-            <Button
-              variant="tonal"
-              onClick={() =>
-                navigate(
-                  `/appointments?visit=${encodeURIComponent(appointment.id)}`,
-                )
-              }
-            >
+            <Button variant="tonal" onClick={finish}>
               Return to visit
             </Button>
           </div>
         </>
       ) : (
         <>
-          <section className={s.summaryCard}>
+          <section className={s.welcome}>
             <Icon name="message-text" size={30} bulk />
             <h2>Prepare for your visit</h2>
             <p>

@@ -32,6 +32,7 @@ export function AppProvider({ children }) {
     return validBrand(saved) ? { ...defaultBrand, ...saved } : defaultBrand;
   });
   const [toast, setToast] = useState(null);
+  const [agentRequest, setAgentRequest] = useState(null);
   const [session, setSession] = useState(
     () =>
       !accountDeleted &&
@@ -127,6 +128,7 @@ export function AppProvider({ children }) {
     setSession(true);
   }
   function signOut() {
+    setAgentRequest(null);
     sessionStorage.setItem("tatva-demo-session", "signed-out");
     setSession(false);
   }
@@ -173,6 +175,14 @@ export function AppProvider({ children }) {
         signOut,
         resetDemo,
         deleteAccount,
+        agentRequest,
+        openAgent: (request) =>
+          setAgentRequest({
+            ...request,
+            memberId: stateRef.current.activeMember,
+            requestId: crypto.randomUUID(),
+          }),
+        closeAgent: () => setAgentRequest(null),
       }}
     >
       {children}

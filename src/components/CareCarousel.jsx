@@ -4,6 +4,8 @@ import { useApp } from "../state/AppContext";
 import { selectCareUpdates } from "../services/careUpdates";
 import { Avatar, Button, Icon } from "./ui";
 import SpotlightCard from "./effects/SpotlightCard";
+import VisitType from "./VisitType";
+import v from "./VisitExperience.module.css";
 import shared from "../App.module.css";
 import s from "../Home.module.css";
 
@@ -23,6 +25,7 @@ export default function CareCarousel() {
   );
 }
 function CareBanners({ slides }) {
+  const { openAgent } = useApp();
   const navigate = useNavigate();
   const track = useRef(null);
   const count = slides.length;
@@ -121,7 +124,14 @@ function CareBanners({ slides }) {
             data-category={slide.id}
             data-tone={slide.tone}
             onClick={(event) => {
-              if (!event.target.closest("button")) navigate(slide.action.path);
+              if (!event.target.closest("button")) {
+                if (slide.action.path.startsWith("/assistant?appointment="))
+                  openAgent({
+                    kind: "symptoms",
+                    appointmentId: slide.entityId,
+                  });
+                else navigate(slide.action.path);
+              }
             }}
             data-state={slide.state}
             data-side={
@@ -138,7 +148,12 @@ function CareBanners({ slides }) {
             inert={position !== index}
           >
             <div className={s.bannerTop}>
-              <span className={s.categoryLabel}>{slide.category.label}</span>
+              <span className={s.categoryLabel}>
+                {slide.category.label}
+                {slide.visitType && (
+                  <VisitType type={slide.visitType} iconOnly />
+                )}
+              </span>
               <span
                 className={s.bannerStatus}
                 data-state={slide.state}
@@ -168,6 +183,9 @@ function CareBanners({ slides }) {
               <div className={shared.grow}>
                 <h2>{slide.title}</h2>
                 <p>{slide.description}</p>
+                {slide.wait && (
+                  <span className={s.bannerWait}>{slide.wait}</span>
+                )}
               </div>
             </div>
             <div className={s.bannerBottom}>
@@ -175,17 +193,39 @@ function CareBanners({ slides }) {
                 <strong title={slide.detail}>{slide.detail}</strong>
                 {slide.meta && (
                   <span title={slide.meta}>
-                    {["upcoming", "completed"].includes(slide.state) && (
-                      <Icon name="location" size={13} bulk />
-                    )}
+                    {["upcoming", "completed", "queue"].includes(
+                      slide.state,
+                    ) && <Icon name="location" size={13} bulk />}
                     {slide.meta}
                   </span>
                 )}
               </div>
               <Button
+                data-ai={slide.action.path.startsWith("/assistant?")}
+                leftIcon={
+                  slide.action.path.startsWith("/assistant?") ? (
+                    <Icon name="add" size={14} />
+                  ) : undefined
+                }
+                className={
+                  slide.action.path.startsWith("/assistant?")
+                    ? v.aiAction
+                    : undefined
+                }
                 size="sm"
-                onClick={() => navigate(slide.action.path)}
-                rightIcon={<Icon name="chevron-right" size={14} />}
+                onClick={() =>
+                  slide.action.path.startsWith("/assistant?appointment=")
+                    ? openAgent({
+                        kind: "symptoms",
+                        appointmentId: slide.entityId,
+                      })
+                    : navigate(slide.action.path)
+                }
+                rightIcon={
+                  slide.action.path.startsWith("/assistant?") ? undefined : (
+                    <Icon name="chevron-right" size={14} />
+                  )
+                }
               >
                 {slide.action.label}
               </Button>

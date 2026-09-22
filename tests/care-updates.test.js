@@ -78,7 +78,8 @@ test("urgent patient information is ranked, deduplicated and isolated by profile
     ["appointments", "records", "payments", "completed"],
   );
   assert.equal(cards[0].entityId, "next");
-  assert.equal(cards[0].action.path, "/queue");
+  assert.match(cards[0].action.path, /^\/assistant\?appointment=/);
+  assert.equal(cards[0].action.label, "Add symptoms");
   assert.equal(cards[1].entityId, "unread");
   assert.equal(cards[2].title, "₹700 outstanding");
   assert.equal(cards[3].action.path, "/appointments?visit=completed");

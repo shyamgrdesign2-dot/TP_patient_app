@@ -7,7 +7,7 @@
 | Home                 | Sticky patient/location header, conditional event banners, first-visit state, four actions, ABHA links | Real-time hospital data                                                           |
 | Doctors              | Search, specialty/location filtering, profiles                                                         | Verified doctor catalog, availability and fees                                    |
 | Booking              | Date/slot/member/channel/reason, confirmation, calendar export                                         | Atomic reservation, patient/EMR linkage, pricing and cancellation policy          |
-| Agent booking        | Guided symptom/reason collection carried into booking                                                  | Reuse actual agent runtime after patient-facing contract is confirmed             |
+| Symptom preparation  | Manual booking, add/select family at booking, guided symptoms after confirmation                       | Reuse actual agent runtime after patient-facing contract is confirmed             |
 | Appointments         | Upcoming/past/cancelled, hospital source, reschedule/cancel                                            | Hospital-initiated changes and event synchronization                              |
 | Queue                | Location-gated demo check-in, idempotent token, wait estimate and Home queue card                      | Live queue stream and hospital check-in policy                                    |
 | Family               | Add/edit/switch, relationship, permission acknowledgment                                               | Verified adult delegation, guardianship, revoke/access audit                      |

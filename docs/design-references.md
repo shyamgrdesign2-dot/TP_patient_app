@@ -65,3 +65,5 @@ The public [SpotlightCard](https://reactbits.dev/components/spotlight-card) supp
 ## Generated images
 
 Generated with the imagegen tool on 22 September 2026: a quiet clinic waiting room, a laboratory, and three fictional family portraits. The interiors are decorative, faded into the right side of Home banners; the portraits replace initials only in the welcome family illustration. Portrait originals remain in the Codex generated-images directory; 256px JPEG derivatives are bundled under `public/images/welcome-*.jpg`. These are illustrative people, not authenticated patient photos.
+
+Symptom actions use the design system’s `--tesseract-gradient-ai-card` and `--tesseract-gradient-ai-hero` palette, with a pale surface, darker violet-to-indigo label and separately coloured plus icon. Appointment types use `rounded/bulk/building/hospital.svg` and `rounded/bulk/video-audio-image/video.svg`; In clinic is the patient-facing label.

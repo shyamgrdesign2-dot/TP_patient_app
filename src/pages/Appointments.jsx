@@ -1,10 +1,6 @@
 import { useState } from "react";
-import {
-  useNavigate,
-  useSearchParams,
-  useParams,
-  useLocation,
-} from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { ConfirmDialog } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../state/AppContext";
 import {
@@ -37,6 +33,11 @@ import {
   useAction,
 } from "../components/ui";
 import s from "../App.module.css";
+import v from "../components/VisitExperience.module.css";
+import VisitType from "../components/VisitType";
+import { MemberForm } from "./Family";
+import SymptomPrompt from "../components/SymptomPrompt";
+import { needsSymptoms } from "../services/symptomReminders";
 export function Doctors() {
   const { state } = useApp();
   const navigate = useNavigate();
@@ -141,7 +142,13 @@ export function Doctors() {
         onClose={() => setSelected(null)}
         title="Meet your doctor"
         footer={
-          <Button fullWidth onClick={() => navigate(`/book/${selected?.id}`)}>
+          <Button
+            fullWidth
+            onClick={() => {
+              setSelected(null);
+              navigate(`/book/${selected?.id}`);
+            }}
+          >
             Book an appointment
           </Button>
         }
@@ -178,22 +185,17 @@ export function Doctors() {
   );
 }
 export function Booking() {
-  const { state, activeMember, dispatch, notify } = useApp();
+  const { state, activeMember, dispatch, notify, openAgent } = useApp();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const routeState = useLocation().state;
   const { doctorId } = useParams();
+  const routeState = useLocation().state;
   const doctor = doctors.find((d) => d.id === doctorId);
   const [step, setStep] = useState(0);
   const [memberId, setMemberId] = useState(activeMember.id);
   const [date, setDate] = useState(dateKey(1));
   const [time, setTime] = useState("");
   const [type, setType] = useState("In-person");
-  const [reason, setReason] = useState(
-    routeState?.memberId === activeMember.id
-      ? routeState.intakeNote || ""
-      : params.get("reason") || "",
-  );
+  const [addingMember, setAddingMember] = useState(false);
   const [confirmed, setConfirmed] = useState(null);
   const { busy, error, run, setError } = useAction();
   if (!doctor)
@@ -228,14 +230,11 @@ export function Booking() {
         time,
         type,
         location,
-        reason,
         source: "Patient",
-        ...(routeState?.memberId === memberId &&
-        routeState?.intakeAnswers &&
-        reason === routeState.intakeNote
+        ...(routeState?.memberId === memberId && routeState?.intakeAnswers
           ? {
               symptomIntake: {
-                note: reason,
+                note: routeState.intakeNote,
                 answers: routeState.intakeAnswers,
                 source: "local-demo",
                 updatedAt: new Date().toISOString(),
@@ -253,6 +252,14 @@ export function Booking() {
     return (
       <div className={s.page}>
         <PageHeader title="You’re all booked" />
+        <div className={s.steps} aria-label="Booking complete: step 5 of 5">
+          {["Doctor", "Slot", "Patient", "Review", "Confirmed"].map((text) => (
+            <span key={text} data-active="true">
+              <b>✓</b>
+              {text}
+            </span>
+          ))}
+        </div>
         <div className={s.successHero}>
           <span>
             <Icon name="tick-circle" size={56} bulk />
@@ -285,7 +292,9 @@ export function Booking() {
             <dt>Where</dt>
             <dd>{locations.find((l) => l.id === location).name}</dd>
             <dt>Visit type</dt>
-            <dd>{type}</dd>
+            <dd>
+              <VisitType type={type} />
+            </dd>
             <dt>Payment</dt>
             <dd>{money(doctor.fee)} · Pay at hospital</dd>
           </dl>
@@ -294,41 +303,40 @@ export function Booking() {
           Please arrive 15 minutes before your appointment and bring any
           previous reports.
         </Notice>
-        <Button
-          variant="outline"
-          fullWidth
-          onClick={() => navigate("/appointments")}
-        >
-          View my appointments
-        </Button>
-        <Button
-          variant="solid"
-          fullWidth
-          onClick={() =>
-            navigate(
-              `/assistant?appointment=${encodeURIComponent(confirmed.id)}${type === "In-person" ? "&return=queue" : ""}`,
-            )
-          }
-        >
-          <Icon name="message-text" /> Share symptoms before your visit
-        </Button>
-        <Button
-          variant="outline"
-          fullWidth
-          onClick={() =>
-            download(
-              "appointment.ics",
-              calendarFile(
-                confirmed,
-                doctor,
-                locations.find((l) => l.id === location),
-              ),
-              "text/calendar",
-            )
-          }
-        >
-          Add to calendar
-        </Button>
+        <div className={v.visitActions}>
+          <Button
+            variant="solid"
+            className={v.aiAction}
+            fullWidth
+            onClick={() =>
+              openAgent({ kind: "symptoms", appointmentId: confirmed.id })
+            }
+          >
+            <Icon name="add" /> Share symptoms before your visit
+          </Button>
+          <div className={v.secondaryActions}>
+            <Button variant="outline" onClick={() => navigate("/appointments")}>
+              View my appointments
+            </Button>
+            <Button
+              variant="outline"
+              fullWidth
+              onClick={() =>
+                download(
+                  "appointment.ics",
+                  calendarFile(
+                    confirmed,
+                    doctor,
+                    locations.find((l) => l.id === location),
+                  ),
+                  "text/calendar",
+                )
+              }
+            >
+              Add to calendar
+            </Button>
+          </div>
+        </div>
         <p className={s.footnote}>
           Demo booking · No hospital appointment has been created.
         </p>
@@ -338,9 +346,9 @@ export function Booking() {
     <div className={s.page}>
       <PageHeader title="Book an appointment" />
       <div className={s.steps}>
-        {["Your visit", "Details", "Confirm"].map((text, i) => (
-          <span key={text} data-active={step >= i}>
-            <b>{step > i ? "✓" : i + 1}</b>
+        {["Doctor", "Slot", "Patient", "Review", "Confirmed"].map((text, i) => (
+          <span key={text} data-active={step + 1 >= i}>
+            <b>{step + 1 > i ? "✓" : i + 1}</b>
             {text}
           </span>
         ))}
@@ -362,7 +370,34 @@ export function Booking() {
         <>
           <ChoiceGroup
             label="Visit type"
-            options={["In-person", "Video consultation"]}
+            options={[
+              {
+                value: "In-person",
+                label: "In clinic",
+                icon: (
+                  <Icon
+                    name="hospital"
+                    family="building"
+                    corner="rounded"
+                    bulk
+                    size={18}
+                  />
+                ),
+              },
+              {
+                value: "Video consultation",
+                label: "Video consultation",
+                icon: (
+                  <Icon
+                    name="video"
+                    family="video-audio-image"
+                    corner="rounded"
+                    bulk
+                    size={18}
+                  />
+                ),
+              },
+            ]}
             value={type}
             onChange={setType}
           />
@@ -413,20 +448,30 @@ export function Booking() {
               label: `${m.name.split(" ")[0]} (${m.relation})`,
             }))}
             value={memberId}
-            onChange={(id) => {
-              setMemberId(id);
-              if (routeState?.intakeNote && id !== routeState.memberId)
-                setReason("");
-            }}
+            onChange={setMemberId}
           />
-          <Field
-            label="Reason for your visit (optional)"
-            autoGrow
-            maxLength={3200}
-            placeholder="Tell the doctor a little about what brings you in."
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={() => setAddingMember(true)}
+          >
+            <Icon name="add" /> Add a new family member
+          </Button>
+          <Sheet
+            open={addingMember}
+            onClose={() => setAddingMember(false)}
+            title="Add a family member"
+          >
+            {addingMember && (
+              <MemberForm
+                onClose={() => setAddingMember(false)}
+                onSave={(profile) => {
+                  setMemberId(profile.id);
+                  setAddingMember(false);
+                }}
+              />
+            )}
+          </Sheet>
           <Notice icon="shield-tick">
             Your appointment and related records will be attached to{" "}
             {member.name}’s profile.
@@ -451,13 +496,9 @@ export function Booking() {
               <dt>Hospital</dt>
               <dd>{locations.find((l) => l.id === location).name}</dd>
               <dt>Visit</dt>
-              <dd>{type}</dd>
-              {reason && (
-                <>
-                  <dt>Reason</dt>
-                  <dd>{reason}</dd>
-                </>
-              )}
+              <dd>
+                <VisitType type={type} />
+              </dd>
             </dl>
             <div className={s.total}>
               <span>Consultation fee</span>
@@ -497,7 +538,7 @@ export function Booking() {
   );
 }
 export function Appointments() {
-  const { state, activeMember, dispatch, notify } = useApp();
+  const { state, activeMember, dispatch, notify, openAgent } = useApp();
   const navigate = useNavigate();
   const [visitParams] = useSearchParams();
   const requested = state.appointments.find(
@@ -558,12 +599,14 @@ export function Appointments() {
               </div>
               <button
                 className={s.doctorProfileButton}
+                aria-label={`View appointment with ${d.name}`}
                 onClick={() => setSelected(a)}
               >
                 <Avatar src={d.image} name={d.name} size={56} shape="rounded" />
                 <span className={s.grow}>
                   <h3>{d.name}</h3>
                   <p>{d.specialty}</p>
+                  <VisitType type={a.type} />
                   <small>
                     {a.source === "Hospital"
                       ? "Booked by hospital"
@@ -578,17 +621,33 @@ export function Appointments() {
                   {locations.find((l) => l.id === a.location).name}
                 </span>
                 <Button
-                  variant="tonal"
+                  leftIcon={
+                    tab === "Upcoming" && needsSymptoms(a) ? (
+                      <Icon name="add" size={16} />
+                    ) : undefined
+                  }
+                  variant={
+                    tab === "Upcoming" && needsSymptoms(a) ? "solid" : "tonal"
+                  }
+                  className={
+                    tab === "Upcoming" && needsSymptoms(a)
+                      ? v.aiAction
+                      : undefined
+                  }
                   size="sm"
                   onClick={() =>
-                    a.queue && a.status === "Confirmed"
-                      ? navigate("/queue")
-                      : setSelected(a)
+                    tab === "Upcoming" && needsSymptoms(a)
+                      ? openAgent({ kind: "symptoms", appointmentId: a.id })
+                      : a.queue && a.status === "Confirmed"
+                        ? navigate(`/queue?visit=${encodeURIComponent(a.id)}`)
+                        : setSelected(a)
                   }
                 >
-                  {a.queue && a.status === "Confirmed"
-                    ? "View queue"
-                    : "View details"}
+                  {tab === "Upcoming" && needsSymptoms(a)
+                    ? "Add symptoms"
+                    : a.queue && a.status === "Confirmed"
+                      ? "View queue"
+                      : "View details"}
                 </Button>
               </div>
             </article>
@@ -640,27 +699,37 @@ export function Appointments() {
                     <PatientName member={activeMember} />
                   </dd>
                   <dt>Visit type</dt>
-                  <dd>{selected.type}</dd>
-                  <dt>Reason</dt>
-                  <dd>{selected.reason || "Not provided"}</dd>
+                  <dd>
+                    <VisitType type={selected.type} />
+                  </dd>
+
                   <dt>Booked by</dt>
                   <dd>{selected.source}</dd>
                 </dl>
                 {refreshSelected.status === "Confirmed" && (
-                  <>
-                    <Button
-                      variant="tonal"
-                      onClick={() =>
-                        navigate(
-                          `/assistant?appointment=${encodeURIComponent(selected.id)}`,
-                        )
-                      }
-                    >
-                      <Icon name="message-text" />{" "}
-                      {refreshSelected.symptomIntake
-                        ? "Review symptoms"
-                        : "Share symptoms before your visit"}
-                    </Button>
+                  <div className={v.visitActions}>
+                    <SymptomPrompt
+                      visit={refreshSelected}
+                      onOpen={() => setSelected(null)}
+                    />
+                    {!needsSymptoms(refreshSelected) && (
+                      <Button
+                        variant="tonal"
+                        onClick={() => {
+                          setSelected(null);
+                          openAgent({
+                            kind: "symptoms",
+                            appointmentId: selected.id,
+                          });
+                        }}
+                      >
+                        <Icon name="message-text" />{" "}
+                        {refreshSelected.symptomIntake ||
+                        refreshSelected.symptomCollectorStatus === "completed"
+                          ? "Review symptoms"
+                          : "Share symptoms before your visit"}
+                      </Button>
+                    )}
                     <Button onClick={() => setReschedule(true)}>
                       Reschedule visit
                     </Button>
@@ -690,7 +759,7 @@ export function Appointments() {
                     >
                       Cancel appointment
                     </Button>
-                  </>
+                  </div>
                 )}
                 {refreshSelected.status === "Completed" && (
                   <Button
@@ -775,7 +844,7 @@ export function Appointments() {
   );
 }
 export function Queue() {
-  const { state, activeMember, dispatch, notify } = useApp();
+  const { state, activeMember, dispatch, notify, openAgent } = useApp();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { busy, error, run } = useAction();
@@ -825,11 +894,14 @@ export function Queue() {
               {!intakeReady && (
                 <>
                   <Button
+                    className={v.aiAction}
                     fullWidth
                     onClick={() =>
-                      navigate(
-                        `/assistant?appointment=${encodeURIComponent(appointment.id)}&return=queue`,
-                      )
+                      openAgent({
+                        kind: "symptoms",
+                        appointmentId: appointment.id,
+                        returnTo: "queue",
+                      })
                     }
                   >
                     Share symptoms <Icon name="chevron-right" />
@@ -849,9 +921,11 @@ export function Queue() {
                 <Button
                   variant="link"
                   onClick={() =>
-                    navigate(
-                      `/assistant?appointment=${encodeURIComponent(appointment.id)}&return=queue`,
-                    )
+                    openAgent({
+                      kind: "symptoms",
+                      appointmentId: appointment.id,
+                      returnTo: "queue",
+                    })
                   }
                 >
                   Review my symptoms
@@ -889,6 +963,7 @@ export function Queue() {
                 <p>
                   {doctor?.name} · {doctor?.specialty}
                 </p>
+                <VisitType type={appointment.type} />
                 <p>
                   <Icon name="location" bulk size={16} /> {hospital?.name} ·{" "}
                   {formatDate(appointment.date)} · {appointment.time}
@@ -941,6 +1016,7 @@ export function Queue() {
               )}
             </>
           )}
+          {checkedIn && <SymptomPrompt visit={appointment} />}
           <Button
             variant="outline"
             fullWidth

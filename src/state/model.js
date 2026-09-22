@@ -132,6 +132,26 @@ export function updateState(state, action) {
         ),
       };
     }
+    case "SYNC_SYMPTOM_STATUS": {
+      const visit = state.appointments.find(
+        (a) =>
+          a.id === action.id &&
+          a.memberId === state.activeMember &&
+          a.status === "Confirmed",
+      );
+      if (!visit?.externalId)
+        throw new Error(
+          "Choose a hospital-connected appointment for this patient.",
+        );
+      return {
+        ...state,
+        appointments: state.appointments.map((a) =>
+          a.id === action.id
+            ? { ...a, symptomCollectorStatus: "completed" }
+            : a,
+        ),
+      };
+    }
     case "SKIP_SYMPTOMS": {
       const appointment = state.appointments.find(
         (a) =>

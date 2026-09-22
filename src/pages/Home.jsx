@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import SpotlightCard from "../components/effects/SpotlightCard";
 import CareCarousel from "../components/CareCarousel";
 import PatientHeader from "../components/PatientHeader";
 import { useNavigate } from "react-router-dom";
@@ -99,20 +98,7 @@ export default function Home() {
             </button>
           ))}
         </div>
-        <SpotlightCard
-          as="button"
-          className={s.agentStrip}
-          onClick={() => navigate("/assistant")}
-        >
-          <span className={s.agentIcon}>
-            <Icon name="magic-star" size={24} bulk />
-          </span>
-          <span className={s.grow}>
-            <strong>Let’s find the right care</strong>
-            <small>Ask your care assistant</small>
-          </span>
-          <Icon name="chevron-right" size={20} />
-        </SpotlightCard>
+
         <SectionTitle
           className={s.sectionHeading}
           action="View all"

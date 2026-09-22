@@ -22,7 +22,7 @@ import {
   useAction,
 } from "../components/ui";
 import s from "../App.module.css";
-export function MemberForm({ member, onClose }) {
+export function MemberForm({ member, onClose, onSave }) {
   const { dispatch, notify } = useApp();
   const [values, setValues] = useState(
     member || {
@@ -53,6 +53,7 @@ export function MemberForm({ member, onClose }) {
       };
       dispatch({ type: "SAVE_MEMBER", member: profile });
       notify(member ? "Profile updated." : "Family member added to the demo.");
+      onSave?.(profile);
       onClose();
     });
   }
