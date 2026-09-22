@@ -330,37 +330,51 @@ test("header sheets select a hospital, show updates, and dismiss with a gesture"
   await expect(page.getByRole("navigation")).toBeVisible();
 });
 
-test("bottom navigation keeps equal cells and centered icon-label pairs on each tab", async ({
+test("bottom navigation labels only the active tab beside its icon", async ({
   page,
 }) => {
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
     for (const path of ["/", "/appointments", "/records", "/family", "/more"]) {
       await page.goto(path);
-      const items = page.getByRole("navigation").getByRole("button");
+      const nav = page.getByRole("navigation");
+      const items = nav.getByRole("button");
       await expect(items).toHaveCount(5);
+      await expect(nav.locator('[class*="navLabel"]')).toHaveCount(1);
       const geometry = await items.evaluateAll((buttons) =>
         buttons.map((button) => {
+          const rect = button.getBoundingClientRect();
           const icon = button
             .querySelector("[data-tp-icon]")
             .getBoundingClientRect();
           const label = button
             .querySelector('[class*="navLabel"]')
-            .getBoundingClientRect();
+            ?.getBoundingClientRect();
           return {
-            width: button.getBoundingClientRect().width,
-            offset: Math.abs(
-              icon.x + icon.width / 2 - label.x - label.width / 2,
-            ),
-            text: label.height,
+            width: rect.width,
+            height: rect.height,
+            named: !!button.getAttribute("aria-label"),
+            gap: label ? label.x - icon.right : null,
+            offset: label
+              ? Math.abs(icon.y + icon.height / 2 - label.y - label.height / 2)
+              : 0,
+            fits: rect.left >= 0 && rect.right <= innerWidth,
           };
         }),
       );
       expect(
-        Math.max(...geometry.map((g) => g.width)) -
-          Math.min(...geometry.map((g) => g.width)),
-      ).toBeLessThan(1);
-      expect(geometry.every((g) => g.offset < 1 && g.text > 0)).toBe(true);
+        geometry.every(
+          (g) =>
+            g.width >= 44 &&
+            g.height >= 44 &&
+            g.named &&
+            g.fits &&
+            g.offset < 1,
+        ),
+      ).toBe(true);
+      expect(geometry.find((g) => g.gap !== null).gap).toBeGreaterThanOrEqual(
+        6,
+      );
     }
   }
 });
@@ -457,12 +471,32 @@ test("direct ABHA entry and reduced-motion sheets remain accessible", async ({
   await expect(page.getByRole("dialog")).toBeHidden();
 });
 
-test("home keeps the location header sticky and cycles through patient updates", async ({
+test("home keeps patient context and banners fixed while its sheet overlays them", async ({
   page,
 }) => {
   await page.goto("/");
   const header = page.locator('[class*="patientHeader"]');
   const initial = await header.boundingBox();
+  expect(initial.height).toBeLessThanOrEqual(80);
+  const name = page.getByRole("button", {
+    name: "Care for Aarav Sharma. Switch patient",
+  });
+  const location = page.getByRole("button", { name: /Change location/ });
+  expect((await name.boundingBox()).y).toBeLessThan(
+    (await location.boundingBox()).y,
+  );
+  expect(
+    await name.evaluate((n) => parseFloat(getComputedStyle(n).fontSize)),
+  ).toBeGreaterThan(
+    await location.evaluate((n) => parseFloat(getComputedStyle(n).fontSize)),
+  );
+  const banner = page.locator('[class*="homeTop"]');
+  const beforeBanner = await banner.boundingBox();
+  const panel = page.locator('[class*="homePanel"]');
+  const beforePanel = await panel.boundingBox();
+  await expect(
+    page.getByRole("button", { name: "Link ABHA", exact: true }),
+  ).toHaveCSS("border-radius", "12px");
   await expect(
     page.getByRole("group", { name: "1 of 3: Upcoming appointment" }),
   ).toContainText("Dr. Meera Iyer");
@@ -483,6 +517,17 @@ test("home keeps the location header sticky and cycles through patient updates",
   await page.locator("main").evaluate((node) => (node.scrollTop = 480));
   const scrolled = await header.boundingBox();
   expect(Math.abs(scrolled.y - initial.y)).toBeLessThan(1);
+  expect(
+    Math.abs((await banner.boundingBox()).y - beforeBanner.y),
+  ).toBeLessThan(1);
+  expect((await panel.boundingBox()).y).toBeLessThan(beforePanel.y - 400);
+  await expect(banner).toHaveAttribute("inert", "");
+  expect((await page.locator('[class*="homeSheetTop"]').boundingBox()).y).toBe(
+    initial.y + initial.height,
+  );
+  await page.locator("main").evaluate((node) => (node.scrollTop = 0));
+  await expect(banner).not.toHaveAttribute("inert");
+  await page.locator("main").evaluate((node) => (node.scrollTop = 480));
   await expect(
     page.getByRole("button", { name: /Change location/ }),
   ).toBeInViewport();

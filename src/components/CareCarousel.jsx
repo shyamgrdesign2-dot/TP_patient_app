@@ -4,6 +4,7 @@ import { useApp } from "../state/AppContext";
 import { doctors, dateKey, formatDate, money } from "../services/data";
 import { locations } from "../config/brand";
 import { Avatar, Button, Icon, IconButton } from "./ui";
+import SpotlightCard from "./effects/SpotlightCard";
 import s from "../App.module.css";
 
 function visitMinutes(visit) {
@@ -108,7 +109,8 @@ export default function CareCarousel() {
           const doctor =
             slide.visit && doctors.find((d) => d.id === slide.visit.doctorId);
           return (
-            <article
+            <SpotlightCard
+              as="article"
               key={slide.id}
               className={s.careBanner}
               data-kind={slide.kind}
@@ -131,7 +133,7 @@ export default function CareCarousel() {
                     <Avatar
                       src={doctor.image}
                       name={doctor.name}
-                      size={56}
+                      size={44}
                       shape="rounded"
                     />
                     <div className={s.grow}>
@@ -239,7 +241,7 @@ export default function CareCarousel() {
                   </div>
                 </>
               )}
-            </article>
+            </SpotlightCard>
           );
         })}
       </div>

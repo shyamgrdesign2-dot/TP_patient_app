@@ -13,7 +13,7 @@ Open **http://127.0.0.1:5178/**. Desktop shows a phone preview with hospital-bra
 
 ## What works locally
 
-- Sticky location-first header, a patient-specific appointment/report/bill carousel, a rounded sheet with matching blue quick actions, nearest-location lookup, glass bottom navigation, and animated/drag-dismissible family, location and notification sheets.
+- Compact sticky patient-name-first header, a stationary appointment/report/bill carousel with a React Bits spotlight, a foreground sheet that scrolls over it, matching blue quick actions, nearest-location lookup, glass bottom navigation with inline active labels, and animated/drag-dismissible family, location and notification sheets.
 - Doctor search, specialty filters, doctor profiles, slot selection, booking for a family member, appointment history, reschedule/cancel, calendar export, sample hospital-created appointments and queue check-in.
 - Guided booking assistant collecting a visit reason and duration. This is a scripted booking flow, not a medical AI or clinical triage system.
 - Per-profile records, category/search filters, sample document previews/downloads, and PDF/JPG/PNG uploads stored in browser IndexedDB.

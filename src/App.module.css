@@ -211,8 +211,8 @@
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 32px);
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: var(--tesseract-space-2);
   gap: var(--tesseract-space-1);
@@ -233,13 +233,14 @@
 }
 .navItem {
   display: flex !important;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  height: 56px !important;
-  min-width: 0 !important;
+  height: 48px !important;
+  min-width: 44px !important;
+  flex: 1 1 44px;
   padding: 0 !important;
-  gap: 4px !important;
+  gap: 8px !important;
   color: var(--tesseract-fg-secondary) !important;
   background: transparent !important;
   border: 0 !important;
@@ -248,6 +249,10 @@
     background 0.22s,
     color 0.22s,
     transform 0.22s;
+}
+.navItem[data-active="true"] {
+  flex: 2 0 auto;
+  padding: 0 14px !important;
 }
 :global(body[data-sheet-open="true"]) .navbar {
   opacity: 0;
@@ -293,6 +298,8 @@
   line-height: var(--tesseract-size-16);
 }
 .home {
+  --tesseract-patient-header-height: 80px;
+  isolation: isolate;
   min-height: 100%;
   background: linear-gradient(
     160deg,
@@ -301,6 +308,9 @@
   );
 }
 .homeTop {
+  position: sticky;
+  top: var(--tesseract-patient-header-height);
+  z-index: 0;
   padding: 0 var(--tesseract-space-5) var(--tesseract-space-2);
 }
 .avatarButton {
@@ -325,6 +335,7 @@
 }
 .homePanel {
   position: relative;
+  z-index: 2;
   padding: 0 var(--tesseract-space-5) var(--tesseract-patient-bottom-space);
   background: var(--tesseract-bg-surface);
   border: 1px solid var(--tesseract-slate-0);
@@ -351,8 +362,8 @@
   font-weight: 500;
 }
 .quickIcon {
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2122,8 +2133,8 @@
   height: 24px;
 }
 .navLabel {
-  font-size: 10px;
-  line-height: 14px;
+  font-size: 12px;
+  line-height: 20px;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -2234,8 +2245,8 @@
 }
 @media (max-width: 360px) {
   .quickIcon {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
   }
   .sectionTitle h2 {
     font-size: var(--tesseract-text-h5);
@@ -2331,96 +2342,94 @@
   display: block;
 }
 
-/* Location-first, persistent home header. The patient selector is a separate disclosure. */
+/* Compact patient context stays above the foreground home sheet. */
 .patientHeader {
   position: sticky;
   top: 0;
+  height: var(--tesseract-patient-header-height);
   z-index: 30;
-  padding: var(--tesseract-space-3) var(--tesseract-space-5);
+  display: flex;
+  align-items: center;
+  padding: 8px 20px;
   background: color-mix(in srgb, var(--tesseract-blue-50) 94%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--tesseract-blue-100) 45%, transparent);
 }
 .patientIdentity {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: var(--tesseract-space-3);
+  gap: 10px;
 }
+.headerPatient,
 .headerLocation {
   display: flex;
   align-items: center;
-  gap: var(--tesseract-space-2);
+  max-width: 100%;
   border: 0;
   padding: 0;
   background: none;
-  color: var(--tesseract-fg-heading);
-  min-height: 44px;
-  max-width: 100%;
   text-align: left;
+}
+.headerPatient {
+  gap: 8px;
+  min-height: 32px;
   font-family: var(--tesseract-font-heading);
-  font-size: var(--tesseract-text-h4);
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.025em;
+  color: var(--tesseract-fg-heading);
 }
-.headerLocation > span:first-child {
-  color: var(--tesseract-blue-600);
-}
+.headerPatient > span:first-child,
 .headerLocation > span:nth-child(2) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.headerLocation > span:last-child {
+.headerPatient > span:last-child {
+  flex-shrink: 0;
   color: var(--tesseract-blue-600);
 }
-.headerPatient {
-  display: flex;
-  align-items: center;
-  gap: var(--tesseract-space-2);
-  min-height: 32px;
-  max-width: 100%;
-  padding: 0 0 0 var(--tesseract-space-8);
-  border: 0;
-  background: none;
-  font-size: var(--tesseract-text-body-xs);
+.headerLocation {
+  min-height: 28px;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--tesseract-fg-secondary);
 }
-.headerPatient > span:first-child {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.headerPatient strong {
-  color: var(--tesseract-fg-heading);
-}
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: var(--tesseract-space-2);
+.headerLocation > span:first-child,
+.headerLocation > span:last-child {
+  color: var(--tesseract-blue-600);
   flex-shrink: 0;
 }
-.headerActions .avatarButton {
-  width: 44px;
-  height: 44px;
+.headerActions {
+  flex-shrink: 0;
+}
+.homeSheetTop {
+  position: sticky;
+  top: var(--tesseract-patient-header-height);
+  z-index: 3;
+  height: 28px;
+  margin: 0 -20px 8px;
+  padding-top: 12px;
   background: var(--tesseract-bg-surface);
-  box-shadow: var(--tesseract-shadow-xs);
+  border-radius: var(--tesseract-patient-sheet-radius)
+    var(--tesseract-patient-sheet-radius) 0 0;
 }
 .homeSheetGrip {
   display: block;
-  width: 36px;
+  width: 32px;
   height: 4px;
   border-radius: var(--tesseract-radius-full);
   background: var(--tesseract-slate-200);
-  margin: var(--tesseract-space-3) auto var(--tesseract-space-5);
+  margin: 0 auto;
 }
 .quickActions > button {
   font-size: var(--tesseract-text-body-xs);
   line-height: 1.4;
 }
 .quickActions > button > span:last-child {
-  min-height: 34px;
+  min-height: 30px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -2428,8 +2437,8 @@
   text-align: center;
 }
 .quickIcon {
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   background: linear-gradient(
     145deg,
     var(--tesseract-blue-100),
@@ -2445,7 +2454,7 @@
 }
 .careCarousel {
   min-width: 0;
-  padding-top: var(--tesseract-space-3);
+  padding-top: var(--tesseract-space-1);
 }
 .bannerTrack {
   position: relative;
@@ -2463,13 +2472,13 @@
 .careBanner {
   flex: 0 0 100%;
   min-width: 0;
-  min-height: 228px;
+  min-height: 200px;
   scroll-snap-align: start;
   scroll-snap-stop: always;
   display: flex;
   flex-direction: column;
-  gap: var(--tesseract-space-3);
-  padding: var(--tesseract-space-5);
+  gap: 10px;
+  padding: var(--tesseract-space-4);
   border: 1px solid
     color-mix(in srgb, var(--tesseract-blue-300) 30%, transparent);
   border-radius: var(--tesseract-radius-24);
@@ -2522,7 +2531,7 @@
 }
 .bannerDoctor h2 {
   color: var(--tesseract-slate-0);
-  font-size: var(--tesseract-text-h4);
+  font-size: 18px;
   letter-spacing: -0.025em;
 }
 .bannerDoctor p {
@@ -2574,7 +2583,7 @@
 }
 .bannerMessage h2 {
   color: var(--tesseract-slate-0);
-  font-size: var(--tesseract-text-h3);
+  font-size: 22px;
   letter-spacing: -0.03em;
   max-width: 250px;
 }
@@ -2698,16 +2707,6 @@
     padding-left: var(--tesseract-space-4);
     padding-right: var(--tesseract-space-4);
   }
-  .headerActions {
-    gap: var(--tesseract-space-1);
-  }
-  .headerLocation {
-    gap: var(--tesseract-space-1);
-    font-size: var(--tesseract-text-h5);
-  }
-  .headerPatient {
-    padding-left: var(--tesseract-space-7);
-  }
   .patientIdentity {
     gap: var(--tesseract-space-2);
   }
@@ -2715,13 +2714,90 @@
     padding: var(--tesseract-space-4);
   }
   .quickIcon {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
   }
   .quickActions > button {
     font-size: 11px;
   }
   .bannerBottom {
     gap: var(--tesseract-space-1);
+  }
+}
+
+/* Compact home rhythm: 16px card insets and 20px section intervals. */
+.homePanel .sectionTitle {
+  margin: 20px 0 10px;
+  min-height: 28px;
+}
+.homePanel .sectionTitle h2 {
+  font-size: 18px;
+  font-weight: 800;
+}
+.homePanel .agentStrip {
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 20px;
+}
+.homePanel .agentIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.homePanel .quickIcon {
+  border-radius: 18px;
+}
+.homePanel .row {
+  padding: 14px;
+}
+.homePanel .packageBanner {
+  padding: 16px;
+}
+.homePanel .packageBanner h3 {
+  font-size: 18px;
+}
+.homePanel .packageArt {
+  width: 88px;
+  transform: none;
+}
+.homeIdentityCard {
+  box-shadow:
+    inset 0 1px 0 var(--tesseract-slate-0),
+    0 4px 16px -12px var(--tesseract-blue-300);
+}
+.homeIdentityCard .rowIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.identityActions {
+  margin-top: 12px;
+}
+.uhidHomeLink {
+  margin-top: 8px;
+  padding-top: 8px;
+  min-height: 44px;
+}
+@media (max-width: 360px) {
+  .homeSheetTop {
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+  .headerPatient {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .navbar {
+    width: calc(100% - 24px);
+    padding: 6px;
+    gap: 2px;
+  }
+  .navItem[data-active="true"] {
+    padding: 0 8px !important;
+  }
+  .navLabel {
+    font-size: 11px;
   }
 }

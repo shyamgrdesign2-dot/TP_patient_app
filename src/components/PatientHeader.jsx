@@ -59,18 +59,16 @@ export default function PatientHeader() {
     <>
       <header className={s.patientHeader}>
         <div className={s.patientIdentity}>
+          <button
+            className={s.avatarButton}
+            aria-label="Switch family profile"
+            aria-haspopup="dialog"
+            aria-expanded={sheet === "family"}
+            onClick={() => setSheet("family")}
+          >
+            <Avatar name={activeMember.name} size={40} color="primary" />
+          </button>
           <div className={s.grow}>
-            <button
-              className={s.headerLocation}
-              aria-label={`${brand.hospitalName}, ${hospital.name}. Change location`}
-              aria-haspopup="dialog"
-              aria-expanded={sheet === "location"}
-              onClick={() => setSheet("location")}
-            >
-              <Icon name="location" size={24} bulk />
-              <span>{hospital.name}</span>
-              <Icon name="chevron-right" size={18} />
-            </button>
             <button
               className={s.headerPatient}
               aria-label={`Care for ${activeMember.name}. Switch patient`}
@@ -78,10 +76,19 @@ export default function PatientHeader() {
               aria-expanded={sheet === "family"}
               onClick={() => setSheet("family")}
             >
-              <span>
-                Care for <strong>{activeMember.name.split(" ")[0]}</strong>
-              </span>
-              <Icon name="chevron-down" size={14} />
+              <span>{activeMember.name}</span>
+              <Icon name="swap-horizontal" size={16} />
+            </button>
+            <button
+              className={s.headerLocation}
+              aria-label={`${brand.hospitalName}, ${hospital.name}. Change location`}
+              aria-haspopup="dialog"
+              aria-expanded={sheet === "location"}
+              onClick={() => setSheet("location")}
+            >
+              <Icon name="location" size={14} bulk />
+              <span>{hospital.name}</span>
+              <Icon name="chevron-right" size={12} />
             </button>
           </div>
           <div className={s.headerActions}>
@@ -93,15 +100,6 @@ export default function PatientHeader() {
               aria-expanded={sheet === "notifications"}
               onClick={() => setSheet("notifications")}
             />
-            <button
-              className={s.avatarButton}
-              aria-label="Switch family profile"
-              aria-haspopup="dialog"
-              aria-expanded={sheet === "family"}
-              onClick={() => setSheet("family")}
-            >
-              <Avatar name={activeMember.name} size={38} color="primary" />
-            </button>
           </div>
         </div>
       </header>

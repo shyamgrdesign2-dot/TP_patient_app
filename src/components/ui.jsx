@@ -29,7 +29,7 @@ export function Button({
   if (!rightIcon && isIcon(content.at(-1))) rightIcon = content.pop();
   return (
     <TesseractButton
-      radius="pill"
+      radius={12}
       className={`${s.button} ${className}`}
       leftIcon={leftIcon}
       rightIcon={rightIcon}
@@ -403,7 +403,7 @@ export function MemberContext() {
         <span>
           For <strong>{activeMember.name}</strong>
         </span>
-        <Icon name="chevron-down" size={14} />
+        <Icon name="swap-horizontal" size={14} />
       </button>
       <FamilySheet open={open} onClose={() => setOpen(false)} />
     </>

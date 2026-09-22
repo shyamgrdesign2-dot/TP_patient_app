@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import CareCarousel from "../components/CareCarousel";
 import PatientHeader from "../components/PatientHeader";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +17,21 @@ import s from "../App.module.css";
 export default function Home() {
   const { state, activeMember, brand, dispatch } = useApp();
   const navigate = useNavigate();
+  const banner = useRef(null);
+  const panel = useRef(null);
+  useEffect(() => {
+    const scroller = panel.current.closest("main");
+    // Covered cards must not remain keyboard targets behind the foreground sheet.
+    const update = () => {
+      const covered =
+        panel.current.getBoundingClientRect().top <
+        banner.current.getBoundingClientRect().bottom - 8;
+      banner.current.inert = covered;
+    };
+    scroller.addEventListener("scroll", update, { passive: true });
+    update();
+    return () => scroller.removeEventListener("scroll", update);
+  }, []);
   const records = state.records.filter((r) => r.memberId === activeMember.id);
   const abhaLinked = state.healthLinks?.[activeMember.id]?.abha;
   const quick = [
@@ -28,11 +44,13 @@ export default function Home() {
     <div className={s.home}>
       <PatientHeader />
       <h1 className={s.srOnly}>Your care home</h1>
-      <div className={s.homeTop}>
+      <div className={s.homeTop} ref={banner}>
         <CareCarousel key={activeMember.id} />
       </div>
-      <div className={s.homePanel}>
-        <span className={s.homeSheetGrip} aria-hidden="true" />
+      <div className={s.homePanel} ref={panel}>
+        <div className={s.homeSheetTop} aria-hidden="true">
+          <span className={s.homeSheetGrip} />
+        </div>
         <div className={s.quickActions}>
           {quick.map(([icon, label, path]) => (
             <button key={path} onClick={() => navigate(path)}>

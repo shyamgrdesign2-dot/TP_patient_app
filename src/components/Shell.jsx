@@ -124,7 +124,9 @@ export default function Shell() {
                         bulk={active === tab.path}
                       />
                     </span>
-                    <span className={s.navLabel}>{tab.label}</span>
+                    {active === tab.path && (
+                      <span className={s.navLabel}>{tab.label}</span>
+                    )}
                   </button>
                 </Button>
               ))}
