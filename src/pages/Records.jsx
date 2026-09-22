@@ -1,10 +1,19 @@
-import { useEffect, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useCallback,
+  useState,
+} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "../state/AppContext";
 import { formatDate, dateKey } from "../services/data";
 import { getFile, saveFile, download } from "../services/files";
 import {
   Button,
+  PatientName,
+  AbhaLogo,
   Badge,
   Icon,
   PageHeader,
@@ -17,6 +26,8 @@ import {
   ErrorText,
   useAction,
 } from "../components/ui";
+import { makeSamplePdf } from "../services/recordPdf";
+const PdfViewer = lazy(() => import("../components/PdfViewer"));
 import s from "../App.module.css";
 const categories = [
   "All records",
@@ -38,6 +49,13 @@ export default function Records() {
   const [fileCategory, setFileCategory] = useState("Lab reports");
   const [fileDate, setFileDate] = useState(dateKey());
   const [fileUrl, setFileUrl] = useState(null);
+  const [recordBlob, setRecordBlob] = useState(null);
+  const pdfDocument = useRef(null);
+  const [pdfReady, setPdfReady] = useState(false);
+  const setPdfDocument = useCallback((doc) => {
+    pdfDocument.current = doc;
+    setPdfReady(!!doc);
+  }, []);
   const [fileError, setFileError] = useState("");
   const { busy, error, run } = useAction();
   const records = state.records.filter((r) => r.memberId === activeMember.id);
@@ -51,9 +69,14 @@ export default function Records() {
     let url;
     let cancelled = false;
     setFileUrl(null);
+    setRecordBlob(null);
     setFileError("");
-    if (selected?.uploaded)
-      getFile(selected.id)
+    setPdfReady(false);
+    if (selected)
+      (selected.uploaded
+        ? getFile(selected.id)
+        : makeSamplePdf(selected, activeMember, brand)
+      )
         .then((blob) => {
           if (cancelled) return;
           if (!blob) {
@@ -64,6 +87,7 @@ export default function Records() {
           }
           url = URL.createObjectURL(blob);
           setFileUrl(url);
+          setRecordBlob(blob);
         })
         .catch(() =>
           setFileError(
@@ -109,33 +133,63 @@ export default function Records() {
       notify("Record saved in this demo browser.");
     });
   }
-  async function downloadRecord() {
-    try {
-      if (selected.uploaded) {
-        const blob = await getFile(selected.id);
-        if (!blob) throw new Error("File unavailable. Please upload it again.");
-        download(selected.fileName, blob);
-      } else {
-        download(
-          `${selected.title.replace(/\W+/g, "-")}-sample.txt`,
-          `${brand.hospitalName}\nSAMPLE RECORD — NOT A CLINICAL DOCUMENT\n\nPatient: ${activeMember.name}\nPatient ID: ${activeMember.mrn}\n${selected.title}\n${formatDate(selected.date)}\n${selected.author}\n\n${selected.values?.map((row) => row.join(" · ")).join("\n") || selected.note}\n\n${selected.note}`,
-        );
-      }
+  const recordFileName = selected?.uploaded
+    ? selected.fileName
+    : `${selected?.title.replace(/\W+/g, "-")}-sample.pdf`;
+  function downloadRecord() {
+    if (recordBlob) {
+      download(recordFileName, recordBlob);
       notify("Download started.");
-    } catch (e) {
-      notify(e.message, true);
+    }
+  }
+  async function shareRecord() {
+    if (!recordBlob) return;
+    const file = new File([recordBlob], recordFileName, {
+      type: recordBlob.type,
+    });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: selected.title });
+      } catch (error) {
+        if (error.name !== "AbortError")
+          notify(
+            "Sharing could not start. Download the file to share it.",
+            true,
+          );
+      }
+    } else {
+      downloadRecord();
+      notify(
+        "File downloaded. Share it from your device’s Files or Downloads app.",
+      );
+    }
+  }
+  async function printRecord() {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      notify("Allow pop-ups to open the print preview.", true);
+      return;
+    }
+    try {
+      const { printDocument } = await import("../components/PdfViewer");
+      await printDocument(printWindow, {
+        pdf: pdfDocument.current,
+        imageUrl: recordBlob?.type.startsWith("image/") ? fileUrl : null,
+        title: selected.title,
+      });
+    } catch (error) {
+      printWindow.close();
+      notify(error.message, true);
     }
   }
   return (
     <div className={s.page}>
       <PageHeader
         title="Health records"
-        subtitle="Your health story, always with you."
-        back={false}
         action={
-          <Button size="sm" variant="tonal" onClick={() => setUpload(true)}>
+          <Button size="md" onClick={() => setUpload(true)}>
             <Icon name="document-upload" size={18} />
-            Upload
+            Upload document
           </Button>
         }
       />
@@ -165,7 +219,7 @@ export default function Records() {
         onClick={() => navigate("/link-records")}
       >
         <span className={s.rowIcon}>
-          <Icon name="link" size={24} />
+          <AbhaLogo />
         </span>
         <span className={s.grow}>
           <strong>Link your health records</strong>
@@ -175,7 +229,12 @@ export default function Records() {
       </button>
       <div className={s.listMeta}>
         {filtered.length} records{" "}
-        <span>For {activeMember.name.split(" ")[0]}</span>
+        <span>
+          For{" "}
+          <PatientName member={activeMember}>
+            {activeMember.name.split(" ")[0]}
+          </PatientName>
+        </span>
       </div>
       <div className={s.stack}>
         {filtered.map((r) => (
@@ -230,80 +289,77 @@ export default function Records() {
       <Sheet
         open={!!selected}
         onClose={() => setParams({})}
-        title={selected?.title || "Record"}
+        title={selected?.title || "Health record"}
+        documentView
+        headerIcon="document-text"
         footer={
-          <Button fullWidth onClick={downloadRecord} disabled={!!fileError}>
-            <Icon name="document-download" size={18} />
-            {selected?.uploaded ? "Download file" : "Download sample record"}
-          </Button>
+          <div className={s.documentFooter}>
+            <div className={s.documentActions}>
+              <Button
+                variant="tonal"
+                size="sm"
+                onClick={shareRecord}
+                disabled={!recordBlob}
+              >
+                <Icon name="share" size={16} />
+                Share
+              </Button>
+              <Button
+                size="sm"
+                onClick={downloadRecord}
+                disabled={!recordBlob}
+                aria-label={
+                  selected?.uploaded
+                    ? "Download file"
+                    : "Download sample record"
+                }
+              >
+                <Icon name="document-download" size={16} />
+                Download
+              </Button>
+              <Button
+                variant="tonal"
+                size="sm"
+                onClick={printRecord}
+                disabled={
+                  !recordBlob ||
+                  !!fileError ||
+                  (recordBlob.type === "application/pdf" && !pdfReady)
+                }
+              >
+                <Icon name="printer" size={16} />
+                Print
+              </Button>
+            </div>
+            <small>
+              {selected && formatDate(selected.date, { year: "numeric" })}
+            </small>
+          </div>
         }
       >
-        {selected && (
-          <>
-            <div className={s.inlineMeta}>
-              <Badge>{selected.category}</Badge>
-              <span>{formatDate(selected.date)}</span>
-            </div>
-            <div className={s.report}>
-              <div className={s.reportHeader}>
-                <strong>{brand.hospitalName}</strong>
-                <small>
-                  {selected.uploaded ? "Personal upload" : "SAMPLE DOCUMENT"}
-                </small>
-              </div>
-              <h2>{selected.title}</h2>
-              <p>
-                {activeMember.name} · {activeMember.mrn}
-              </p>
-              <small>{selected.author}</small>
-              {selected.values && (
-                <table className={s.reportTable}>
-                  <thead>
-                    <tr>
-                      <th>Test</th>
-                      <th>Result</th>
-                      <th>Unit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selected.values.map((v) => (
-                      <tr key={v[0]}>
-                        {v.map((x) => (
-                          <td key={x}>{x}</td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-              {selected.note && <p>{selected.note}</p>}
-              {fileUrl &&
-                (selected.mime === "application/pdf" ? (
-                  <iframe
-                    title="Uploaded PDF report"
-                    src={fileUrl}
-                    className={s.pdfPreview}
-                  />
-                ) : (
-                  <img
-                    alt={selected.title}
-                    src={fileUrl}
-                    className={s.reportImage}
-                  />
-                ))}
-            </div>
-            <ErrorText>{fileError}</ErrorText>
-            {!selected.uploaded && (
-              <Notice>
-                This sample preview will be replaced by the hospital’s signed
-                document when connected.
-              </Notice>
-            )}
-          </>
-        )}
+        <ErrorText>{fileError}</ErrorText>
+        {!recordBlob && !fileError && <p role="status">Loading document…</p>}
+        {recordBlob &&
+          (recordBlob.type === "application/pdf" ? (
+            <Suspense fallback={<p role="status">Preparing PDF viewer…</p>}>
+              <PdfViewer
+                blob={recordBlob}
+                title={selected?.title}
+                onDocument={setPdfDocument}
+              />
+            </Suspense>
+          ) : (
+            <img
+              src={fileUrl}
+              alt={selected?.title}
+              className={s.reportImage}
+            />
+          ))}
       </Sheet>
       <Sheet
         open={upload}
+        documentView
+        headerIcon="document-upload"
         onClose={() => setUpload(false)}
         title="Add a health record"
         description={`Save a record to ${activeMember.name}’s profile.`}

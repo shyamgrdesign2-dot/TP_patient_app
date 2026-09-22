@@ -67,7 +67,7 @@ function ThemedApp() {
         accent: brand.accent,
         fontBody: brand.fontBody,
         fontHeading: brand.fontHeading,
-        radius: 20,
+        radius: 12,
       }),
     [brand],
   );

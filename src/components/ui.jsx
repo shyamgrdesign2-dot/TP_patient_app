@@ -8,13 +8,34 @@ import {
   DrawerContent,
   DrawerTitle,
   DrawerDescription,
-  InputBox,
+  InputBox as TesseractInputBox,
   Logo,
 } from "@dhspl-tatvacare/tesseract-ui";
-import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../state/AppContext";
 import s from "../App.module.css";
-export { Badge, Avatar, InputBox };
+export { Badge, Avatar };
+export function PatternAvatar({ name, size = 52 }) {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("");
+  return (
+    <span
+      className={s.patternAvatar}
+      style={{ width: size, height: size, fontSize: size * 0.32 }}
+      aria-hidden="true"
+    >
+      {initials}
+    </span>
+  );
+}
+export function InputBox(props) {
+  return <TesseractInputBox radius={12} {...props} />;
+}
 // Keep icons in the library's dedicated slots, out of its clipped text label.
 export function Button({
   children,
@@ -42,7 +63,15 @@ export function Button({
 export function Icon({ name, size = 20, bulk, ...props }) {
   return (
     <TPIcon
-      name={name === "add" ? "add-circle" : name}
+      name={
+        name === "add"
+          ? "add-circle"
+          : name === "arrow-left"
+            ? "arrow-left3"
+            : ["close", "close-circle", "close-square"].includes(name)
+              ? "close-square"
+              : name
+      }
       size={size}
       variant={
         (bulk ??
@@ -51,29 +80,78 @@ export function Icon({ name, size = 20, bulk, ...props }) {
           : "linear"
       }
       {...props}
+      {...(["close", "close-circle", "close-square"].includes(name)
+        ? { corner: "rounded", variant: "bold" }
+        : {})}
+      {...(name === "emergency"
+        ? { corner: "rounded", variant: "bulk", family: "medical" }
+        : {})}
+      {...(name === "user"
+        ? { corner: "rounded", variant: "bulk", family: "users" }
+        : {})}
+      {...(name === "location"
+        ? { corner: "straight", variant: "bulk", family: "location" }
+        : {})}
     />
   );
 }
-export function BrandLogo({ symbol = false, light = false }) {
+export function AbhaLogo({ linked = false }) {
+  return (
+    <img
+      className={s.abhaLogo}
+      src="/brand/abha.svg"
+      alt={linked ? "ABHA linked" : "ABHA"}
+      title={
+        linked
+          ? "ABHA linked to this patient"
+          : "Ayushman Bharat Health Account"
+      }
+    />
+  );
+}
+export function PatientName({ member, children }) {
+  const { state } = useApp();
+  return (
+    <span className={s.patientName}>
+      {children ?? member.name}
+      {state.healthLinks?.[member.id]?.abha && <AbhaLogo linked />}
+    </span>
+  );
+}
+export function BrandLogo({ symbol = false, light = false, height }) {
   const { brand } = useApp();
   if (brand.logo)
-    return <img src={brand.logo} className={s.brandImage} alt={brand.name} />;
+    return (
+      <img
+        src={brand.logo}
+        className={s.brandImage}
+        style={height ? { height } : undefined}
+        alt={brand.name}
+      />
+    );
   if (brand.name === "Tatva Practice")
     return (
       <Logo
         variant={symbol ? "symbol" : "wordmark"}
-        height={symbol ? 28 : 24}
+        height={height ?? (symbol ? 28 : 24)}
         tone={light ? "light" : "blue"}
       />
     );
   return (
     <span className={s.customBrand}>
-      <Icon name="health" size={28} bulk />
+      <Icon name="health" size={height ?? 28} bulk />
       {!symbol && brand.name}
     </span>
   );
 }
-export function IconButton({ name, label, onClick, badge, ...props }) {
+export function IconButton({
+  name,
+  label,
+  onClick,
+  badge,
+  iconSize = 20,
+  ...props
+}) {
   return (
     <Button
       variant="outline"
@@ -83,15 +161,26 @@ export function IconButton({ name, label, onClick, badge, ...props }) {
       aria-label={label}
       onClick={onClick}
       {...props}
-    >
-      <Icon name={name} />
-      {badge > 0 && <span className={s.notificationCount}>{badge}</span>}
-    </Button>
+      icon={
+        <>
+          <Icon
+            name={name}
+            size={iconSize}
+            color={
+              ["notification-2", "emergency"].includes(name)
+                ? "var(--tesseract-blue-600)"
+                : undefined
+            }
+          />
+          {badge > 0 && <span className={s.notificationCount}>{badge}</span>}
+        </>
+      }
+    />
   );
 }
-export function SectionTitle({ children, action, onAction }) {
+export function SectionTitle({ children, action, onAction, className = "" }) {
   return (
-    <div className={s.sectionTitle}>
+    <div className={`${s.sectionTitle} ${className}`}>
       <h2>{children}</h2>
       {action && (
         <Button variant="link" size="sm" onClick={onAction}>
@@ -102,23 +191,38 @@ export function SectionTitle({ children, action, onAction }) {
     </div>
   );
 }
-export function PageHeader({ title, subtitle, back = true, action }) {
+export function PageHeader({ title, action }) {
+  const [actionHost, setActionHost] = useState(null);
+  useEffect(() => {
+    setActionHost(document.getElementById("page-action"));
+  }, []);
   const navigate = useNavigate();
+  const location = useLocation();
+  function goBack() {
+    if (window.history.state?.idx > 0) navigate(-1);
+    else navigate(location.pathname === "/login" ? "/welcome" : "/");
+  }
   return (
-    <header className={s.pageHeader}>
-      {back && (
-        <IconButton
-          name="chevron-left"
-          label="Go back"
-          onClick={() => navigate(-1)}
-        />
-      )}
-      <div className={s.grow}>
-        <h1>{title}</h1>
-        {subtitle && <p>{subtitle}</p>}
-      </div>
-      {action}
-    </header>
+    <>
+      <header className={s.pageHeader}>
+        <Button
+          variant="ghost"
+          theme="neutral"
+          className={s.headerBack}
+          aria-label="Go back"
+          onClick={goBack}
+        >
+          <Icon name="arrow-left3" size={22} />
+        </Button>
+        <div className={s.grow}>{title && <h1>{title}</h1>}</div>
+      </header>
+      {action &&
+        actionHost &&
+        createPortal(
+          <div className={s.floatingAction}>{action}</div>,
+          actionHost,
+        )}
+    </>
   );
 }
 export function Empty({
@@ -139,7 +243,16 @@ export function Empty({
     </div>
   );
 }
-export function Sheet({ open, onClose, title, description, children, footer }) {
+export function Sheet({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  documentView = false,
+  headerIcon,
+}) {
   const [present, setPresent] = useState(open);
   const panel = useRef(null);
   const gesture = useRef(null);
@@ -213,27 +326,35 @@ export function Sheet({ open, onClose, title, description, children, footer }) {
       <DrawerContent
         ref={panel}
         side="bottom"
-        className={s.sheet}
+        className={`${s.sheet} ${documentView ? s.documentSheet : ""}`}
         footer={footer}
         bodyClassName={s.sheetBody}
         aria-describedby={description ? undefined : null}
         header={
           <div
             className={s.sheetHeader}
-            onPointerDown={startDrag}
-            onPointerMove={moveDrag}
-            onPointerUp={endDrag}
-            onPointerCancel={endDrag}
+            onPointerDown={documentView ? undefined : startDrag}
+            onPointerMove={documentView ? undefined : moveDrag}
+            onPointerUp={documentView ? undefined : endDrag}
+            onPointerCancel={documentView ? undefined : endDrag}
           >
-            <span className={s.sheetGrip} aria-hidden="true" />
+            {!documentView && (
+              <span className={s.sheetGrip} aria-hidden="true" />
+            )}
             <div className={s.sheetHeading}>
+              {headerIcon && <Icon name={headerIcon} size={24} bulk />}
               <div className={s.grow}>
                 <DrawerTitle>{title}</DrawerTitle>
                 {description && (
                   <DrawerDescription>{description}</DrawerDescription>
                 )}
               </div>
-              <IconButton name="close-circle" label="Close" onClick={onClose} />
+              <IconButton
+                name="close-circle"
+                iconSize={26}
+                label="Close"
+                onClick={onClose}
+              />
             </div>
           </div>
         }
@@ -269,7 +390,9 @@ export function FamilySheet({ open, onClose }) {
             color={member.id === activeMember.id ? "primary" : "slate"}
           />
           <span className={s.grow}>
-            <strong>{member.name}</strong>
+            <strong>
+              <PatientName member={member} />
+            </strong>
             <small>
               {member.relation} · {member.mrn}
             </small>
@@ -395,15 +518,18 @@ export function MemberContext() {
     <>
       <button
         className={s.memberContext}
+        aria-label={`For ${activeMember.name}. Switch patient`}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
       >
-        <Avatar name={activeMember.name} size={28} color="primary" />
+        <Icon name="user" size={18} bulk />
         <span>
-          For <strong>{activeMember.name}</strong>
+          <strong>
+            <PatientName member={activeMember} />
+          </strong>
         </span>
-        <Icon name="swap-horizontal" size={14} />
+        <Icon name="chevron-down" size={16} />
       </button>
       <FamilySheet open={open} onClose={() => setOpen(false)} />
     </>

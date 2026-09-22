@@ -1,0 +1,1110 @@
+/* Home has one geometry contract, independent of the legacy page styles. */
+.home {
+  --tesseract-patient-header-height: 72px;
+  --tesseract-home-inset: 20px;
+  --tesseract-home-card-radius: 16px;
+  --tesseract-home-line: color-mix(
+    in srgb,
+    var(--tesseract-blue-100) 35%,
+    var(--tesseract-slate-200)
+  );
+  isolation: isolate;
+  min-height: 100%;
+  background: color-mix(
+    in srgb,
+    var(--tesseract-blue-50) 36%,
+    var(--tesseract-slate-50)
+  );
+}
+.patientHeader {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: var(--tesseract-patient-header-height);
+  padding: 6px var(--tesseract-home-inset);
+  display: flex;
+  align-items: center;
+  background: color-mix(in srgb, var(--tesseract-bg-surface) 72%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.patientIdentity {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+.headerPatient,
+.headerLocation {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.headerPatient {
+  min-height: 28px;
+  gap: 6px;
+  font-family: var(--tesseract-font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--tesseract-fg-heading);
+}
+.headerPatient > span:first-child,
+.headerLocation > span:nth-child(2) {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.headerPatient > span:last-child {
+  color: var(--tesseract-blue-500);
+  flex-shrink: 0;
+}
+.headerLocation {
+  min-height: 24px;
+  gap: 4px;
+  color: var(--tesseract-fg-secondary);
+  font-size: 12px;
+}
+.headerLocation > span:first-child,
+.headerLocation > span:last-child {
+  flex-shrink: 0;
+  color: var(--tesseract-blue-600);
+}
+.locationCity {
+  color: var(--tesseract-fg-tertiary);
+}
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.headerActions > button {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: color-mix(
+    in srgb,
+    var(--tesseract-blue-100) 38%,
+    var(--tesseract-bg-surface)
+  ) !important;
+}
+.headerActions > button:last-child {
+  border-radius: 14px;
+}
+.headerActions > button:first-child {
+  color: var(--tesseract-fg-primary);
+}
+.homeTop {
+  position: sticky;
+  top: var(--tesseract-patient-header-height);
+  z-index: 0;
+  padding: 0 0 8px;
+}
+.careCarousel {
+  min-width: 0;
+  padding-top: 16px;
+}
+.careHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+  margin-bottom: 12px;
+}
+.careHeading h1 {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--tesseract-fg-heading);
+}
+.bannerTrack {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
+  touch-action: pan-x pinch-zoom;
+  border-radius: 0;
+}
+.bannerTrack::-webkit-scrollbar {
+  display: none;
+}
+.careBanner {
+  flex: 0 0 calc((100% - 20px) / 1.18);
+  min-width: 0;
+  min-height: 196px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  border: 1px solid
+    color-mix(in srgb, var(--tesseract-blue-300) 35%, transparent);
+  border-radius: var(--tesseract-home-card-radius);
+  background:
+    linear-gradient(
+      118deg,
+      transparent 20%,
+      color-mix(in srgb, var(--tesseract-blue-400) 20%, transparent) 45%,
+      transparent 75%
+    ),
+    radial-gradient(
+      85% 130% at var(--tesseract-home-glow-x, 90%) -15%,
+      color-mix(in srgb, var(--tesseract-blue-400) 35%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      70% 100% at 10% 100%,
+      color-mix(in srgb, var(--tesseract-blue-500) 52%, transparent),
+      transparent 80%
+    ),
+    linear-gradient(
+      125deg,
+      var(--tesseract-blue-600),
+      var(--tesseract-blue-700) 38%,
+      var(--tesseract-blue-900) 78%,
+      var(--tesseract-blue-900)
+    );
+  color: var(--tesseract-slate-0);
+  --tesseract-spotlight-color: color-mix(
+    in srgb,
+    var(--tesseract-slate-0) 16%,
+    transparent
+  );
+  --tesseract-grid-color: color-mix(
+    in srgb,
+    var(--tesseract-slate-0) 25%,
+    transparent
+  );
+}
+.bannerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.categoryLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tesseract-slate-0);
+}
+.bannerStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  background: color-mix(in srgb, var(--tesseract-slate-0) 12%, transparent);
+  border-radius: 9999px;
+  color: var(--tesseract-slate-0);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.bannerStatus[data-state="upcoming"] {
+  color: var(--tesseract-slate-0);
+}
+.bannerContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.bannerContent h2 {
+  color: var(--tesseract-slate-0);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+.bannerContent p {
+  color: var(--tesseract-blue-50);
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.bannerBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid
+    color-mix(in srgb, var(--tesseract-slate-0) 20%, transparent);
+}
+.bannerSchedule {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.bannerSchedule strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.bannerSchedule span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--tesseract-blue-50);
+}
+.bannerBottom > button {
+  font-size: 12px;
+  font-family: var(--tesseract-font-body);
+  font-weight: 600;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 10px;
+  flex-shrink: 0;
+  box-shadow: none;
+}
+.carouselControls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  margin-top: 4px;
+}
+.carouselControls > button {
+  width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  min-width: 28px !important;
+  padding: 0 !important;
+  border: none !important;
+  background: none !important;
+  color: var(--tesseract-fg-secondary);
+  box-shadow: none;
+}
+.carouselControls > button [data-tp-icon] {
+  width: 16px !important;
+  height: 16px !important;
+}
+.bannerDots {
+  display: flex;
+  align-items: center;
+}
+.bannerDots button {
+  width: 24px;
+  height: 28px;
+  border: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: none;
+  border-radius: 8px;
+}
+.bannerDots button > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--tesseract-slate-300);
+  transition:
+    width 0.2s,
+    background 0.2s;
+}
+.bannerDots button[aria-pressed="true"] > span {
+  width: 18px;
+  border-radius: 8px;
+  background: var(--tesseract-blue-500);
+}
+.homePanel {
+  position: relative;
+  z-index: 2;
+  padding: 24px var(--tesseract-home-inset)
+    var(--tesseract-patient-bottom-space);
+  background: var(--tesseract-bg-surface);
+  border: 0;
+  border-radius: 14px 12px 0 0;
+  box-shadow: 0 -8px 30px -22px
+    color-mix(in srgb, var(--tesseract-slate-900) 22%, transparent);
+}
+.homeSheetTop {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 24px;
+  margin: -16px 0 12px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+.homeSheetGrip {
+  display: block;
+  margin: 0 auto;
+  height: 4px;
+  width: 28px;
+  background: var(--tesseract-slate-200);
+  border-radius: 8px;
+}
+.quickActions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.quickActions > button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 92px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+  color: var(--tesseract-fg-primary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.quickIcon {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  color: var(--tesseract-blue-600);
+  border-radius: 14px;
+  border: 1px solid
+    color-mix(in srgb, var(--tesseract-slate-0) 90%, var(--tesseract-blue-100));
+  background: linear-gradient(
+    145deg,
+    color-mix(
+      in srgb,
+      var(--tesseract-blue-100) 75%,
+      var(--tesseract-bg-surface)
+    ),
+    color-mix(in srgb, var(--tesseract-blue-50) 75%, transparent)
+  );
+  box-shadow:
+    inset 0 1px 0 var(--tesseract-slate-0),
+    0 4px 10px -6px var(--tesseract-blue-300);
+  backdrop-filter: blur(12px);
+}
+.quickActions > button:active {
+  background: none;
+}
+.agentStrip {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 16px;
+  border: 1px solid var(--tesseract-blue-100);
+  border-radius: 14px;
+  background: linear-gradient(
+    120deg,
+    var(--tesseract-blue-50),
+    var(--tesseract-bg-surface)
+  );
+  color: var(--tesseract-blue-600);
+  text-align: left;
+  --tesseract-spotlight-color: color-mix(
+    in srgb,
+    var(--tesseract-blue-200) 25%,
+    transparent
+  );
+}
+.agentIcon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: linear-gradient(
+    145deg,
+    var(--tesseract-blue-500),
+    var(--tesseract-blue-700)
+  );
+  color: var(--tesseract-slate-0);
+  border-radius: 14px;
+}
+.agentStrip strong {
+  display: block;
+  color: var(--tesseract-fg-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.agentStrip small {
+  display: block;
+  font-size: 11px;
+  margin-top: 2px;
+}
+.sectionHeading {
+  margin: 22px 0 10px;
+  min-height: 28px;
+}
+.sectionHeading h2 {
+  font-size: 18px;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+}
+.sectionHeading button {
+  font-size: 11px !important;
+}
+.recordsList {
+  overflow: hidden;
+  border: 1px solid var(--tesseract-home-line);
+  border-radius: 14px;
+  background: var(--tesseract-bg-surface);
+}
+.recordsList > button {
+  padding: 14px;
+  gap: 12px;
+}
+.recordsList > button > span:first-child {
+  width: 36px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--tesseract-slate-50);
+}
+.recordsList strong {
+  font-size: 12px;
+}
+.recordsList small {
+  font-size: 11px;
+}
+.homeIdentityCard {
+  border: 1px solid var(--tesseract-home-line);
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 16px;
+  background: var(--tesseract-bg-surface);
+}
+.homeIdentityCard h3 {
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+.homeIdentityCard p {
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.homeIdentityCard > div:first-child > span:first-child {
+  width: 36px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--tesseract-blue-50);
+}
+.identityActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+.identityActions > :only-child {
+  grid-column: 1 / -1;
+}
+.identityActions > :is(button, a) {
+  padding: 0 10px;
+  font-size: 12px;
+  box-shadow: none;
+}
+.creationHint {
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  margin-top: 8px;
+}
+.uhidHomeLink {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-top: 1px solid var(--tesseract-slate-100);
+  padding: 12px 0 0;
+  margin-top: 12px;
+  min-height: 44px;
+  color: var(--tesseract-blue-700);
+  background: none;
+  font-size: 11px;
+  text-align: left;
+}
+.uhidHomeLink > span:nth-child(2) {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+}
+.uhidHomeLink strong {
+  font-weight: 600;
+}
+.wellnessCard {
+  isolation: isolate;
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 184px;
+  padding: 18px;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  text-align: left;
+  background: var(--tesseract-blue-50);
+}
+.wellnessCard > div {
+  position: relative;
+  z-index: 2;
+  max-width: 75%;
+}
+.wellnessCard::before {
+  z-index: 1;
+  position: absolute;
+  content: "";
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--tesseract-blue-50) 25%,
+    color-mix(in srgb, var(--tesseract-blue-50) 94%, transparent) 48%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+.wellnessPhoto {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 60%;
+  object-fit: cover;
+  object-position: 55% center;
+}
+.wellnessCard h3 {
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin: 10px 0 8px;
+}
+.wellnessCard p {
+  font-size: 11px;
+  color: var(--tesseract-fg-secondary);
+}
+.wellnessCard > div > span:first-child {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--tesseract-blue-700);
+}
+.wellnessCard > div > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tesseract-blue-700);
+}
+.familyMini {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.familyMini button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 12px 2px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--tesseract-slate-50);
+}
+.familyMini button[data-active="true"] {
+  background: var(--tesseract-blue-50);
+  border-color: var(--tesseract-blue-100);
+}
+.familyMini strong {
+  font-size: 11px;
+  margin-top: 3px;
+  color: var(--tesseract-fg-primary);
+}
+.familyMini small {
+  font-size: 10px;
+}
+.homeFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-top: 36px;
+}
+.homeFooter p {
+  font-size: 12px;
+}
+.homeFooter small {
+  font-size: 10px;
+}
+@media (max-width: 360px) {
+  .home {
+    --tesseract-home-inset: 16px;
+  }
+  .headerPatient {
+    font-size: 18px;
+  }
+  .locationCity {
+    display: none;
+  }
+  .headerActions {
+    gap: 0;
+  }
+  .patientIdentity {
+    gap: 8px;
+  }
+  .careBanner {
+    padding: 14px;
+    gap: 16px;
+  }
+  .bannerContent h2 {
+    color: var(--tesseract-slate-0);
+    font-size: 18px;
+  }
+  .bannerBottom > button {
+    padding: 0 10px;
+  }
+  .bannerSchedule strong {
+    font-size: 11px;
+  }
+  .quickActions > button {
+    padding: 0;
+    font-size: 10px;
+    gap: 8px;
+  }
+  .quickIcon {
+    width: 52px;
+    height: 52px;
+  }
+  .homeIdentityCard {
+    padding: 14px;
+  }
+  .identityActions > :is(button, a) {
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .patientHeader {
+    background: var(--tesseract-bg-surface);
+    backdrop-filter: none;
+  }
+}
+
+.careHeading > span {
+  font-size: 10px;
+  color: var(--tesseract-fg-secondary);
+}
+.headerHospital {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 16px;
+  min-width: 0;
+  color: var(--tesseract-fg-tertiary);
+  font-size: 10px;
+}
+.headerHospital > :first-child {
+  width: 12px;
+  height: 12px;
+  max-width: 12px;
+  max-height: 12px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.headerHospital > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.careBanner .bannerBottom > button[data-variant="solid"] {
+  background: var(--tesseract-slate-0);
+  border-color: var(--tesseract-slate-0);
+  color: var(--tesseract-blue-700);
+  box-shadow: none;
+}
+
+.careBanner[data-category="records"] {
+  --tesseract-home-glow-x: 55%;
+}
+.careBanner[data-category="payments"] {
+  --tesseract-home-glow-x: 10%;
+}
+.careBanner[data-category="wellness"] {
+  --tesseract-home-glow-x: 75%;
+}
+.headerHospital > :first-child :is(svg, [data-tp-icon]) {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.quickActions > button > span:last-child {
+  white-space: nowrap;
+}
+
+.headerLocation > span:nth-child(2) {
+  text-decoration: none;
+}
+.patientHeader {
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--tesseract-slate-0) 65%, transparent);
+  box-shadow: 0 4px 18px -16px var(--tesseract-slate-600);
+}
+.homePanel[data-scrolled="true"] {
+  box-shadow: 0 -14px 32px -12px
+    color-mix(in srgb, var(--tesseract-blue-900) 22%, transparent);
+}
+.homePanel {
+  transition: box-shadow 180ms ease;
+}
+.bannerTrack {
+  border-radius: 0;
+}
+.bannerBottom {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.bannerBottom > button {
+  margin-left: auto;
+}
+.careBanner {
+  min-height: 196px;
+  padding: 14px 16px;
+  gap: 12px;
+}
+.bannerTop {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+@media (max-width: 360px) {
+  .careBanner {
+    padding: 14px;
+    min-height: 210px;
+  }
+  .bannerBottom > button {
+    font-size: 12px;
+  }
+  .bannerContent {
+    gap: 8px;
+  }
+}
+
+.careBanner {
+  transition:
+    transform 240ms ease,
+    opacity 240ms ease;
+}
+.careBanner[data-side="left"] {
+  transform: perspective(700px) rotateY(16deg) scale(0.95);
+  transform-origin: right center;
+  opacity: 0.8;
+}
+.careBanner[data-side="right"] {
+  transform: perspective(700px) rotateY(-16deg) scale(0.95);
+  transform-origin: left center;
+  opacity: 0.8;
+}
+@media (prefers-reduced-motion: reduce) {
+  .careBanner {
+    transition: none;
+  }
+  .careBanner[data-side] {
+    transform: none;
+  }
+}
+
+.bannerSchedule {
+  flex: 1 1 0;
+  overflow: hidden;
+}
+.bannerSchedule strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.bannerSchedule > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+.bannerBottom > button {
+  max-width: 54%;
+  min-width: 0;
+  font-size: 12px;
+}
+@media (max-width: 360px) {
+  .bannerSchedule strong {
+    font-size: 10px;
+  }
+  .bannerBottom > button {
+    padding: 0 8px;
+    font-size: 11px;
+  }
+}
+
+.careBanner {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 24%, transparent),
+    inset 0 -2px 5px
+      color-mix(in srgb, var(--tesseract-blue-900) 35%, transparent);
+}
+.headerActions > button {
+  border-radius: 12px;
+}
+
+.headerLocation {
+  color: var(--tesseract-blue-600);
+}
+.headerActions > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+}
+.headerActions > button > span {
+  gap: 0;
+}
+
+.careCarousel[data-single="true"] {
+  padding: 16px var(--tesseract-home-inset) 8px;
+}
+.careCarousel[data-single="true"] .bannerTrack {
+  overflow: hidden;
+}
+.careCarousel[data-single="true"] .careBanner {
+  flex-basis: 100%;
+}
+.homeTop:not(:has(section)) {
+  padding: 0;
+}
+.headerActions > button:first-child {
+  color: var(--tesseract-blue-600);
+  background: var(--tesseract-blue-50) !important;
+  border: 1px solid var(--tesseract-blue-100);
+}
+
+.headerActions > button,
+.headerActions > button:first-child {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none;
+  color: var(--tesseract-blue-600);
+}
+.emergencyContact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: 14px;
+}
+.emergencyContact strong,
+.emergencyContact small {
+  display: block;
+}
+.emergencyContact small {
+  margin-top: 4px;
+}
+
+:is(.careBanner, .agentStrip, .recordsList, .homeIdentityCard, .wellnessCard) {
+  position: relative;
+  border-color: transparent;
+}
+:is(
+  .careBanner,
+  .agentStrip,
+  .recordsList,
+  .homeIdentityCard,
+  .wellnessCard
+)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--tesseract-blue-200),
+    transparent 40%,
+    transparent 60%,
+    var(--tesseract-blue-200)
+  );
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+}
+.careBanner::after {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tesseract-blue-200) 65%, transparent),
+    transparent 40%,
+    transparent 60%,
+    color-mix(in srgb, var(--tesseract-blue-400) 50%, transparent)
+  );
+}
+.careBanner:not([inert]) {
+  cursor: pointer;
+}
+.homeIdentityCard {
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--tesseract-blue-50) 75%, white),
+    var(--tesseract-bg-surface) 85%
+  );
+}
+.recordsList,
+.wellnessCard {
+  border: 1px solid var(--tesseract-border-neutral);
+}
+.recordsList::after,
+.wellnessCard::after {
+  display: none;
+}
+
+.recordHeading {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* Semantic banners: strong colour surfaces with no perimeter stroke. */
+.careBanner {
+  border: 0;
+  box-shadow: none;
+}
+.careBanner::after {
+  display: none;
+}
+.careBanner[data-tone="success"] {
+  background:
+    radial-gradient(
+      ellipse at 10% 100%,
+      color-mix(in srgb, var(--tesseract-success-600) 60%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      125deg,
+      var(--tesseract-success-700),
+      var(--tesseract-success-900) 90%
+    );
+  --tesseract-care-accent: var(--tesseract-success-800);
+}
+.careBanner[data-tone="warning"] {
+  background:
+    radial-gradient(
+      ellipse at 10% 100%,
+      color-mix(in srgb, var(--tesseract-warning-600) 48%, transparent),
+      transparent 65%
+    ),
+    linear-gradient(
+      125deg,
+      var(--tesseract-warning-800),
+      var(--tesseract-warning-900) 90%
+    );
+  --tesseract-care-accent: var(--tesseract-warning-800);
+}
+.careBanner:is([data-tone="success"], [data-tone="warning"]) {
+  color: var(--tesseract-slate-0);
+  --tesseract-care-pattern: var(--tesseract-slate-0);
+}
+.careBanner:is([data-tone="success"], [data-tone="warning"])
+  :is(.bannerContent p, .bannerSchedule span) {
+  color: var(--tesseract-slate-0);
+}
+.careBanner:is([data-tone="success"], [data-tone="warning"])
+  .bannerBottom
+  > button {
+  color: var(--tesseract-care-accent) !important;
+}
+.careBanner[data-tone="info"] {
+  background:
+    radial-gradient(
+      ellipse at 15% 0%,
+      color-mix(in srgb, white 45%, transparent),
+      transparent 65%
+    ),
+    linear-gradient(
+      135deg,
+      var(--tesseract-blue-100),
+      var(--tesseract-blue-200)
+    );
+  color: var(--tesseract-blue-900);
+  --tesseract-care-pattern: var(--tesseract-blue-700);
+}
+.careBanner[data-tone="info"]
+  :is(
+    .categoryLabel,
+    .bannerContent h2,
+    .bannerContent p,
+    .bannerSchedule span
+  ) {
+  color: inherit;
+}
+.careBanner[data-tone="info"] .bannerStatus {
+  color: var(--tesseract-blue-700);
+  background: var(--tesseract-blue-50);
+}
+.careBanner[data-tone="info"] .bannerBottom {
+  border-color: var(--tesseract-blue-200);
+}
+.careBanner[data-tone="info"] .bannerBottom > button {
+  background: var(--tesseract-blue-50) !important;
+  color: var(--tesseract-blue-700) !important;
+  border: 0;
+}
+
+.headerActions {
+  gap: 6px;
+}
+.headerActions > button,
+.headerActions > button:first-child {
+  background: color-mix(
+    in srgb,
+    var(--tesseract-blue-50) 72%,
+    white
+  ) !important;
+  border-radius: 12px !important;
+  box-shadow:
+    inset 0 1px 0 white,
+    0 2px 5px color-mix(in srgb, var(--tesseract-slate-900) 4%, transparent);
+}
+
+.homeIdentityCard {
+  background:
+    radial-gradient(
+      130% 120% at 50% 0%,
+      color-mix(in srgb, var(--tesseract-blue-400) 7%, transparent),
+      transparent 62%
+    ),
+    linear-gradient(158deg, white, transparent 48%),
+    color-mix(in srgb, var(--tesseract-blue-50) 45%, white);
+  box-shadow:
+    inset 0 1px 0 white,
+    0 12px 28px -22px
+      color-mix(in srgb, var(--tesseract-blue-800) 25%, transparent);
+}

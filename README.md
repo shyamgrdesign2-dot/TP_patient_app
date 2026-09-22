@@ -13,15 +13,21 @@ Open **http://127.0.0.1:5178/**. Desktop shows a phone preview with hospital-bra
 
 ## What works locally
 
-- Compact sticky patient-name-first header, a stationary appointment/report/bill carousel with a React Bits spotlight, a foreground sheet that scrolls over it, matching blue quick actions, nearest-location lookup, glass bottom navigation with inline active labels, and animated/drag-dismissible family, location and notification sheets.
+- Sticky name/location header with hospital emergency and notification controls; a patient-scoped event carousel with semantic colours, a first-visit welcome state, and a foreground home sheet. Four bottom tabs: Home, Calendar, Records and More.
 - Doctor search, specialty filters, doctor profiles, slot selection, booking for a family member, appointment history, reschedule/cancel, calendar export, sample hospital-created appointments and queue check-in.
-- Guided booking assistant collecting a visit reason and duration. This is a scripted booking flow, not a medical AI or clinical triage system.
-- Per-profile records, category/search filters, sample document previews/downloads, and PDF/JPG/PNG uploads stored in browser IndexedDB.
-- Family and profile editing, emergency contacts, notification inbox, notification preferences, feedback.
+- Guided symptom collection adapted from the existing patient-agent quick replies: symptoms, duration, severity, history, vitals, editable summary and doctor/booking handoff. AI/voice services remain disconnected.
+- Per-profile records, filters and PDF/JPG/PNG uploads in IndexedDB. A 92% document sheet renders PDFs with page navigation/zoom, Share, Download and Print; sample records generate clearly labelled demonstration PDFs.
+- Family/profile editing, hospital contact configuration, notifications/preferences, feedback and confirmed local account deletion (including uploaded files and saved credentials).
 - Bill review, explicitly simulated payments, sample receipts, vaccination history, health-package and home-care requests, inpatient discharge history.
 - Patient-led UHID and ABHA linking from Home, Records, Profile and More, plus official ABHA creation from Home: sample identity entry, expiring demo OTP, explicit consent, per-family-member connection state, and unlinking. No live verification or record import.
-- Demo OTP entry, validation and resend timer; locally hashed quick PIN/password with attempt limits. These **are not production authentication**.
+- Five-slide onboarding with generated family portraits and Tesseract controls; mobile-number → Send code → OTP → existing account or first-time profile setup; locally hashed quick PIN/password with attempt limits. These **are not production authentication**.
 - Hospital branding presets plus custom name, logo, colours and fonts. Updates persist in this browser.
+
+## Home, arrival and PWA
+
+The [care-card contract](docs/home-card-contract.md) defines event visibility, ranking, colour, first-visit and empty states. After booking, symptom questions and a reviewed visit summary lead into hospital check-in (with an explicit skip option). Hospital check-in requires a same-day in-person appointment and a fresh, accurate geolocation within the configured site radius before allocating a **local demo token**. Coordinates are demonstration locations; verify actual hospital entrances before integration. A live backend must allocate tokens, verify arrival and publish wait estimates.
+
+The production build includes a standalone web manifest, app icons and a versioned service worker. Its allowlist caches bundled UI assets only. Browser install availability varies; native OS installation has not been validated. Live patient APIs and uploaded files are excluded from service-worker caching. The development server deliberately does not register a service worker.
 
 ## Branding: one source
 

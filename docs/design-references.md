@@ -10,7 +10,7 @@
 
 Tesseract Button, Badge, Avatar, InputBox, Checkbox, Toggle, Drawer, ConfirmDialog, TPIcon and Logo. Mulish headings; Inter UI copy. Central theme seeds generate primary/accent ramps. A compatibility mapping supplies Avatar’s primary token aliases; explicit typography variables ensure the package provider applies custom fonts to overlays as well as page content.
 
-The patient-specific compositions use CSS Modules. Colours reference Tesseract tokens. New dimensions are layout values rather than changes to the library’s source tokens. The glass navigation shows only the active label, to the right of its icon; inactive tabs retain accessible names and 44px targets. CTA buttons use an explicit numeric 12px Tesseract radius; circular icon controls and navigation retain their own shape. Reduced-motion preference removes transitions; sheets slide from the bottom, support grip dragging, Escape and overlay dismissal, and retain Tesseract’s focus and keyboard handling.
+The patient-specific compositions use CSS Modules. Colours reference Tesseract tokens. New dimensions are layout values rather than changes to the library’s source tokens. The glass navigation shows only the active label, to the right of its icon; inactive tabs retain accessible names and 44px targets. CTA buttons use an explicit numeric 12px Tesseract radius; patient-switch pills, avatars and navigation retain their own shape. Reduced-motion preference removes transitions; sheets slide from the bottom, support grip dragging, Escape and overlay dismissal, and retain Tesseract’s focus and keyboard handling.
 
 Tesseract is vendored internally at version 1.1.0, unmodified. It must remain in a private organization repository.
 
@@ -32,22 +32,36 @@ Downloaded Unsplash photos are generic illustrative healthcare imagery; the samp
 - Doctor portrait 2: https://images.unsplash.com/photo-1559839734-2b71ea197ec2
 - Doctor portrait 3: https://images.unsplash.com/photo-1622253692010-333f2da6031d
 
-## September UI refinement research
+## Current visual and interaction contract
 
-- [Apple HIG: Materials](https://developer.apple.com/design/human-interface-guidelines/materials): use translucency for controls and navigation while protecting content legibility. Applied to the floating navigation and header controls, with an opaque fallback for reduced transparency.
-- [Material 3 color, typography, shapes and elevation](https://developer.android.com/develop/ui/compose/designsystems/material3): establish hierarchy with tonal surface colors and consistent type/shape roles. Applied through Tesseract tokens: rounded cards, pale appointment date bands, differentiated action tiles, soft elevation and high-contrast primary text.
-- [Material cards](https://m3.material.io/components/cards/overview): contain related content and its actions. Appointment, doctor, record and identity cards each group a single task.
+User comments take precedence over references. Home places the patient greeting above the clickable bulk location. Notification and emergency icons have compact tonal backgrounds. The 72px glass header remains visible while the foreground sheet scrolls over stationary banners; its drawer grip scrolls away with the sheet.
 
-Medavida is an interaction reference, not a banking-card template. The copied health-card composition was removed. Home leads with a patient-scoped carousel: upcoming appointments first, followed by new records and outstanding bills; patients without appointments get a booking prompt. An 80px sticky header puts the patient name above the smaller location. The patient control uses the Tesseract swap-horizontal glyph; the location retains a right-facing chevron. The carousel stays fixed beneath the header while the rounded home sheet scrolls over it. Its grip pins below the header; covered banners become inert until revealed again. Four matching blue actions lead the sheet. ABHA creation, ABHA linking and hospital UHID linking are accessible from Home. Family, location and notification controls open sheets. Branding remains centralized.
+Home banners are conditional events, not fixed categories; see [the card contract](home-card-contract.md). They use compact 16px geometry, deeper brand/success/warning gradients, one blue-tonal report card, no perimeter outlines, and a shared same-row CTA footer. The actual Tesseract `AnimatedGrid` is zoomed and faded on the left; a subtle clinic or laboratory photograph sits on the right; decorative category glyphs are removed. Cards do not auto-advance.
 
-The supplied rounded Tesseract glyphs are used: `arrow-right4` through the `chevron-right` alias, `location` (bulk), `notification-2` (bulk), and `calendar-2` (bulk where active). Billing uses the `bill` glyph; the ambiguous catalogue `add` website icon is replaced with `add-circle`.
+Section/input/CTA radii are 12–14px. White cards retain complete neutral borders. Tonal sections use blue washes and restrained edge highlights. The wellness photograph has a pale-blue gradient overlay behind its text. New-record badges appear beside the title; navigation rows retain their chevron.
 
-The latest requested name-first hierarchy supersedes the earlier location-first reference. Carousel navigation supports native horizontal swiping, dot buttons, next-arrow and keyboard arrows; it does not advance automatically. Off-screen slides are inert to keyboard and assistive technology.
+Subpage title headers are sticky. Patient switching uses a compact, centered, sticky liquid-glass pill with the supplied `rounded/bulk/users/user` icon and downward chevron. Header actions live above the four-tab bottom navigation. More contains family management. Back icons are neutral `rounded/linear/arrow/arrow-left3`; sheet close controls use the supplied bold close-square with no outer background/stroke. Document sheets use 92% height, white divided headers and no drag grip.
 
-“Create ABHA” opens the [official ABDM registration portal](https://abha.abdm.gov.in/abha/v3/); the app does not collect Aadhaar information or pretend to create an identity locally. Existing ABHA and UHID linking remain explicitly marked sample flows until their services are connected.
+## Medavida / Zeva onboarding and surfaces
 
-## React Bits refinement
+The supplied `/Users/shyamsundar/Documents/Medavida` source identifies its app as Zeva (package name vireo). The inspected reference files are `screens/Onboarding.tsx`, `screens/SignIn.tsx`, `screens/More.tsx`, `components/ui.tsx`, `components/AnimatedGradient.tsx`, `components/AnimatedBackground.tsx`, `components/backgrounds/GradientWaves.tsx` and `index.css`.
 
-Reviewed the user-provided [React Bits introduction](https://reactbits.dev/get-started/index) and [Pro documentation](https://pro.reactbits.dev/docs/introduction), including Aurora Blur and Gradient Carousel. The Pro browser was signed out; no licensed Pro source was retrieved or claimed.
+The patient welcome flow adapts the reference’s 4.6-second story progress, hero/copy transitions, swipe/keyboard navigation, a single bottom Get started action, and masked title reveal. The five stories cover appointments, documents, family, hospital check-in and bills. The visible Pause control and separate Sign in action were removed at the user’s request. Touch, keyboard focus and progress selection stop cycling; reduced motion and a hidden tab also pause it. Get started immediately opens mobile-number entry, followed by Send code and six visual OTP cells. The underlying single OTP input supports paste/autofill and keyboard editing. Verification remains the explicit demo code; the reference’s accept-any-code behavior is not used. Saved local PIN/password are secondary sign-in methods. After verification, a known mobile number restores its existing local demo account; a new number enters name/date-of-birth setup and receives an empty care history. Local account snapshots remain separate. Production identification must be performed by the authentication service.
 
-Adapted the public [React Bits SpotlightCard](https://reactbits.dev/components/spotlight-card) for the care carousel, retaining its pointer-positioned radial highlight. Added a static touch treatment, semantic article support, keyboard focus and reduced-motion handling, and mapped colours to hospital theme tokens. The component’s attribution and full license are in `licenses/react-bits.md`. No animation dependency or WebGL renderer is required. Card and section spacing is tightened independently of the decorative effect.
+The reference GradientWaves source is ported with OGL, lazy loaded only for onboarding, with a static CSS fallback, reduced-motion handling and visibility suspension. It does not render behind medical records. CTAs use unmodified Tesseract buttons; the reference’s NeoPop raised-button treatment is intentionally excluded. Shared profile cards use the reference’s 158/160-degree white-to-tonal surface, inset highlight and two-stage lift shadow, translated to Tesseract tokens. The circular profile avatar uses its dark gradient, upper-left glow and inset edge recipe.
+
+## Existing patient-agent reference
+
+`DHSPL-Tatvacare/pm-agents-pwa`, prod revision `0770b5f`, supplies the quick-reply tool module and chat-bubble structure. The local `symptom-collector` adapter implements deterministic intake, editable summary and a booking-note handoff. Hosted AI, voice, orchestration and backend booking tools are not connected. No reference credentials are copied.
+
+## React Bits and documents
+
+The public [SpotlightCard](https://reactbits.dev/components/spotlight-card) supplies the restrained pointer highlight. The Medavida GradientWaves reference attributes its shader to [React Bits Gradient Waves](https://reactbits.dev/backgrounds/gradient-waves). Attribution/license are retained in `licenses/react-bits.md`. No licensed React Bits Pro source was retrieved.
+
+[PDF.js](https://mozilla.github.io/pdf.js/examples/) renders local documents in the browser; [pdf-lib](https://pdf-lib.js.org/) creates clearly labelled sample PDFs. Share uses the native file share API where supported and otherwise downloads with an explicit fallback message; Print renders all pages into a print window. Native iOS/Android document handoff is not verified.
+
+“Create ABHA” is text-only and opens the [official ABDM registration portal](https://abha.abdm.gov.in/abha/v3/). The actual ABHA logo asset is used, and linked patients receive that mark beside their name. No Aadhaar information is collected or locally generated identity claimed.
+
+## Generated images
+
+Generated with the imagegen tool on 22 September 2026: a quiet clinic waiting room, a laboratory, and three fictional family portraits. The interiors are decorative, faded into the right side of Home banners; the portraits replace initials only in the welcome family illustration. Portrait originals remain in the Codex generated-images directory; 256px JPEG derivatives are bundled under `public/images/welcome-*.jpg`. These are illustrative people, not authenticated patient photos.

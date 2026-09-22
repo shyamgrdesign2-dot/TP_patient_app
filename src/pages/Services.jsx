@@ -48,10 +48,7 @@ export function Billing() {
   }
   return (
     <div className={s.page}>
-      <PageHeader
-        title="Bills & payments"
-        subtitle="A clear view of your care costs."
-      />
+      <PageHeader title="Bills & payments" />
       <MemberContext />
       <div className={s.balanceCard}>
         <span className={s.eyebrow}>TOTAL OUTSTANDING</span>
@@ -204,10 +201,7 @@ export function Packages() {
   );
   return (
     <div className={s.page}>
-      <PageHeader
-        title="A healthier tomorrow"
-        subtitle="Thoughtful health checks for every stage of life."
-      />
+      <PageHeader title="A healthier tomorrow" />
       <MemberContext />
       {packages.map((p, i) => (
         <article className={s.packageCard} key={p.id} data-index={i}>
@@ -331,10 +325,7 @@ export function Vaccines() {
   const vaccines = state.vaccines.filter((v) => v.memberId === activeMember.id);
   return (
     <div className={s.page}>
-      <PageHeader
-        title="Vaccinations"
-        subtitle="Keep track of your preventive care."
-      />
+      <PageHeader title="Vaccinations" />
       <MemberContext />
       <div className={s.softCard}>
         <Icon name="shield-tick" size={36} bulk />
@@ -446,10 +437,7 @@ export function HomeCare() {
   ];
   return (
     <div className={s.page}>
-      <PageHeader
-        title="Care, closer to home"
-        subtitle="The comfort of home. The support you need."
-      />
+      <PageHeader title="Care, closer to home" />
       <MemberContext />
       <img
         className={s.carePhoto}
@@ -615,10 +603,7 @@ export function Inpatient() {
   const hasStay = activeMember.id === "mother";
   return (
     <div className={s.page}>
-      <PageHeader
-        title="Hospital stays"
-        subtitle="Your inpatient care, kept together."
-      />
+      <PageHeader title="Hospital stays" />
       <MemberContext />
       {hasStay ? (
         <>

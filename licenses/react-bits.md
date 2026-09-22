@@ -1,7 +1,9 @@
 # React Bits attribution
 
 The SpotlightCard component and its CSS are adapted from https://github.com/DavidHDev/react-bits/tree/main/src/content/Components/SpotlightCard.
-Adaptations: semantic element support, Tesseract theme tokens, pointer events, a static touch highlight, keyboard focus and reduced-motion support.
+GradientWaves is also adapted through the supplied Medavida/Zeva reference, which attributes the original shader to https://reactbits.dev/backgrounds/gradient-waves. Adaptations include JavaScript conversion, lazy loading, tenant colours, WebGL fallback and motion preferences.
+
+SpotlightCard adaptations: semantic element support, Tesseract theme tokens, pointer events, a static touch highlight, keyboard focus and reduced-motion support.
 
 MIT + Commons Clause License Condition v1.0
 

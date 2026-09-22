@@ -22,6 +22,9 @@
     "@dhspl-tatvacare/tesseract-ui": "file:vendor/dhspl-tatvacare-tesseract-ui-1.1.0.tgz",
     "@fontsource/inter": "^5.2.0",
     "@fontsource/mulish": "^5.2.0",
+    "ogl": "^1.0.11",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.0"

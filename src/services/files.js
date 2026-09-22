@@ -63,3 +63,32 @@ export function calendarFile(appointment, doctor, location) {
     "END:VCALENDAR",
   ].join("\r\n");
 }
+
+export async function clearFiles(preserveIds = []) {
+  const db = await openDB();
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("files", "readwrite");
+      const store = tx.objectStore("files");
+      if (!preserveIds.length) store.clear();
+      else {
+        const keep = new Set(preserveIds);
+        const cursor = store.openCursor();
+        cursor.onsuccess = () => {
+          const item = cursor.result;
+          if (!item) return;
+          if (!keep.has(item.key)) item.delete();
+          item.continue();
+        };
+      }
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () =>
+        reject(
+          tx.error || new Error("Could not remove uploaded files. Try again."),
+        );
+    });
+  } finally {
+    db.close();
+  }
+}

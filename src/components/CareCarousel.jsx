@@ -1,102 +1,101 @@
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../state/AppContext";
-import { doctors, dateKey, formatDate, money } from "../services/data";
-import { locations } from "../config/brand";
-import { Avatar, Button, Icon, IconButton } from "./ui";
+import { selectCareUpdates } from "../services/careUpdates";
+import { Avatar, Button, Icon } from "./ui";
 import SpotlightCard from "./effects/SpotlightCard";
-import s from "../App.module.css";
+import shared from "../App.module.css";
+import s from "../Home.module.css";
 
-function visitMinutes(visit) {
-  const [hour, minute, period] = visit.time.split(/[: ]/);
-  return (
-    ((Number(hour) % 12) + (period === "PM" ? 12 : 0)) * 60 + Number(minute)
-  );
-}
 export default function CareCarousel() {
   const { state, activeMember } = useApp();
+  const slides = selectCareUpdates(state, activeMember.id);
+  return (
+    <>
+      <h1 className={shared.srOnly}>Your care home</h1>
+      {slides.length > 0 && (
+        <CareBanners
+          key={`${activeMember.id}-${slides.map((slide) => slide.id).join("-")}`}
+          slides={slides}
+        />
+      )}
+    </>
+  );
+}
+function CareBanners({ slides }) {
   const navigate = useNavigate();
   const track = useRef(null);
-  const [active, setActive] = useState(0);
-  const upcoming = state.appointments
-    .filter(
-      (a) =>
-        a.memberId === activeMember.id &&
-        a.status === "Confirmed" &&
-        a.date >= dateKey(),
-    )
-    .sort(
-      (a, b) =>
-        a.date.localeCompare(b.date) || visitMinutes(a) - visitMinutes(b),
-    )
-    .slice(0, 3);
-  const latest = state.records
-    .filter((r) => r.memberId === activeMember.id && r.new)
-    .sort((a, b) => b.date.localeCompare(a.date))[0];
-  const unpaid = state.bills.filter(
-    (b) => b.memberId === activeMember.id && b.status === "Unpaid",
-  );
-  const slides = upcoming.map((visit) => ({
-    kind: "visit",
-    id: visit.id,
-    label: "Upcoming appointment",
-    visit,
-  }));
-  if (!slides.length)
-    slides.push({
-      kind: "book",
-      id: "book",
-      label: "Your next step to better health",
-    });
-  if (latest)
-    slides.push({
-      kind: "record",
-      id: latest.id,
-      label: "New health record",
-      record: latest,
-    });
-  if (unpaid.length)
-    slides.push({
-      kind: "bill",
-      id: "bills",
-      label: "Your outstanding bills",
-      total: unpaid.reduce((sum, b) => sum + b.amount, 0),
-      count: unpaid.length,
-    });
-  if (slides.length < 2)
-    slides.push({
-      kind: "checkup",
-      id: "checkup",
-      label: "Preventive health checks",
-    });
-  function go(index) {
-    const next = (index + slides.length) % slides.length;
-    const slide = track.current.children[next];
-    track.current.scrollTo({
-      left: slide.offsetLeft - track.current.children[0].offsetLeft,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "instant"
-        : "smooth",
+  const count = slides.length;
+  const start = count > 1 ? count : 0;
+  const [position, setPosition] = useState(start);
+  const physical = useRef(start);
+  const active = position % count;
+  const timer = useRef(null);
+  const repeated = count > 1 ? [...slides, ...slides, ...slides] : slides;
+  function center(index, behavior = "instant") {
+    const node = track.current;
+    const slide = node?.children[index];
+    if (!slide) return;
+    node.scrollTo({
+      top: 0,
+      left: slide.offsetLeft + slide.offsetWidth / 2 - node.clientWidth / 2,
+      behavior,
     });
   }
+  useLayoutEffect(() => {
+    const node = track.current;
+    const observer = new ResizeObserver(() => center(physical.current));
+    observer.observe(node);
+    center(start);
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer.current);
+    };
+  }, [start]);
+  function go(index) {
+    const delta = index - active;
+    center(
+      physical.current + delta,
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+    );
+  }
   function syncPosition() {
-    const children = [...track.current.children];
-    const left = track.current.scrollLeft;
-    let nearest = 0;
-    children.forEach((child, index) => {
+    const node = track.current;
+    const children = [...node.children];
+    const middle = node.scrollLeft + node.clientWidth / 2;
+    const nearest = children.reduce(
+      (best, child, index) =>
+        Math.abs(child.offsetLeft + child.offsetWidth / 2 - middle) <
+        Math.abs(
+          children[best].offsetLeft + children[best].offsetWidth / 2 - middle,
+        )
+          ? index
+          : best,
+      0,
+    );
+    physical.current = nearest;
+    setPosition(nearest);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
       if (
-        Math.abs(child.offsetLeft - children[0].offsetLeft - left) <
-        Math.abs(children[nearest].offsetLeft - children[0].offsetLeft - left)
-      )
-        nearest = index;
-    });
-    setActive(nearest);
+        count > 1 &&
+        (physical.current < count || physical.current >= count * 2)
+      ) {
+        const rebased = count + (physical.current % count);
+        physical.current = rebased;
+        setPosition(rebased);
+        center(rebased);
+      }
+    }, 180);
   }
   return (
     <section
       className={s.careCarousel}
       aria-label="Your care updates"
-      aria-roledescription="carousel"
+      aria-roledescription={count > 1 ? "carousel" : undefined}
+      data-single={count === 1}
       onKeyDown={(event) => {
         if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
           event.preventDefault();
@@ -105,171 +104,115 @@ export default function CareCarousel() {
       }}
     >
       <div className={s.bannerTrack} ref={track} onScroll={syncPosition}>
-        {slides.map((slide, index) => {
-          const doctor =
-            slide.visit && doctors.find((d) => d.id === slide.visit.doctorId);
-          return (
-            <SpotlightCard
-              as="article"
-              key={slide.id}
-              className={s.careBanner}
-              data-kind={slide.kind}
-              role="group"
-              aria-roledescription="slide"
-              aria-label={`${index + 1} of ${slides.length}: ${slide.label}`}
-              inert={active !== index}
-            >
-              {slide.kind === "visit" ? (
-                <>
-                  <div className={s.bannerTop}>
-                    <span>
-                      <Icon name="calendar-2" size={16} bulk /> YOUR NEXT VISIT
-                    </span>
-                    <span className={s.bannerStatus}>
-                      <span /> Confirmed
-                    </span>
-                  </div>
-                  <div className={s.bannerDoctor}>
-                    <Avatar
-                      src={doctor.image}
-                      name={doctor.name}
-                      size={44}
-                      shape="rounded"
-                    />
-                    <div className={s.grow}>
-                      <h2>{doctor.name}</h2>
-                      <p>{doctor.specialty}</p>
-                    </div>
-                  </div>
-                  <div className={s.bannerVisitTime}>
-                    <Icon name="calendar-2" size={18} bulk />
-                    <strong>
-                      {slide.visit.date === dateKey()
-                        ? "Today"
-                        : formatDate(slide.visit.date, { weekday: "short" })}
-                    </strong>
-                    <span className={s.bannerDivider} />
-                    <strong>{slide.visit.time}</strong>
-                  </div>
-                  <div className={s.bannerBottom}>
-                    <span>
-                      <Icon name="location" size={14} bulk />
-                      {
-                        locations.find((l) => l.id === slide.visit.location)
-                          .name
-                      }
-                    </span>
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        navigate(slide.visit.queue ? "/queue" : "/appointments")
-                      }
-                      rightIcon={<Icon name="chevron-right" size={16} />}
-                    >
-                      {slide.visit.queue ? "View queue" : "View appointment"}
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className={s.bannerTop}>
-                    <span>
-                      <Icon
-                        name={
-                          slide.kind === "bill"
-                            ? "bill"
-                            : slide.kind === "record"
-                              ? "document-text"
-                              : "health"
-                        }
-                        size={16}
-                        bulk
-                      />
-                      {slide.kind === "record"
-                        ? "A NEW UPDATE"
-                        : slide.kind === "bill"
-                          ? "BILLS & PAYMENTS"
-                          : "CARE, MADE SIMPLE"}
-                    </span>
-                    <Icon name="health" size={24} bulk />
-                  </div>
-                  <div className={s.bannerMessage}>
-                    <h2>
-                      {slide.kind === "record"
-                        ? "Your report is ready."
-                        : slide.kind === "bill"
-                          ? `${money(slide.total)} outstanding`
-                          : slide.kind === "checkup"
-                            ? "Make time for your health."
-                            : "Let’s plan your next visit."}
-                    </h2>
-                    <p>
-                      {slide.kind === "record"
-                        ? slide.record.title
-                        : slide.kind === "bill"
-                          ? `${slide.count} unpaid ${slide.count === 1 ? "bill" : "bills"} for ${activeMember.name.split(" ")[0]}`
-                          : slide.kind === "checkup"
-                            ? "Health checks designed around you."
-                            : "Find the right specialist at your hospital."}
-                    </p>
-                  </div>
-                  <div className={s.bannerBottom}>
-                    <small>For {activeMember.name.split(" ")[0]}</small>
-                    <Button
-                      size="sm"
-                      rightIcon={<Icon name="chevron-right" size={16} />}
-                      onClick={() =>
-                        navigate(
-                          slide.kind === "record"
-                            ? `/records?record=${slide.record.id}`
-                            : slide.kind === "bill"
-                              ? "/billing"
-                              : slide.kind === "checkup"
-                                ? "/packages"
-                                : "/doctors",
-                        )
-                      }
-                    >
-                      {slide.kind === "record"
-                        ? "View report"
-                        : slide.kind === "bill"
-                          ? "View bills"
-                          : slide.kind === "checkup"
-                            ? "Explore packages"
-                            : "Find a doctor"}
-                    </Button>
-                  </div>
-                </>
+        {repeated.map((slide, index) => (
+          <SpotlightCard
+            as="article"
+            key={`${slide.id}-${index}`}
+            className={s.careBanner}
+            pattern={
+              {
+                appointments: "appointments",
+                records: "records",
+                payments: "payments",
+                completed: "completed",
+                welcome: "appointments",
+              }[slide.id]
+            }
+            data-category={slide.id}
+            data-tone={slide.tone}
+            onClick={(event) => {
+              if (!event.target.closest("button")) navigate(slide.action.path);
+            }}
+            data-state={slide.state}
+            data-side={
+              index === position
+                ? "center"
+                : index < position
+                  ? "left"
+                  : "right"
+            }
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`${(index % count) + 1} of ${count}: ${slide.label}`}
+            aria-hidden={position !== index}
+            inert={position !== index}
+          >
+            <div className={s.bannerTop}>
+              <span className={s.categoryLabel}>{slide.category.label}</span>
+              <span
+                className={s.bannerStatus}
+                data-state={slide.state}
+                data-side={
+                  index === position
+                    ? "center"
+                    : index < position
+                      ? "left"
+                      : "right"
+                }
+              >
+                {["upcoming", "completed"].includes(slide.state) && (
+                  <Icon name="tick-circle" size={12} />
+                )}
+                {slide.status}
+              </span>
+            </div>
+            <div className={s.bannerContent}>
+              {["upcoming", "completed"].includes(slide.state) && (
+                <Avatar
+                  src={slide.image}
+                  name={slide.title}
+                  size={44}
+                  shape="rounded"
+                />
               )}
-            </SpotlightCard>
-          );
-        })}
+              <div className={shared.grow}>
+                <h2>{slide.title}</h2>
+                <p>{slide.description}</p>
+              </div>
+            </div>
+            <div className={s.bannerBottom}>
+              <div className={s.bannerSchedule}>
+                <strong title={slide.detail}>{slide.detail}</strong>
+                {slide.meta && (
+                  <span title={slide.meta}>
+                    {["upcoming", "completed"].includes(slide.state) && (
+                      <Icon name="location" size={13} bulk />
+                    )}
+                    {slide.meta}
+                  </span>
+                )}
+              </div>
+              <Button
+                size="sm"
+                onClick={() => navigate(slide.action.path)}
+                rightIcon={<Icon name="chevron-right" size={14} />}
+              >
+                {slide.action.label}
+              </Button>
+            </div>
+          </SpotlightCard>
+        ))}
       </div>
-      <div className={s.carouselControls}>
-        <div className={s.bannerDots}>
-          {slides.map((slide, index) => (
-            <button
-              type="button"
-              key={slide.id}
-              aria-label={`Show banner ${index + 1}: ${slide.label}`}
-              aria-pressed={active === index}
-              onClick={() => go(index)}
-            >
-              <span />
-            </button>
-          ))}
+      {count > 1 && (
+        <div className={s.carouselControls}>
+          <div className={s.bannerDots}>
+            {slides.map((slide, index) => (
+              <button
+                type="button"
+                key={slide.id}
+                aria-label={`Show banner ${index + 1}: ${slide.label}`}
+                aria-pressed={active === index}
+                onClick={() => go(index)}
+              >
+                <span />
+              </button>
+            ))}
+          </div>
+          <span className={shared.srOnly} aria-live="polite">
+            {slides[active].category.label}, {active + 1} of {slides.length}
+          </span>
         </div>
-        <span className={s.bannerCounter} aria-live="polite">
-          {active + 1} of {slides.length}
-        </span>
-        <div className={s.bannerArrows}>
-          <IconButton
-            name="chevron-right"
-            label="Next care update"
-            onClick={() => go(active + 1)}
-          />
-        </div>
-      </div>
+      )}
     </section>
   );
 }

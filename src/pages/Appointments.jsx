@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams, useParams } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+  useParams,
+  useLocation,
+} from "react-router-dom";
 import { ConfirmDialog } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../state/AppContext";
 import {
@@ -10,10 +15,12 @@ import {
   slots,
   dateKey,
 } from "../services/data";
+import { locateForCheckIn } from "../services/checkIn";
 import { locations } from "../config/brand";
 import { download, calendarFile } from "../services/files";
 import {
   Button,
+  PatientName,
   Badge,
   Avatar,
   Icon,
@@ -46,10 +53,7 @@ export function Doctors() {
   );
   return (
     <div className={s.page}>
-      <PageHeader
-        title="Find your doctor"
-        subtitle="The right care starts with the right person."
-      />
+      <PageHeader title="Find your doctor" />
       <MemberContext />
       <Field
         aria-label="Search doctors"
@@ -177,6 +181,7 @@ export function Booking() {
   const { state, activeMember, dispatch, notify } = useApp();
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const routeState = useLocation().state;
   const { doctorId } = useParams();
   const doctor = doctors.find((d) => d.id === doctorId);
   const [step, setStep] = useState(0);
@@ -184,7 +189,11 @@ export function Booking() {
   const [date, setDate] = useState(dateKey(1));
   const [time, setTime] = useState("");
   const [type, setType] = useState("In-person");
-  const [reason, setReason] = useState(params.get("reason") || "");
+  const [reason, setReason] = useState(
+    routeState?.memberId === activeMember.id
+      ? routeState.intakeNote || ""
+      : params.get("reason") || "",
+  );
   const [confirmed, setConfirmed] = useState(null);
   const { busy, error, run, setError } = useAction();
   if (!doctor)
@@ -221,6 +230,18 @@ export function Booking() {
         location,
         reason,
         source: "Patient",
+        ...(routeState?.memberId === memberId &&
+        routeState?.intakeAnswers &&
+        reason === routeState.intakeNote
+          ? {
+              symptomIntake: {
+                note: reason,
+                answers: routeState.intakeAnswers,
+                source: "local-demo",
+                updatedAt: new Date().toISOString(),
+              },
+            }
+          : {}),
       };
       dispatch({ type: "BOOK", booking });
       dispatch({ type: "SELECT_MEMBER", id: memberId });
@@ -231,7 +252,7 @@ export function Booking() {
   if (confirmed)
     return (
       <div className={s.page}>
-        <PageHeader title="You’re all booked" back={false} />
+        <PageHeader title="You’re all booked" />
         <div className={s.successHero}>
           <span>
             <Icon name="tick-circle" size={56} bulk />
@@ -254,7 +275,9 @@ export function Booking() {
           </div>
           <dl>
             <dt>Patient</dt>
-            <dd>{member.name}</dd>
+            <dd>
+              <PatientName member={member} />
+            </dd>
             <dt>When</dt>
             <dd>
               {formatDate(date)} · {time}
@@ -271,8 +294,23 @@ export function Booking() {
           Please arrive 15 minutes before your appointment and bring any
           previous reports.
         </Notice>
-        <Button fullWidth onClick={() => navigate("/appointments")}>
+        <Button
+          variant="outline"
+          fullWidth
+          onClick={() => navigate("/appointments")}
+        >
           View my appointments
+        </Button>
+        <Button
+          variant="solid"
+          fullWidth
+          onClick={() =>
+            navigate(
+              `/assistant?appointment=${encodeURIComponent(confirmed.id)}${type === "In-person" ? "&return=queue" : ""}`,
+            )
+          }
+        >
+          <Icon name="message-text" /> Share symptoms before your visit
         </Button>
         <Button
           variant="outline"
@@ -375,12 +413,16 @@ export function Booking() {
               label: `${m.name.split(" ")[0]} (${m.relation})`,
             }))}
             value={memberId}
-            onChange={setMemberId}
+            onChange={(id) => {
+              setMemberId(id);
+              if (routeState?.intakeNote && id !== routeState.memberId)
+                setReason("");
+            }}
           />
           <Field
             label="Reason for your visit (optional)"
             autoGrow
-            maxLength={600}
+            maxLength={3200}
             placeholder="Tell the doctor a little about what brings you in."
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -397,7 +439,9 @@ export function Booking() {
           <div className={s.detailCard}>
             <dl>
               <dt>Patient</dt>
-              <dd>{member.name}</dd>
+              <dd>
+                <PatientName member={member} />
+              </dd>
               <dt>Doctor</dt>
               <dd>{doctor.name}</dd>
               <dt>Date</dt>
@@ -455,8 +499,16 @@ export function Booking() {
 export function Appointments() {
   const { state, activeMember, dispatch, notify } = useApp();
   const navigate = useNavigate();
-  const [tab, setTab] = useState("Upcoming");
-  const [selected, setSelected] = useState(null);
+  const [visitParams] = useSearchParams();
+  const requested = state.appointments.find(
+    (visit) =>
+      visit.id === visitParams.get("visit") &&
+      visit.memberId === activeMember.id,
+  );
+  const [tab, setTab] = useState(
+    requested?.status === "Completed" ? "Past" : "Upcoming",
+  );
+  const [selected, setSelected] = useState(requested || null);
   const [cancel, setCancel] = useState(null);
   const [reschedule, setReschedule] = useState(false);
   const [date, setDate] = useState(dateKey(1));
@@ -478,12 +530,10 @@ export function Appointments() {
     <div className={s.page}>
       <PageHeader
         title="My visits"
-        subtitle="Every appointment, in one place."
-        back={false}
         action={
           <Button size="sm" onClick={() => navigate("/doctors")}>
             <Icon name="add" size={18} />
-            Book
+            Book appointment
           </Button>
         }
       />
@@ -586,7 +636,9 @@ export function Appointments() {
                     {formatDate(refreshSelected.date)} · {refreshSelected.time}
                   </dd>
                   <dt>Patient</dt>
-                  <dd>{activeMember.name}</dd>
+                  <dd>
+                    <PatientName member={activeMember} />
+                  </dd>
                   <dt>Visit type</dt>
                   <dd>{selected.type}</dd>
                   <dt>Reason</dt>
@@ -596,6 +648,19 @@ export function Appointments() {
                 </dl>
                 {refreshSelected.status === "Confirmed" && (
                   <>
+                    <Button
+                      variant="tonal"
+                      onClick={() =>
+                        navigate(
+                          `/assistant?appointment=${encodeURIComponent(selected.id)}`,
+                        )
+                      }
+                    >
+                      <Icon name="message-text" />{" "}
+                      {refreshSelected.symptomIntake
+                        ? "Review symptoms"
+                        : "Share symptoms before your visit"}
+                    </Button>
                     <Button onClick={() => setReschedule(true)}>
                       Reschedule visit
                     </Button>
@@ -712,90 +777,170 @@ export function Appointments() {
 export function Queue() {
   const { state, activeMember, dispatch, notify } = useApp();
   const navigate = useNavigate();
-  const appointment = state.appointments.find(
-    (a) =>
-      a.memberId === activeMember.id && a.status === "Confirmed" && a.queue,
-  );
-  const doctor = doctors.find((d) => d.id === appointment?.doctorId);
+  const [params] = useSearchParams();
+  const { busy, error, run } = useAction();
+  const appointment = state.appointments
+    .filter(
+      (item) =>
+        item.memberId === activeMember.id &&
+        (!params.get("visit") || item.id === params.get("visit")) &&
+        item.status === "Confirmed" &&
+        item.type === "In-person" &&
+        item.date >= dateKey(),
+    )
+    .sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) ||
+        Number(!!b.queue?.checkedIn) - Number(!!a.queue?.checkedIn),
+    )[0];
+  const doctor = doctors.find((item) => item.id === appointment?.doctorId);
+  const hospital = locations.find((item) => item.id === appointment?.location);
+  const checkedIn = appointment?.queue?.checkedIn;
+  const intakeReady =
+    appointment?.symptomIntake ||
+    appointment?.symptomIntakeSkipped ||
+    appointment?.symptomCollectorStatus === "completed";
+  const longWait =
+    checkedIn &&
+    appointment.queue.minutes > (appointment.queue.expectedMinutes ?? 30);
   return (
     <div className={s.page}>
-      <PageHeader
-        title="Your place in line"
-        subtitle="A little less waiting. A little more clarity."
-      />
+      <PageHeader title="Your place in line" />
       <MemberContext />
       {appointment ? (
         <>
-          <div className={s.queueCard}>
-            <Badge color="success" icon={<Icon name="activity" size={12} />}>
-              Demo queue
-            </Badge>
-            <span className={s.eyebrow}>YOUR TOKEN NUMBER</span>
-            <h1>{appointment.queue.token}</h1>
-            <p>
-              {doctor.name} · {doctor.specialty}
-            </p>
-            <div className={s.queueStats}>
-              <div>
-                <strong>{appointment.queue.ahead}</strong>
-                <small>patients ahead</small>
-              </div>
-              <div>
-                <strong>
-                  ~{appointment.queue.minutes}
-                  <em> min</em>
-                </strong>
-                <small>estimated wait</small>
-              </div>
-            </div>
-          </div>
-          <div className={s.timeline}>
-            {[
-              {
-                title: "Appointment confirmed",
-                sub: `${formatDate(appointment.date)} at ${appointment.time}`,
-                done: true,
-              },
-              {
-                title: "Check in at the hospital",
-                sub: appointment.queue.checkedIn
-                  ? "You’re checked in"
-                  : "Let reception know you’ve arrived",
-                done: appointment.queue.checkedIn,
-              },
-              {
-                title: "Your consultation",
-                sub: appointment.queue.room,
-                done: false,
-              },
-            ].map((item, i) => (
-              <div key={item.title} data-done={item.done}>
-                <span>
-                  {item.done ? (
-                    <Icon name="tick-circle" bulk size={24} />
-                  ) : (
-                    i + 1
-                  )}
+          {!checkedIn && (
+            <section className={s.detailCard}>
+              <span className={s.eyebrow}>BEFORE YOUR CONSULTATION</span>
+              <h2>
+                {intakeReady
+                  ? "You’re ready to check in"
+                  : "First, tell us how you’re feeling"}
+              </h2>
+              <p>
+                {intakeReady
+                  ? "Your appointment is confirmed. Check in when you arrive at the hospital to receive your queue token."
+                  : "Let the symptom collector guide you through your symptoms, duration, medical history and questions. Review your summary, then continue to hospital check-in."}
+              </p>
+              {!intakeReady && (
+                <>
+                  <Button
+                    fullWidth
+                    onClick={() =>
+                      navigate(
+                        `/assistant?appointment=${encodeURIComponent(appointment.id)}&return=queue`,
+                      )
+                    }
+                  >
+                    Share symptoms <Icon name="chevron-right" />
+                  </Button>
+                  <Button
+                    variant="link"
+                    fullWidth
+                    onClick={() =>
+                      dispatch({ type: "SKIP_SYMPTOMS", id: appointment.id })
+                    }
+                  >
+                    Skip symptoms for now
+                  </Button>
+                </>
+              )}
+              {appointment.symptomIntake && (
+                <Button
+                  variant="link"
+                  onClick={() =>
+                    navigate(
+                      `/assistant?appointment=${encodeURIComponent(appointment.id)}&return=queue`,
+                    )
+                  }
+                >
+                  Review my symptoms
+                </Button>
+              )}
+            </section>
+          )}
+          {(checkedIn || intakeReady) && (
+            <>
+              <div
+                className={s.queueCard}
+                data-tone={
+                  checkedIn ? (longWait ? "warning" : "success") : undefined
+                }
+              >
+                <Badge
+                  color={
+                    checkedIn ? (longWait ? "warning" : "success") : "primary"
+                  }
+                >
+                  {checkedIn
+                    ? longWait
+                      ? "Longer wait · Demo queue"
+                      : "Checked in · Demo queue"
+                    : "Hospital check-in"}
+                </Badge>
+                <span className={s.eyebrow}>
+                  {checkedIn ? "YOUR TOKEN NUMBER" : "READY FOR YOUR VISIT"}
                 </span>
-                <div>
-                  <strong>{item.title}</strong>
-                  <p>{item.sub}</p>
-                </div>
+                {checkedIn ? (
+                  <h1>{appointment.queue.token}</h1>
+                ) : (
+                  <h2>Let us know when you arrive</h2>
+                )}
+                <p>
+                  {doctor?.name} · {doctor?.specialty}
+                </p>
+                <p>
+                  <Icon name="location" bulk size={16} /> {hospital?.name} ·{" "}
+                  {formatDate(appointment.date)} · {appointment.time}
+                </p>
+                {checkedIn && (
+                  <div className={s.queueStats}>
+                    <div>
+                      <strong>{appointment.queue.ahead}</strong>
+                      <small>patients ahead</small>
+                    </div>
+                    <div>
+                      <strong>
+                        ~{appointment.queue.minutes}
+                        <em> min</em>
+                      </strong>
+                      <small>estimated wait</small>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-          <Button
-            fullWidth
-            disabled={appointment.queue.checkedIn}
-            onClick={() => {
-              dispatch({ type: "CHECK_IN", id: appointment.id });
-              notify("Demo check-in complete.");
-            }}
-          >
-            {appointment.queue.checkedIn
-              ? "You’re checked in"
-              : "I’ve arrived · Check in"}
-          </Button>
+              <ErrorText>{error}</ErrorText>
+              <Button
+                fullWidth
+                loading={busy}
+                disabled={checkedIn || appointment.date !== dateKey()}
+                onClick={() =>
+                  run(async () => {
+                    const position = await locateForCheckIn();
+                    dispatch({
+                      type: "CHECK_IN",
+                      id: appointment.id,
+                      position,
+                    });
+                    notify("Demo check-in complete. Your token is ready.");
+                  })
+                }
+              >
+                {checkedIn
+                  ? "You’re checked in"
+                  : appointment.date === dateKey()
+                    ? "I have arrived · Check in"
+                    : `Check-in opens ${formatDate(appointment.date)}`}
+              </Button>
+              {!checkedIn && (
+                <Notice>
+                  Allow location access at the hospital to generate your token.
+                  Your location is checked once and is not saved. You can also
+                  check in at reception.
+                </Notice>
+              )}
+            </>
+          )}
           <Button
             variant="outline"
             fullWidth
@@ -803,17 +948,18 @@ export function Queue() {
           >
             Hospital information & directions
           </Button>
-          <Notice>
-            Wait times are estimates and may change for urgent cases. This
-            preview shows a sample queue; live updates require the hospital
-            queue service.
-          </Notice>
+          {checkedIn && (
+            <Notice>
+              This is a demo token and estimated wait. Live queue allocation and
+              updates require the hospital queue service.
+            </Notice>
+          )}
         </>
       ) : (
         <Empty
           icon="timer"
           title="No active queue"
-          description="Your queue token will appear when the hospital opens check-in for your visit."
+          description="Your queue token will appear after you check in for a confirmed hospital visit."
           action="View appointments"
           onAction={() => navigate("/appointments")}
         />

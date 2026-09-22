@@ -11,8 +11,10 @@ import {
 import { getCredentialType, saveDemoCredential } from "../services/demoAuth";
 import {
   Button,
+  PatientName,
   Badge,
   Avatar,
+  PatternAvatar,
   Icon,
   PageHeader,
   SectionTitle,
@@ -45,6 +47,7 @@ export function More() {
     [
       "YOUR ACCOUNT",
       [
+        ["people", "Manage family", "/family"],
         ["bill", "Bills & payment history", "/billing"],
         ["link", "Link UHID / ABHA", "/link-records"],
         ["call-calling", "Emergency contacts", "/emergency"],
@@ -61,11 +64,13 @@ export function More() {
   ];
   return (
     <div className={s.page}>
-      <PageHeader title="A little more care" back={false} />
+      <PageHeader title="A little more care" />
       <button className={s.profileSummary} onClick={() => navigate("/profile")}>
-        <Avatar name={activeMember.name} size={64} color="primary" />
+        <PatternAvatar name={activeMember.name} size={64} />
         <span className={s.grow}>
-          <h2>{activeMember.name}</h2>
+          <h2>
+            <PatientName member={activeMember} />
+          </h2>
           <small>
             {activeMember.mrn} · {activeMember.relation}
           </small>
@@ -90,7 +95,7 @@ export function More() {
       ))}
       <Button
         variant="ghost"
-        theme="neutral"
+        theme="error"
         fullWidth
         onClick={() => {
           signOut();
@@ -165,13 +170,16 @@ export function Notifications() {
   );
 }
 export function Settings() {
-  const { state, dispatch, notify, resetDemo, signOut } = useApp();
+  const { state, dispatch, notify, resetDemo, signOut, deleteAccount } =
+    useApp();
   const navigate = useNavigate();
   const [security, setSecurity] = useState(false);
   const [type, setType] = useState("PIN");
   const [value, setValue] = useState("");
   const [confirm, setConfirm] = useState("");
   const [reset, setReset] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const { busy, error, run } = useAction();
   return (
     <div className={s.page}>
@@ -251,11 +259,64 @@ export function Settings() {
           patient service. Contact your hospital for help with real records.
         </p>
       </div>
+      <Button theme="error" variant="ghost" onClick={() => setDeleting(true)}>
+        Delete account
+      </Button>
+      <Sheet
+        open={deleting}
+        onClose={() => {
+          if (!busy) setDeleting(false);
+        }}
+        title="Delete your account?"
+      >
+        <p>
+          This removes your local demo profile, family profiles, bookings,
+          linked identities, saved access code and uploaded files from this
+          browser. This cannot be undone.
+        </p>
+        <Notice>
+          This preview cannot delete records held by your hospital. Contact the
+          hospital for live account or record deletion.
+        </Notice>
+        <label className={s.consentLabel}>
+          <input
+            type="checkbox"
+            checked={deleteConfirmed}
+            onChange={(event) => setDeleteConfirmed(event.target.checked)}
+          />
+          I understand that my local demo data will be permanently deleted.
+        </label>
+        <ErrorText>{error}</ErrorText>
+        <Button
+          theme="error"
+          fullWidth
+          disabled={!deleteConfirmed}
+          loading={busy}
+          onClick={() =>
+            run(async () => {
+              await deleteAccount();
+              setDeleting(false);
+              navigate("/login", { replace: true });
+            })
+          }
+        >
+          Delete my demo account
+        </Button>
+        <Button
+          variant="ghost"
+          fullWidth
+          disabled={busy}
+          onClick={() => setDeleting(false)}
+        >
+          Keep my account
+        </Button>
+      </Sheet>
       <Button variant="outline" onClick={() => setReset(true)}>
         Reset sample data
       </Button>
       <Button
         variant="ghost"
+        theme="error"
         onClick={() => {
           signOut();
           navigate("/login");
@@ -364,10 +425,7 @@ export function Branding() {
   }
   return (
     <div className={s.page}>
-      <PageHeader
-        title="Make it your hospital"
-        subtitle="One brand. Every patient touchpoint."
-      />
+      <PageHeader title="Make it your hospital" />
       <Notice>
         Brand studio · Preview configuration for hospital administrators.
       </Notice>
@@ -475,6 +533,20 @@ export function Branding() {
             }
           />
         </div>
+        <Field
+          label="Hospital emergency number"
+          type="tel"
+          value={draft.emergencyPhone || ""}
+          placeholder="Hospital-provided phone number"
+          onChange={(e) => set("emergencyPhone", e.target.value)}
+        />
+        <Field
+          label="Hospital ambulance number"
+          type="tel"
+          value={draft.ambulancePhone || ""}
+          placeholder="Hospital-provided phone number"
+          onChange={(e) => set("ambulancePhone", e.target.value)}
+        />
         <ChoiceGroup
           label="Font family"
           options={["Inter", "Mulish", "System"]}
@@ -627,10 +699,7 @@ export function Feedback() {
   const { error, run } = useAction();
   return (
     <div className={s.page}>
-      <PageHeader
-        title="We’re listening"
-        subtitle="Help us make your next visit even better."
-      />
+      <PageHeader title="We’re listening" />
       {done ? (
         <div className={s.successHero}>
           <Icon name="heart" size={56} bulk />

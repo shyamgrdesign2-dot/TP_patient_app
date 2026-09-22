@@ -6,6 +6,7 @@ export function sampleIdentity(member, method) {
   return `12-3456-7890-${suffix}`;
 }
 import { dateKey, slots, doctors } from "../services/data.js";
+import { verifyArrival } from "../services/checkIn.js";
 import { locations } from "../config/brand.js";
 export function memberExists(state, id) {
   if (!state.members.some((m) => m.id === id))
@@ -101,6 +102,52 @@ export function updateState(state, action) {
         ],
       };
     }
+    case "SAVE_SYMPTOMS": {
+      const appointment = state.appointments.find(
+        (a) => a.id === action.id && a.memberId === state.activeMember,
+      );
+      if (!appointment || appointment.status !== "Confirmed")
+        throw new Error("Choose a confirmed visit for this patient.");
+      if (
+        typeof action.note !== "string" ||
+        !action.note.trim() ||
+        action.note.length > 6000
+      )
+        throw new Error("Review your symptom summary before saving.");
+      return {
+        ...state,
+        appointments: state.appointments.map((a) =>
+          a.id === action.id
+            ? {
+                ...a,
+                symptomIntakeSkipped: false,
+                symptomIntake: {
+                  note: action.note,
+                  answers: action.answers,
+                  updatedAt: new Date().toISOString(),
+                  source: "local-demo",
+                },
+              }
+            : a,
+        ),
+      };
+    }
+    case "SKIP_SYMPTOMS": {
+      const appointment = state.appointments.find(
+        (a) =>
+          a.id === action.id &&
+          a.memberId === state.activeMember &&
+          a.status === "Confirmed",
+      );
+      if (!appointment)
+        throw new Error("Choose a confirmed visit for this patient.");
+      return {
+        ...state,
+        appointments: state.appointments.map((a) =>
+          a.id === action.id ? { ...a, symptomIntakeSkipped: true } : a,
+        ),
+      };
+    }
     case "CANCEL": {
       const appointment = state.appointments.find((a) => a.id === action.id);
       if (!appointment || appointment.status !== "Confirmed")
@@ -131,15 +178,57 @@ export function updateState(state, action) {
         ),
       };
     }
-    case "CHECK_IN":
+    case "CHECK_IN": {
+      const appointment = state.appointments.find(
+        (item) => item.id === action.id && item.memberId === state.activeMember,
+      );
+      if (!appointment)
+        throw new Error("Select an appointment for the active patient.");
+      if (
+        appointment.status === "Confirmed" &&
+        appointment.queue?.checkedIn &&
+        appointment.date === dateKey()
+      )
+        return state;
+      verifyArrival(
+        appointment,
+        locations.find((item) => item.id === appointment.location),
+        action.position,
+        dateKey(),
+      );
+      const queue = state.appointments.filter(
+        (item) =>
+          item.location === appointment.location &&
+          item.date === appointment.date &&
+          item.queue?.checkedIn,
+      );
+      const sequence =
+        Math.max(
+          0,
+          ...queue.map(
+            (item) => Number(item.queue.token.split("-").at(-1)) || 0,
+          ),
+        ) + 1;
+      const ahead = queue.filter((item) => item.status === "Confirmed").length;
       return {
         ...state,
-        appointments: state.appointments.map((a) =>
-          a.id === action.id && a.queue && a.status === "Confirmed"
-            ? { ...a, queue: { ...a.queue, checkedIn: true } }
-            : a,
+        appointments: state.appointments.map((item) =>
+          item.id === appointment.id
+            ? {
+                ...item,
+                queue: {
+                  token: `A-${String(sequence).padStart(3, "0")}`,
+                  ahead,
+                  minutes: ahead * 6,
+                  room: "Reception will guide you",
+                  checkedIn: true,
+                  checkedInAt: new Date().toISOString(),
+                },
+              }
+            : item,
         ),
       };
+    }
     case "SAVE_MEMBER": {
       if (
         !action.member.name?.trim() ||

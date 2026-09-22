@@ -7,6 +7,8 @@ import {
   Avatar,
   Badge,
   Button,
+  PatientName,
+  AbhaLogo,
   Icon,
   PageHeader,
   MemberContext,
@@ -109,10 +111,7 @@ export default function LinkRecords({ initialMethod }) {
   }
   return (
     <div className={s.page}>
-      <PageHeader
-        title="Link health records"
-        subtitle="Connect your hospital and health identities."
-      />
+      <PageHeader title="Link health records" />
       <MemberContext />
       <div className={s.linkIntro}>
         <span className={s.linkEmblem}>
@@ -246,7 +245,9 @@ export default function LinkRecords({ initialMethod }) {
             <div className={s.identityPatient}>
               <Avatar name={activeMember.name} size={44} />
               <span>
-                <strong>{activeMember.name}</strong>
+                <strong>
+                  <PatientName member={activeMember} />
+                </strong>
                 <small>
                   {activeMember.relation} · {brand.hospitalName}
                 </small>
@@ -303,7 +304,9 @@ export default function LinkRecords({ initialMethod }) {
               <>
                 <div className={s.softCard}>
                   <Badge color="success">Demo identity verified</Badge>
-                  <h3>{activeMember.name}</h3>
+                  <h3>
+                    <PatientName member={activeMember} />
+                  </h3>
                   <p>
                     {label}: {sampleIdentity(activeMember, method)}
                   </p>

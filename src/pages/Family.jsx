@@ -5,7 +5,9 @@ import { useApp } from "../state/AppContext";
 import { dateKey, formatDate } from "../services/data";
 import {
   Button,
+  PatientName,
   Avatar,
+  PatternAvatar,
   Badge,
   Icon,
   PageHeader,
@@ -139,12 +141,10 @@ export default function Family() {
     <div className={s.page}>
       <PageHeader
         title="Your family"
-        subtitle="Care is better when it’s together."
-        back={false}
         action={
           <Button size="sm" onClick={() => setParams({ add: "1" })}>
             <Icon name="add" />
-            Add
+            Add members
           </Button>
         }
       />
@@ -181,7 +181,9 @@ export default function Family() {
                 color={m.id === activeMember.id ? "primary" : "slate"}
               />
               <div className={s.grow}>
-                <h3>{m.name}</h3>
+                <h3>
+                  <PatientName member={m} />
+                </h3>
                 <p>
                   {m.relation} · {m.gender}
                 </p>
@@ -262,8 +264,10 @@ export function Profile() {
         }
       />
       <div className={s.profileHero}>
-        <Avatar name={activeMember.name} size={88} color="primary" />
-        <h1>{activeMember.name}</h1>
+        <PatternAvatar name={activeMember.name} size={88} />
+        <h1>
+          <PatientName member={activeMember} />
+        </h1>
         <p>
           {activeMember.relation} · {activeMember.mrn}
         </p>

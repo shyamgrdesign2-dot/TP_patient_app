@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../state/AppContext";
-import { locations, distanceKm } from "../config/brand";
+import { locations, distanceKm, hospitalCallHref } from "../config/brand";
 import {
-  Avatar,
+  PatientName,
   Icon,
   IconButton,
   Button,
@@ -13,7 +13,9 @@ import {
   ErrorText,
   Empty,
 } from "./ui";
-import s from "../App.module.css";
+import shared from "../App.module.css";
+import home from "../Home.module.css";
+const s = { ...shared, ...home };
 
 export default function PatientHeader() {
   const { state, activeMember, brand, dispatch } = useApp();
@@ -59,15 +61,6 @@ export default function PatientHeader() {
     <>
       <header className={s.patientHeader}>
         <div className={s.patientIdentity}>
-          <button
-            className={s.avatarButton}
-            aria-label="Switch family profile"
-            aria-haspopup="dialog"
-            aria-expanded={sheet === "family"}
-            onClick={() => setSheet("family")}
-          >
-            <Avatar name={activeMember.name} size={40} color="primary" />
-          </button>
           <div className={s.grow}>
             <button
               className={s.headerPatient}
@@ -76,8 +69,10 @@ export default function PatientHeader() {
               aria-expanded={sheet === "family"}
               onClick={() => setSheet("family")}
             >
-              <span>{activeMember.name}</span>
-              <Icon name="swap-horizontal" size={16} />
+              <PatientName member={activeMember}>
+                Hello, {activeMember.name.split(" ")[0]}
+              </PatientName>
+              <Icon name="chevron-down" size={16} />
             </button>
             <button
               className={s.headerLocation}
@@ -86,14 +81,23 @@ export default function PatientHeader() {
               aria-expanded={sheet === "location"}
               onClick={() => setSheet("location")}
             >
-              <Icon name="location" size={14} bulk />
+              <Icon name="location" size={18} bulk />
               <span>{hospital.name}</span>
-              <Icon name="chevron-right" size={12} />
             </button>
           </div>
           <div className={s.headerActions}>
             <IconButton
+              name="emergency"
+              iconSize={26}
+              label="Emergency hospital contacts"
+              aria-haspopup="dialog"
+              aria-expanded={sheet === "emergency"}
+              onClick={() => setSheet("emergency")}
+            />
+            <IconButton
               name="notification-2"
+              iconSize={24}
+              radius={12}
               label="Notifications"
               badge={unread}
               aria-haspopup="dialog"
@@ -103,6 +107,40 @@ export default function PatientHeader() {
           </div>
         </div>
       </header>
+      <Sheet
+        open={sheet === "emergency"}
+        onClose={() => setSheet(null)}
+        title="Emergency contacts"
+        description={brand.hospitalName}
+      >
+        {[
+          ["Hospital emergency", "emergencyPhone", "call-calling"],
+          ["Hospital ambulance", "ambulancePhone", "emergency"],
+        ].map(([label, key, icon]) => (
+          <div className={s.emergencyContact} key={key}>
+            <span className={s.rowIcon}>
+              <Icon name={icon} bulk size={26} />
+            </span>
+            <div className={s.grow}>
+              <strong>{label}</strong>
+              <small>
+                {hospitalCallHref(brand[key])
+                  ? brand[key]
+                  : "Number not configured"}
+              </small>
+            </div>
+            <Button
+              variant="tonal"
+              size="sm"
+              href={hospitalCallHref(brand[key])}
+              disabled={!hospitalCallHref(brand[key])}
+              aria-label={`Call ${label.toLowerCase()}`}
+            >
+              Call
+            </Button>
+          </div>
+        ))}
+      </Sheet>
       <FamilySheet open={sheet === "family"} onClose={() => setSheet(null)} />
       <Sheet
         open={sheet === "location"}

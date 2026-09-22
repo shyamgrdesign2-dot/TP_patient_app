@@ -7,9 +7,9 @@
   --tesseract-patient-touch: 44px;
   --tesseract-patient-bottom-space: 112px;
   --tesseract-patient-control-height: 48px;
-  --tesseract-patient-border-width: 10px;
-  --tesseract-patient-device-radius: 48px;
-  --tesseract-patient-sheet-radius: 32px;
+  --tesseract-patient-border-width: 1px;
+  --tesseract-patient-device-radius: 12px;
+  --tesseract-patient-sheet-radius: 14px;
 }
 * {
   box-sizing: border-box;

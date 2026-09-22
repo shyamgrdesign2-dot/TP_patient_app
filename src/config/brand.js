@@ -9,6 +9,8 @@ export const defaultBrand = {
   fontBody: "Inter, system-ui, sans-serif",
   fontHeading: "Mulish, system-ui, sans-serif",
   logo: "",
+  emergencyPhone: "",
+  ambulancePhone: "",
   appId: "in.tatvacare.practice.patient.demo",
 };
 export const brandPresets = [
@@ -85,4 +87,9 @@ export function distanceKm(a, b) {
       Math.cos(rad(b.lat)) *
       Math.sin(rad(b.lng - a.lng) / 2) ** 2;
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+export function hospitalCallHref(number) {
+  const normalized = String(number || "").replace(/[ ()-]/g, "");
+  return /^\+?\d{7,15}$/.test(normalized) ? `tel:${normalized}` : undefined;
 }

@@ -6,9 +6,8 @@ import { brandPresets } from "../config/brand";
 import s from "../App.module.css";
 const tabs = [
   { path: "/", label: "Home", icon: "home-2" },
-  { path: "/appointments", label: "Visits", icon: "calendar-2" },
+  { path: "/appointments", label: "Calendar", icon: "calendar-2" },
   { path: "/records", label: "Records", icon: "document-text" },
-  { path: "/family", label: "Family", icon: "people" },
   { path: "/more", label: "More", icon: "category" },
 ];
 export default function Shell() {
@@ -25,8 +24,8 @@ export default function Shell() {
     ? "/appointments"
     : ["/link-records", "/abha"].includes(location.pathname)
       ? "/records"
-      : location.pathname === "/profile"
-        ? "/family"
+      : ["/profile", "/family"].includes(location.pathname)
+        ? "/more"
         : null;
   const active =
     parentTab ||
@@ -35,7 +34,9 @@ export default function Shell() {
     (location.pathname === "/" ? "/" : "/more");
   const showNav =
     session &&
-    !["/welcome", "/login", "/onboarding"].includes(location.pathname) &&
+    !["/welcome", "/login", "/onboarding", "/assistant"].includes(
+      location.pathname,
+    ) &&
     !location.pathname.startsWith("/book");
   return (
     <div className={s.previewStage}>
@@ -91,18 +92,11 @@ export default function Shell() {
         </div>
       </aside>
       <div className={s.phone}>
-        <div className={s.deviceStatus} aria-hidden="true">
-          <span>9:41</span>
-          <span className={s.dynamicIsland} />
-          <div>
-            <Icon name="wifi" size={16} />
-            <Icon name="battery-full" size={20} />
-          </div>
-        </div>
-        <div className={s.appViewport}>
+        <div className={s.appViewport} data-has-nav={showNav}>
           <main className={s.scrollArea} ref={scroll} id="app-content">
             <Outlet />
           </main>
+          <div id="page-action" className={s.floatingActionSlot} />
           {showNav && (
             <nav className={s.navbar} aria-label="Main navigation">
               {tabs.map((tab) => (
@@ -139,7 +133,6 @@ export default function Shell() {
             </div>
           )}
         </div>
-        <div className={s.homeIndicator} aria-hidden="true" />
       </div>
       <span className={s.previewFoot}>
         DESIGNED WITH TESSERACT <span>·</span> BUILT AROUND YOU
