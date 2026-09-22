@@ -1,8 +1,8 @@
+import CareCarousel from "../components/CareCarousel";
 import PatientHeader from "../components/PatientHeader";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../state/AppContext";
-import { locations } from "../config/brand";
-import { doctors, formatDate } from "../services/data";
+import { formatDate } from "../services/data";
 import {
   Button,
   Badge,
@@ -16,47 +16,23 @@ import s from "../App.module.css";
 export default function Home() {
   const { state, activeMember, brand, dispatch } = useApp();
   const navigate = useNavigate();
-  const appointment = state.appointments
-    .filter((a) => a.memberId === activeMember.id && a.status === "Confirmed")
-    .sort((a, b) => a.date.localeCompare(b.date))[0];
-  const doctor = doctors.find((d) => d.id === appointment?.doctorId);
   const records = state.records.filter((r) => r.memberId === activeMember.id);
-  const firstName = activeMember.name.split(" ")[0];
+  const abhaLinked = state.healthLinks?.[activeMember.id]?.abha;
   const quick = [
-    ["calendar-add", "Book a visit", "/doctors"],
-    ["document-text", "My records", "/records"],
-    ["timer", "My queue", "/queue"],
-    ["bill", "Pay bills", "/billing"],
+    ["calendar-2", "Book Appointment", "/doctors"],
+    ["document-text", "My Records", "/records"],
+    ["timer", "Queue", "/queue"],
+    ["bill", "My Bills", "/billing"],
   ];
   return (
     <div className={s.home}>
+      <PatientHeader />
+      <h1 className={s.srOnly}>Your care home</h1>
       <div className={s.homeTop}>
-        <PatientHeader />
-        <section className={s.careHero} aria-label="Your care overview">
-          <div className={s.careHeroCopy}>
-            <span className={s.heroPill}>
-              <Icon name="health" size={16} bulk /> YOUR EVERYDAY CARE
-            </span>
-            <h1>
-              A little care.
-              <br />A healthier you.
-            </h1>
-            <p>
-              The right doctor, whenever
-              <br />
-              you need one.
-            </p>
-            <Button
-              onClick={() => navigate("/doctors")}
-              rightIcon={<Icon name="chevron-right" size={16} />}
-            >
-              Find a doctor
-            </Button>
-          </div>
-          <img src="/images/care.jpg" alt="" className={s.careHeroPhoto} />
-        </section>
+        <CareCarousel key={activeMember.id} />
       </div>
       <div className={s.homePanel}>
+        <span className={s.homeSheetGrip} aria-hidden="true" />
         <div className={s.quickActions}>
           {quick.map(([icon, label, path]) => (
             <button key={path} onClick={() => navigate(path)}>
@@ -77,68 +53,68 @@ export default function Home() {
           </span>
           <Icon name="chevron-right" size={20} />
         </button>
-        <SectionTitle
-          action="View all"
-          onAction={() => navigate("/appointments")}
+        <SectionTitle>Your health identity</SectionTitle>
+        <section
+          className={s.homeIdentityCard}
+          aria-label="ABHA and hospital identity"
         >
-          Coming up
-        </SectionTitle>
-        {appointment ? (
-          <div className={s.appointmentCard}>
-            <div className={s.appointmentDate}>
-              <span>
-                <Icon name="calendar-2" size={16} />
-                {formatDate(appointment.date, { weekday: "short" })} <i />{" "}
-                {appointment.time}
-              </span>
-              <Badge color="success" size="sm">
-                Confirmed
-              </Badge>
+          <div className={s.doctorRow}>
+            <span className={s.rowIcon}>
+              <Icon name="shield-tick" size={24} bulk />
+            </span>
+            <div className={s.grow}>
+              <h3>
+                {abhaLinked
+                  ? "Your ABHA is linked"
+                  : "One ABHA. Connected care."}
+              </h3>
+              <p>
+                {abhaLinked
+                  ? "Demo connection for this profile"
+                  : "Create an account or link your existing ABHA."}
+              </p>
             </div>
-            <div className={s.doctorRow}>
-              <Avatar
-                src={doctor.image}
-                name={doctor.name}
-                size={56}
-                shape="rounded"
-              />
-              <div className={s.grow}>
-                <h3>{doctor.name}</h3>
-                <p>{doctor.specialty}</p>
-                <small>
-                  {appointment.source === "Hospital"
-                    ? "Booked by your hospital"
-                    : `For ${firstName}`}{" "}
-                  · {appointment.type}
-                </small>
-              </div>
-            </div>
-            <div className={s.appointmentBottom}>
-              <span>
-                <Icon name="location" size={14} />
-                {locations.find((l) => l.id === appointment.location).name}
-              </span>
+          </div>
+          <div className={s.identityActions}>
+            {abhaLinked ? (
               <Button
                 variant="tonal"
-                size="sm"
-                onClick={() =>
-                  navigate(appointment.queue ? "/queue" : "/appointments")
-                }
+                fullWidth
+                onClick={() => navigate("/link-records")}
               >
-                {appointment.queue ? "View queue" : "View appointment"}
-                <Icon name="chevron-right" size={14} />
+                Manage linked identities
               </Button>
-            </div>
+            ) : (
+              <>
+                <Button onClick={() => navigate("/abha")}>Link ABHA</Button>
+                <Button
+                  href="https://abha.abdm.gov.in/abha/v3/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outline"
+                  rightIcon={<Icon name="export" size={14} />}
+                >
+                  Create ABHA
+                </Button>
+              </>
+            )}
           </div>
-        ) : (
-          <div className={s.softCard}>
-            <h3>Your next step to feeling better.</h3>
-            <p>Find the right doctor for you.</p>
-            <Button variant="tonal" onClick={() => navigate("/doctors")}>
-              Book an appointment
-            </Button>
-          </div>
-        )}
+          {!abhaLinked && (
+            <small className={s.creationHint}>
+              Creation opens the official ABDM portal.
+            </small>
+          )}
+          <button
+            className={s.uhidHomeLink}
+            onClick={() => navigate("/link-records")}
+          >
+            <Icon name="hospital" size={18} bulk />
+            <span>
+              Have a hospital UHID? <strong>Link it here</strong>
+            </span>
+            <Icon name="chevron-right" size={16} />
+          </button>
+        </section>
         <SectionTitle action="Explore" onAction={() => navigate("/packages")}>
           Stay a step ahead
         </SectionTitle>

@@ -13,13 +13,13 @@ Open **http://127.0.0.1:5178/**. Desktop shows a phone preview with hospital-bra
 
 ## What works locally
 
-- Care-focused home, location below the patient name, nearest-location lookup, glass bottom navigation with aligned labels, and animated/drag-dismissible family, location and notification sheets.
+- Sticky location-first header, a patient-specific appointment/report/bill carousel, a rounded sheet with matching blue quick actions, nearest-location lookup, glass bottom navigation, and animated/drag-dismissible family, location and notification sheets.
 - Doctor search, specialty filters, doctor profiles, slot selection, booking for a family member, appointment history, reschedule/cancel, calendar export, sample hospital-created appointments and queue check-in.
 - Guided booking assistant collecting a visit reason and duration. This is a scripted booking flow, not a medical AI or clinical triage system.
 - Per-profile records, category/search filters, sample document previews/downloads, and PDF/JPG/PNG uploads stored in browser IndexedDB.
 - Family and profile editing, emergency contacts, notification inbox, notification preferences, feedback.
 - Bill review, explicitly simulated payments, sample receipts, vaccination history, health-package and home-care requests, inpatient discharge history.
-- Patient-led UHID and ABHA linking from Records, Profile and More: sample identity entry, expiring demo OTP, explicit consent, per-family-member connection state, and unlinking. No live verification or record import.
+- Patient-led UHID and ABHA linking from Home, Records, Profile and More, plus official ABHA creation from Home: sample identity entry, expiring demo OTP, explicit consent, per-family-member connection state, and unlinking. No live verification or record import.
 - Demo OTP entry, validation and resend timer; locally hashed quick PIN/password with attempt limits. These **are not production authentication**.
 - Hospital branding presets plus custom name, logo, colours and fonts. Updates persist in this browser.
 

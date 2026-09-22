@@ -6,7 +6,7 @@ test("home uses a care overview and switches family context", async ({
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("button", { name: "Hello, Aarav" }),
+    page.getByRole("button", { name: "Care for Aarav Sharma. Switch patient" }),
   ).toContainText("Aarav");
   await page.getByRole("button", { name: "Switch family profile" }).click();
   await page
@@ -14,7 +14,9 @@ test("home uses a care overview and switches family context", async ({
     .getByRole("button", { name: /Rajesh Sharma/ })
     .click();
   await expect(
-    page.getByRole("button", { name: "Hello, Rajesh" }),
+    page.getByRole("button", {
+      name: "Care for Rajesh Sharma. Switch patient",
+    }),
   ).toContainText("Rajesh");
   await page
     .getByRole("navigation")
@@ -453,4 +455,81 @@ test("direct ABHA entry and reduced-motion sheets remain accessible", async ({
     .getByRole("button", { name: "Close", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toBeHidden();
+});
+
+test("home keeps the location header sticky and cycles through patient updates", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const header = page.locator('[class*="patientHeader"]');
+  const initial = await header.boundingBox();
+  await expect(
+    page.getByRole("group", { name: "1 of 3: Upcoming appointment" }),
+  ).toContainText("Dr. Meera Iyer");
+  await page.getByRole("button", { name: "Next care update" }).click();
+  await expect(
+    page.getByRole("button", { name: "Show banner 2: New health record" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("group", { name: "2 of 3: New health record" }),
+  ).toContainText("Complete blood count");
+  await page.getByRole("button", { name: "Next care update" }).click();
+  await expect(
+    page.getByRole("button", { name: "Show banner 3: Your outstanding bills" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("group", { name: "3 of 3: Your outstanding bills" }),
+  ).toContainText("₹700");
+  await page.locator("main").evaluate((node) => (node.scrollTop = 480));
+  const scrolled = await header.boundingBox();
+  expect(Math.abs(scrolled.y - initial.y)).toBeLessThan(1);
+  await expect(
+    page.getByRole("button", { name: /Change location/ }),
+  ).toBeInViewport();
+  await expect(page.getByRole("link", { name: "Create ABHA" })).toHaveAttribute(
+    "href",
+    "https://abha.abdm.gov.in/abha/v3/",
+  );
+  await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveAccessibleName("Link your ABHA");
+});
+
+test("home banners follow family context and quick actions use one colour", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto("/");
+  const backgrounds = await page
+    .locator('[class*="quickIcon"]')
+    .evaluateAll((nodes) =>
+      nodes.map((node) => getComputedStyle(node).backgroundImage),
+    );
+  expect(new Set(backgrounds).size).toBe(1);
+  expect(
+    await page
+      .locator("main")
+      .evaluate((node) => node.scrollWidth <= node.clientWidth + 1),
+  ).toBe(true);
+  await page.getByRole("button", { name: "Switch family profile" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /Rajesh Sharma/ })
+    .click();
+  await expect(
+    page.getByRole("group", { name: /1 of .*Upcoming appointment/ }),
+  ).toContainText("Dr. Arjun Rao");
+  await expect(
+    page.getByRole("group", { name: /Upcoming appointment/ }),
+  ).not.toContainText("Dr. Meera Iyer");
+  await page.getByRole("button", { name: "Switch family profile" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /Sunita Sharma/ })
+    .click();
+  await expect(
+    page.getByRole("group", { name: /1 of .*Your next step to better health/ }),
+  ).toContainText("Let’s plan your next visit.");
+  await expect(
+    page.getByRole("button", { name: "Find a doctor", exact: true }),
+  ).toBeVisible();
 });
