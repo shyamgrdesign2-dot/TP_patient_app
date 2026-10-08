@@ -14,6 +14,8 @@ npm run dev
 
 The project `.npmrc` reads the token from `NODE_AUTH_TOKEN`; never commit a token.
 
+**Deploying (Vercel or any CI):** add an environment variable `NODE_AUTH_TOKEN` with a GitHub token that has `read:packages` and access to the DHSPL-Tatvacare packages, for Production and Preview. `vercel.json` rewrites every route to `index.html`, so `/admin` and other deep links work on refresh.
+
 Open **http://127.0.0.1:5178/**. Desktop shows a phone preview with hospital-brand controls; phones get the full-screen app. `/welcome` opens the introduction and `/login` opens authentication. The home route starts with an explicitly sample patient session for design review. Mobile OTP code: **123456**. No SMS is sent.
 
 ## Architecture
