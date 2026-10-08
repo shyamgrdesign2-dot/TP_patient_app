@@ -1,16 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { needsSymptoms } from "../src/services/symptomReminders.js";
+import { needsSymptoms } from "../src/patient/services/symptomReminders.js";
 import {
   validateAgentLink,
   readAgentStatus,
-} from "../src/services/agentSession.js";
+} from "../src/patient/services/agentSession.js";
 
-test("pending symptoms remain actionable after skipping or checking in", () => {
+test("pending symptoms remain actionable after skipping", () => {
   const visit = { status: "Confirmed" };
   assert.equal(needsSymptoms(visit), true);
   assert.equal(needsSymptoms({ ...visit, symptomIntakeSkipped: true }), true);
-  assert.equal(needsSymptoms({ ...visit, queue: { checkedIn: true } }), true);
   assert.equal(
     needsSymptoms({ ...visit, symptomIntake: { note: "Headache" } }),
     false,

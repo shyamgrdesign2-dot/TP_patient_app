@@ -1,0 +1,931 @@
+/* Home has one geometry contract, independent of the legacy page styles.
+   Type follows the shared ladder: greeting h5 > section h5 > row title
+   body-sm semibold > meta body-xs. Surfaces are flat Tesseract tokens. */
+.home {
+  --tesseract-patient-header-height: 72px;
+  --tesseract-home-inset: var(--tesseract-space-5);
+  --tesseract-home-card-radius: var(--tesseract-radius-16);
+  isolation: isolate;
+  min-height: 100%;
+  background: var(--tesseract-bg-page);
+}
+
+/* Header ------------------------------------------------------------------ */
+.patientHeader {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: var(--tesseract-patient-header-height);
+  padding: var(--tesseract-space-1-5) var(--tesseract-home-inset);
+  display: flex;
+  align-items: center;
+  background: var(--tesseract-bg-surface);
+  border-bottom: 1px solid var(--tesseract-border-soft);
+}
+.patientIdentity {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: var(--tesseract-space-3);
+}
+.headerPatient,
+.headerLocation {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.headerPatient {
+  min-height: var(--tesseract-size-28);
+  gap: var(--tesseract-space-1);
+  font-family: var(--tesseract-font-heading);
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+  color: var(--tesseract-fg-heading);
+}
+.headerPatient > span:first-child,
+.headerLocation > span:nth-child(2) {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* Only the branch is underlined, so it reads as tappable. */
+.headerLocation > span:nth-child(2) {
+  text-decoration: underline;
+  text-decoration-color: var(--tesseract-border-strong);
+  text-underline-offset: 3px;
+}
+.headerLocation:hover > span:nth-child(2) {
+  text-decoration-color: currentColor;
+}
+.headerPatient > span:last-child {
+  color: var(--tesseract-fg-tertiary);
+  flex-shrink: 0;
+}
+.headerLocation {
+  min-height: var(--tesseract-size-24);
+  gap: var(--tesseract-space-1);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.headerLocation > span:first-child {
+  flex-shrink: 0;
+  color: var(--tesseract-fg-link);
+}
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  flex-shrink: 0;
+}
+.headerActions > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tesseract-patient-touch);
+  height: var(--tesseract-patient-touch);
+  min-width: var(--tesseract-patient-touch);
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--tesseract-radius-12) !important;
+  box-shadow: none;
+}
+.headerActions > button > span {
+  gap: 0;
+}
+/* Emergency reads as a distinct, urgent affordance; the bell stays quiet. */
+.headerActions > .headerEmergency {
+  background: var(--tesseract-bg-error-soft) !important;
+  color: var(--tesseract-fg-error);
+}
+/* Same soft tile as the emergency button, in neutral grey. */
+.headerActions > .headerBell {
+  background: var(--tesseract-bg-subtle) !important;
+  color: var(--tesseract-fg-secondary);
+}
+.headerActions > .headerBell:hover {
+  background: var(--tesseract-slate-200) !important;
+}
+
+/* Care carousel ----------------------------------------------------------- */
+.homeTop {
+  position: sticky;
+  top: var(--tesseract-patient-header-height);
+  z-index: 0;
+  padding: 0 0 var(--tesseract-space-2);
+}
+.homeTop:not(:has(section)) {
+  padding: 0;
+}
+.careCarousel {
+  min-width: 0;
+  padding-top: var(--tesseract-space-4);
+}
+.careCarousel[data-single="true"] {
+  padding: var(--tesseract-space-4) var(--tesseract-home-inset)
+    var(--tesseract-space-2);
+}
+.careCarousel[data-single="true"] .bannerTrack {
+  overflow: hidden;
+}
+.careCarousel[data-single="true"] .careBanner {
+  flex-basis: 100%;
+}
+.bannerTrack {
+  position: relative;
+  display: flex;
+  gap: var(--tesseract-space-2-5);
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
+  touch-action: pan-x pinch-zoom;
+  border-radius: 0;
+}
+.bannerTrack::-webkit-scrollbar {
+  display: none;
+}
+/* One brand surface. Tesseract's --tesseract-gradient-primary-card is fixed
+   hex (not remapped by createTheme), so the same single layer is drawn from
+   the brand ramp to keep white-label hospitals on their own colour. */
+.careBanner {
+  flex: 0 0 calc((100% - var(--tesseract-space-5)) / 1.18);
+  min-width: 0;
+  min-height: 196px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-3-5) var(--tesseract-space-4);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  border: 0;
+  border-radius: var(--tesseract-home-card-radius);
+  /* Light-to-dark depth with a soft glow in the top-right corner. */
+  --tesseract-care-from: var(--tesseract-blue-500);
+  --tesseract-care-to: var(--tesseract-blue-900);
+  background:
+    radial-gradient(
+      120% 90% at 100% 0%,
+      color-mix(in srgb, var(--tesseract-slate-0) 16%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(
+      150deg,
+      var(--tesseract-care-from),
+      var(--tesseract-care-to) 75%
+    );
+  color: var(--tesseract-on-dark);
+  box-shadow: none;
+  --tesseract-spotlight-color: color-mix(
+    in srgb,
+    var(--tesseract-on-dark) 16%,
+    transparent
+  );
+  --tesseract-grid-color: color-mix(
+    in srgb,
+    var(--tesseract-on-dark) 25%,
+    transparent
+  );
+  --tesseract-care-pattern: var(--tesseract-on-dark);
+  transition:
+    transform 240ms ease,
+    opacity 240ms ease;
+}
+.careBanner:not([inert]) {
+  cursor: pointer;
+}
+.careBanner[data-side="left"] {
+  transform: perspective(700px) rotateY(16deg) scale(0.95);
+  transform-origin: right center;
+  opacity: 0.8;
+}
+.careBanner[data-side="right"] {
+  transform: perspective(700px) rotateY(-16deg) scale(0.95);
+  transform-origin: left center;
+  opacity: 0.8;
+}
+/* ABHA is always a green card, whatever its link state. */
+.careBanner[data-category="abha"] {
+  --tesseract-care-from: var(--tesseract-success-500);
+  --tesseract-care-to: var(--tesseract-success-900);
+  --tesseract-care-accent: var(--tesseract-success-800);
+  --tesseract-spotlight-color: color-mix(
+    in srgb,
+    var(--tesseract-slate-0) 18%,
+    transparent
+  );
+}
+.careBanner[data-category="abha"] .bannerBottom > button {
+  color: var(--tesseract-success-800) !important;
+}
+.careBanner[data-category="abha"] .bannerBottom > button [data-tp-icon] {
+  color: inherit;
+}
+/* Records: a deeper navy so it reads apart from the Appointments blue. */
+.careBanner[data-tone="neutral"] {
+  --tesseract-care-from: var(--tesseract-blue-700);
+  --tesseract-care-to: var(--tesseract-blue-900);
+}
+.careBanner[data-tone="neutral"] .bannerBottom > button {
+  color: var(--tesseract-blue-800) !important;
+}
+.careBanner[data-tone="success"] {
+  --tesseract-care-from: var(--tesseract-success-600);
+  --tesseract-care-to: var(--tesseract-success-900);
+  --tesseract-care-accent: var(--tesseract-success-800);
+}
+.careBanner[data-tone="warning"] {
+  --tesseract-care-from: var(--tesseract-warning-600);
+  --tesseract-care-to: var(--tesseract-warning-900);
+  --tesseract-care-accent: var(--tesseract-warning-800);
+}
+.bannerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-1);
+}
+.categoryLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  letter-spacing: normal;
+  color: var(--tesseract-on-dark);
+}
+/* Linked ABHA: the address is the headline; a lone action spans the row. */
+.careBanner[data-state="linked"] .bannerContent h2 {
+  font-weight: var(--tesseract-weight-bold);
+  overflow-wrap: anywhere;
+}
+.careBanner[data-state="linked"] .bannerContent p {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.bannerBottom[data-single] > button {
+  flex: 1;
+  max-width: none !important;
+}
+/* ABHA logo as a single-colour mark, so it can take the white label colour. */
+.abhaMark {
+  flex-shrink: 0;
+  width: var(--tesseract-size-16);
+  height: var(--tesseract-size-16);
+  background: currentColor;
+  -webkit-mask: url("/brand/abha.svg") center / contain no-repeat;
+  mask: url("/brand/abha.svg") center / contain no-repeat;
+}
+/* Glass status pill: a soft Badge fails contrast on the dark card. */
+.bannerStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  padding: var(--tesseract-space-1) var(--tesseract-space-2);
+  background: color-mix(in srgb, var(--tesseract-on-dark) 14%, transparent);
+  border-radius: var(--tesseract-radius-full);
+  color: var(--tesseract-on-dark);
+  font-size: var(--tesseract-text-caption-sm);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-medium);
+  white-space: nowrap;
+}
+.bannerContent {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  flex: 1;
+}
+.bannerContent h2 {
+  color: var(--tesseract-on-dark);
+  font-size: var(--tesseract-text-h4);
+  line-height: var(--tesseract-text-h4-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+}
+.bannerContent p {
+  color: color-mix(in srgb, var(--tesseract-on-dark) 88%, transparent);
+  margin-top: var(--tesseract-space-1);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+}
+.bannerIdentity {
+  flex: 0 0 var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  display: grid;
+  place-items: center;
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-surface);
+}
+.bannerIdentity img {
+  width: var(--tesseract-size-28);
+  height: var(--tesseract-size-28);
+}
+.bannerBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: var(--tesseract-space-2);
+  padding-top: var(--tesseract-space-3);
+  border-top: 1px solid
+    color-mix(in srgb, var(--tesseract-on-dark) 20%, transparent);
+}
+.bannerSchedule {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-0-5);
+}
+.bannerSchedule strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.bannerSchedule > span {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: color-mix(in srgb, var(--tesseract-on-dark) 88%, transparent);
+}
+.bannerBottom > button {
+  margin-left: auto;
+  max-width: 54%;
+  min-width: 0;
+  min-height: var(--tesseract-size-36);
+  height: var(--tesseract-size-36);
+  flex-shrink: 0;
+  padding-inline: var(--tesseract-space-2-5) !important;
+  font-family: var(--tesseract-font-body);
+  font-size: var(--tesseract-text-caption);
+  font-weight: var(--tesseract-weight-semibold);
+  box-shadow: none;
+}
+.careBanner .bannerBottom > button[data-variant="solid"] {
+  background: var(--tesseract-bg-surface);
+  border-color: var(--tesseract-bg-surface);
+  color: var(--tesseract-fg-link);
+  box-shadow: none;
+}
+.careBanner .bannerBottom > button[data-ai="true"] {
+  padding-inline: var(--tesseract-space-2) !important;
+  max-width: 56%;
+}
+.careBanner:is([data-tone="success"], [data-tone="warning"])
+  .bannerBottom
+  > button {
+  color: var(--tesseract-care-accent) !important;
+}
+.careBanner:is([data-tone="success"], [data-tone="warning"])
+  .bannerBottom
+  > button
+  [data-tp-icon] {
+  color: inherit;
+}
+.carouselControls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--tesseract-space-0-5);
+  height: var(--tesseract-size-28);
+  margin-top: var(--tesseract-space-1);
+}
+.bannerDots {
+  display: flex;
+  align-items: center;
+}
+.bannerDots button {
+  width: var(--tesseract-size-24);
+  height: var(--tesseract-size-28);
+  border: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: none;
+  border-radius: var(--tesseract-radius-full);
+}
+.bannerDots button > span {
+  width: var(--tesseract-size-6);
+  height: var(--tesseract-size-6);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-slate-300);
+  transition:
+    width var(--tesseract-duration-150, 150ms),
+    background var(--tesseract-duration-150, 150ms);
+}
+.bannerDots button[aria-pressed="true"] > span {
+  width: var(--tesseract-size-18);
+  background: var(--tesseract-blue-500);
+}
+
+/* Foreground sheet -------------------------------------------------------- */
+.homePanel {
+  position: relative;
+  z-index: 2;
+  padding: var(--tesseract-space-6) var(--tesseract-home-inset)
+    var(--tesseract-patient-bottom-space);
+  background: var(--tesseract-bg-surface);
+  border: 0;
+  border-radius: var(--tesseract-radius-16) var(--tesseract-radius-16) 0 0;
+  box-shadow: var(--tesseract-shadow-xs);
+  transition: box-shadow var(--tesseract-duration-150, 150ms) ease;
+}
+.homePanel[data-scrolled="true"] {
+  box-shadow: var(--tesseract-shadow-lg);
+}
+.homeSheetTop {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: var(--tesseract-size-24);
+  margin: calc(var(--tesseract-space-4) * -1) 0 var(--tesseract-space-3);
+  padding: var(--tesseract-space-2) 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+.homeSheetGrip {
+  display: block;
+  margin: 0 auto;
+  height: var(--tesseract-size-4);
+  width: var(--tesseract-size-28);
+  background: var(--tesseract-slate-200);
+  border-radius: var(--tesseract-radius-full);
+}
+
+/* Quick actions: four identical brand-soft tiles (asserted: one background),
+   each filling its column so the row reads as one evenly spaced set. */
+.quickActions {
+  display: grid;
+  grid-template-columns: repeat(var(--quick-count, 4), minmax(0, 1fr));
+  gap: var(--tesseract-space-3);
+}
+.quickActions > button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  min-width: 0;
+  min-height: 84px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+  color: var(--tesseract-fg-primary);
+  font-size: var(--tesseract-text-caption-lg);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-medium);
+}
+.quickActions > button > span:last-child {
+  white-space: nowrap;
+}
+.quickIcon {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 76px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  color: var(--tesseract-fg-link);
+  border-radius: var(--tesseract-radius-16);
+  border: 0;
+  background: var(--tesseract-bg-brand-soft);
+  box-shadow: none;
+  transition: background var(--tesseract-duration-150, 150ms);
+}
+.quickActions > button:hover .quickIcon {
+  background-color: var(--tesseract-blue-100);
+}
+
+/* Sections ---------------------------------------------------------------- */
+.sectionHeading {
+  margin: var(--tesseract-space-6) 0 var(--tesseract-space-2-5);
+  min-height: var(--tesseract-size-28);
+}
+
+.recordsList {
+  overflow: hidden;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+}
+.recordsList > button {
+  padding: var(--tesseract-space-3-5);
+  gap: var(--tesseract-space-3);
+}
+.recordsList > button > span:first-child {
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  border-radius: var(--tesseract-radius-10);
+}
+.recordMeta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-2);
+}
+
+.homeIdentityCard {
+  position: relative;
+  overflow: hidden;
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+}
+.homeIdentityCard h3 {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  letter-spacing: normal;
+}
+.homeIdentityCard p {
+  margin-top: var(--tesseract-space-0-5);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.homeIdentityCard > div:first-child > span:first-child {
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-bg-brand-soft);
+}
+.identityActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--tesseract-space-2);
+  margin-top: var(--tesseract-space-4);
+}
+.identityActions > :only-child {
+  grid-column: 1 / -1;
+}
+.identityActions > :is(button, a) {
+  padding: 0 var(--tesseract-space-2-5);
+  font-size: var(--tesseract-text-body-xs);
+  box-shadow: none;
+}
+
+.wellnessCard {
+  isolation: isolate;
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 184px;
+  padding: var(--tesseract-space-4-5);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  overflow: hidden;
+  text-align: left;
+  background: var(--tesseract-bg-brand-soft);
+}
+.wellnessCard > div {
+  position: relative;
+  z-index: 2;
+  max-width: 75%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.wellnessCard::before {
+  z-index: 1;
+  position: absolute;
+  content: "";
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--tesseract-bg-brand-soft) 25%,
+    color-mix(in srgb, var(--tesseract-bg-brand-soft) 94%, transparent) 48%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+.wellnessPhoto {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 60%;
+  object-fit: cover;
+  object-position: 55% center;
+}
+.wellnessCard h3 {
+  margin: var(--tesseract-space-2-5) 0 var(--tesseract-space-1);
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+}
+.wellnessCard p {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.wellnessCard > div > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  margin-top: var(--tesseract-space-3);
+  font-size: var(--tesseract-text-body-xs);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-link);
+}
+
+/* Members and "Add new" share one row: four across, scrolling past that. */
+.familyMini {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - var(--tesseract-space-2) * 3) / 4);
+  gap: var(--tesseract-space-2);
+  margin: 0 calc(var(--tesseract-home-inset) * -1);
+  padding: 0 var(--tesseract-home-inset);
+  overflow-x: auto;
+  scroll-padding-inline: var(--tesseract-home-inset);
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.familyMini::-webkit-scrollbar {
+  display: none;
+}
+.familyMini > button {
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.familyMini button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  padding: var(--tesseract-space-3) var(--tesseract-space-0-5);
+  border: 1px solid transparent;
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-subtle, var(--tesseract-slate-50));
+}
+.familyMini button[data-active="true"] {
+  background: var(--tesseract-bg-selected);
+  border-color: var(--tesseract-border-primary);
+}
+.familyMini strong {
+  margin-top: var(--tesseract-space-0-5);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.familyMini small {
+  font-size: var(--tesseract-text-caption-sm);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+
+.homeFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-2-5);
+  padding-top: var(--tesseract-space-8);
+}
+.homeFooter p {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+}
+.homeFooter small {
+  font-size: var(--tesseract-text-caption-sm);
+}
+
+.emergencyContact {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+}
+.emergencyContact strong,
+.emergencyContact small {
+  display: block;
+}
+.emergencyContact small {
+  margin-top: var(--tesseract-space-0-5);
+}
+
+/* Narrow phones: layout only, the type ladder does not shrink. */
+@media (max-width: 360px) {
+  .home {
+    --tesseract-home-inset: var(--tesseract-space-4);
+  }
+  .headerActions {
+    gap: 0;
+  }
+  .patientIdentity {
+    gap: var(--tesseract-space-2);
+  }
+  .careBanner {
+    min-height: 210px;
+    padding: var(--tesseract-space-3-5);
+  }
+  .bannerContent {
+    gap: var(--tesseract-space-2);
+  }
+  /* Keep the full date and time visible beside the action on narrow phones. */
+  .bannerBottom {
+    gap: var(--tesseract-space-1);
+  }
+  .bannerSchedule strong {
+    font-size: var(--tesseract-text-caption);
+    line-height: var(--tesseract-text-caption-lh);
+  }
+  .bannerBottom > button,
+  .careBanner .bannerBottom > button[data-ai="true"] {
+    padding-inline: var(--tesseract-space-1-5) !important;
+    font-size: var(--tesseract-text-caption-sm);
+  }
+  .quickActions > button {
+    font-size: var(--tesseract-text-caption);
+  }
+  .quickIcon {
+    height: var(--tesseract-size-56, 56px);
+  }
+  .homeIdentityCard {
+    padding: var(--tesseract-space-3-5);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .careBanner {
+    transition: none;
+  }
+  .careBanner[data-side] {
+    transform: none;
+  }
+}
+
+/* Past consultations rail */
+.pastRail {
+  display: flex;
+  gap: var(--tesseract-space-2-5);
+  margin: 0 calc(var(--tesseract-home-inset) * -1);
+  padding: var(--tesseract-space-0-5) var(--tesseract-home-inset) var(--tesseract-space-1);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--tesseract-home-inset);
+  scrollbar-width: none;
+}
+.pastRail::-webkit-scrollbar {
+  display: none;
+}
+/* Past consultations: the My visits card, full width with a peek of the
+   next one when there are several. */
+.visitRail {
+  display: flex;
+  gap: var(--tesseract-space-3);
+  margin: 0 calc(var(--tesseract-home-inset) * -1);
+  padding: var(--tesseract-space-0-5) var(--tesseract-home-inset)
+    var(--tesseract-space-1);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--tesseract-home-inset);
+  scrollbar-width: none;
+}
+.visitRail::-webkit-scrollbar {
+  display: none;
+}
+.visitCard {
+  flex: 0 0 calc(100% - var(--tesseract-space-8));
+  min-width: 0;
+  border: 1px solid var(--tesseract-border-soft);
+  scroll-snap-align: start;
+}
+.visitRail[data-single] .visitCard {
+  flex-basis: 100%;
+}
+
+/* Packages promo: an image-led green banner, then a short card rail. */
+.packagesBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  margin-top: var(--tesseract-space-6);
+}
+.packagePromo {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 152px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--tesseract-home-card-radius);
+  background:
+    radial-gradient(
+      120% 90% at 100% 0%,
+      color-mix(in srgb, var(--tesseract-slate-0) 16%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(
+      150deg,
+      var(--tesseract-success-500),
+      var(--tesseract-success-900) 80%
+    );
+  color: var(--tesseract-on-dark);
+  text-align: left;
+}
+.promoText {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1 1 62%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tesseract-space-1);
+  min-width: 0;
+  padding: var(--tesseract-space-4);
+}
+.promoEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  margin-bottom: var(--tesseract-space-1);
+  padding: var(--tesseract-space-0-5) var(--tesseract-space-2);
+  border-radius: var(--tesseract-radius-full);
+  background: color-mix(in srgb, var(--tesseract-on-dark) 16%, transparent);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.promoText strong {
+  font-family: var(--tesseract-font-heading);
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+}
+.promoText small {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: color-mix(in srgb, var(--tesseract-on-dark) 88%, transparent);
+}
+.promoCta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  margin-top: auto;
+  padding: var(--tesseract-space-1-5) var(--tesseract-space-3);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-bg-surface);
+  color: var(--tesseract-success-800);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.promoCta [data-tp-icon] {
+  color: inherit;
+}
+.promoText small + .promoCta {
+  margin-top: var(--tesseract-space-3);
+}
+.promoMedia {
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: 1;
+  width: 44%;
+}
+/* The hospital's photo fades into the green so the copy stays legible. */
+.promoMedia > span:not(.promoArt) {
+  height: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 45%);
+  mask-image: linear-gradient(90deg, transparent, black 45%);
+}
+.promoArt {
+  position: absolute;
+  right: calc(var(--tesseract-space-5) * -1);
+  bottom: calc(var(--tesseract-space-6) * -1);
+  color: color-mix(in srgb, var(--tesseract-on-dark) 18%, transparent);
+  transform: rotate(-10deg);
+}

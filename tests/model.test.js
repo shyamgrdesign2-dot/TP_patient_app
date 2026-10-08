@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { initialState, dateKey } from "../src/services/data.js";
-import { updateState } from "../src/state/model.js";
+import { initialState, dateKey } from "../src/shared/data.js";
+import { updateState } from "../src/patient/state/model.js";
 const booking = (overrides = {}) => ({
   id: "test-booking",
   memberId: "father",
@@ -85,20 +85,6 @@ test("record cannot attach to an unknown profile", () => {
     /authorised/,
   );
 });
-test("demo payment can settle an invoice only once", () => {
-  const state = updateState(initialState(), {
-    type: "PAY_DEMO",
-    id: "INV-1048",
-    method: "UPI",
-  });
-  assert.equal(state.bills[0].status, "Paid");
-  assert.match(state.bills[0].transaction, /^DEMO-/);
-  assert.throws(
-    () =>
-      updateState(state, { type: "PAY_DEMO", id: "INV-1048", method: "UPI" }),
-    /already paid/,
-  );
-});
 test("profile updates preserve MRN, and future birth dates are rejected", () => {
   const s = initialState();
   const member = { ...s.members[0], name: "Edited name" };
@@ -176,7 +162,7 @@ test("identity linking requires profile match, consent and unexpired demo verifi
   }
   const state = updateState(initialState(), action);
   assert.equal(state.healthLinks.self.uhid.identifier, "TP-10482");
-  assert.equal(state.healthLinks.father, undefined);
+  assert.equal(state.healthLinks.father.uhid, undefined);
   assert.equal(state.records.length, initialState().records.length);
   const unlinked = updateState(state, {
     type: "UNLINK_IDENTITY_DEMO",
@@ -185,4 +171,44 @@ test("identity linking requires profile match, consent and unexpired demo verifi
   });
   assert.equal(unlinked.healthLinks.self.uhid, null);
   assert.deepEqual(unlinked.records, state.records);
+});
+
+test("package booking requests are added with a notice and only requested ones cancel", () => {
+  const s = updateState(initialState(), {
+    type: "PACKAGE_REQUEST",
+    request: {
+      memberId: "father",
+      kind: "vaccine",
+      itemId: "influenza",
+      itemName: "Influenza (quadrivalent)",
+      price: 1950,
+      clinic: "indiranagar",
+      clinicName: "Indiranagar",
+      date: dateKey(2),
+    },
+  });
+  assert.equal(s.packageRequests[0].status, "Requested");
+  assert.equal(s.notifications[0].type, "package");
+  assert.equal(s.notifications[0].memberId, "father");
+  assert.throws(
+    () =>
+      updateState(s, {
+        type: "PACKAGE_REQUEST",
+        request: { ...s.packageRequests[0], id: "x", date: dateKey(-1) },
+      }),
+    /future date/,
+  );
+  const c = updateState(s, {
+    type: "PACKAGE_REQUEST_CANCEL",
+    id: s.packageRequests[0].id,
+  });
+  assert.equal(c.packageRequests[0].status, "Cancelled");
+  assert.throws(
+    () =>
+      updateState(c, {
+        type: "PACKAGE_REQUEST_CANCEL",
+        id: s.packageRequests[0].id,
+      }),
+    /awaiting confirmation/,
+  );
 });

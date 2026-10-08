@@ -13,7 +13,7 @@
 | Family               | Add/edit/switch, relationship, permission acknowledgment                                               | Verified adult delegation, guardianship, revoke/access audit                      |
 | Records              | Separate profiles, filter/search/view, upload/download                                                 | EMR release workflow, signed files, malware scan, authorization                   |
 | IPD                  | Sample stay and discharge records on the mother profile                                                | Admission service and patient-visible care updates                                |
-| Billing              | Invoice detail, outstanding balance, demo payment and receipt                                          | Gateway sandbox/live, webhook verification, refunds, insurance                    |
+| Billing              | View-only: generated invoices, outstanding balance, paid status and receipt download. No in-app payment                                          | Gateway sandbox/live, webhook verification, refunds, insurance                    |
 | UHID / ABHA          | Patient-led sample verification, consent, scoped link/unlink                                           | Actual ABDM identity, consent, discovery and linking                              |
 | Vaccinations         | Per-profile sample history, consultation request                                                       | Clinician-managed schedule and eligibility                                        |
 | Packages             | Catalog/details, date/collection request                                                               | Service catalog, scheduling, preparation, pricing                                 |

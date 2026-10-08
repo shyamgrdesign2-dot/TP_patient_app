@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { fileURLToPath } from "node:url";
 
 test("home uses a care overview and switches family context", async ({
   page,
@@ -51,15 +52,13 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
     .click();
   await page.getByRole("button", { name: "09:00 AM", exact: true }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Rajesh (Father)", exact: true })
-    .click();
+  await page.getByRole("radio", { name: /^Rajesh .*\(Father\)/ }).click();
   await expect(page.getByLabel("Reason for your visit (optional)")).toHaveCount(
     0,
   );
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
-    .getByRole("button", { name: "Confirm demo appointment", exact: true })
+    .getByRole("button", { name: "Confirm appointment", exact: true })
     .click();
   await expect(
     page.getByText("Your appointment is confirmed.", { exact: true }),
@@ -92,7 +91,7 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
     .getByRole("alertdialog")
     .getByRole("button", { name: "Cancel appointment", exact: true })
     .click();
-  await page.getByRole("button", { name: "Cancelled", exact: true }).click();
+  await page.getByRole("radio", { name: "Cancelled", exact: true }).click();
   await expect(page.getByText("Dr. Meera Iyer", { exact: true })).toBeVisible();
 });
 
@@ -128,41 +127,51 @@ test("record uploads persist and are attached to the current patient", async ({
   expect((await download).suggestedFilename()).toBe("sample.png");
 });
 
-test("billing demo is explicit and receipt survives reload", async ({
+test("billing is view-only with invoice and receipt downloads", async ({
   page,
 }) => {
   await page.goto("/billing");
   await page.getByRole("button", { name: /INV-1048/ }).click();
-  await page.getByRole("button", { name: /Simulate payment/ }).click();
   await expect(
-    page.getByText("No money was charged. This is a payment-flow preview."),
+    page.getByText(/Please pay at the hospital billing desk/),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: /pay/i })).toHaveCount(0);
+  const invoice = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download invoice" }).click();
+  expect((await invoice).suggestedFilename()).toBe("INV-1048-invoice.txt");
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  await page.reload();
-  await page.getByRole("button", { name: "Unpaid", exact: true }).click();
-  await expect(page.getByText("No bills to show")).toBeVisible();
+  await page.getByRole("button", { name: /INV-1021/ }).click();
+  const receipt = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download receipt" }).click();
+  expect((await receipt).suggestedFilename()).toBe("INV-1021-receipt.txt");
 });
 
-test("branding applies name colour font and logo globally", async ({
+test("branding lives in the admin console, not the patient app", async ({
   page,
+  context,
 }) => {
+  // Theme now sits inside App configuration; the old /admin/theme redirects.
+  await page.goto("/more");
+  await expect(page.getByText("Hospital branding preview")).toHaveCount(0);
   await page.goto("/branding");
-  await page.getByRole("button", { name: /Coastal Health/ }).click();
-  await expect(page).toHaveTitle(/Coastal Health/);
-  await page.getByLabel("App name", { exact: true }).fill("Orchid Health");
-  await page
-    .getByLabel("Hospital name", { exact: true })
-    .fill("Orchid Hospital");
-  await page.getByLabel("Primary colour", { exact: true }).fill("#205c44");
-  await page.getByRole("button", { name: "Mulish", exact: true }).click();
-  await page.getByRole("button", { name: "Apply hospital branding" }).click();
-  await page
-    .getByRole("navigation")
-    .getByRole("button", { name: "Home", exact: true })
-    .click();
   await expect(
-    page.getByRole("button", { name: /Orchid Hospital/ }),
+    page.getByRole("heading", { name: "Page not found" }),
   ).toBeVisible();
+  const admin = await context.newPage();
+  await admin.goto("/admin/theme");
+  await admin.getByRole("radio", { name: /Admin doctor/ }).click();
+  await admin
+    .getByRole("button", { name: "Continue with Tatva Practice" })
+    .click();
+  await expect(admin).toHaveURL(/\/admin\/app$/);
+  // App configuration opens on the preview and summary; Edit opens the form.
+  await expect(admin.getByTitle("Patient app preview")).toBeVisible();
+  await admin.getByRole("button", { name: "Edit", exact: true }).click();
+  await admin.getByLabel("Primary colour picker").fill("#205c44");
+  await admin.getByLabel("Heading font").selectOption("Poppins");
+  await admin.getByRole("button", { name: "Save changes" }).click();
+  await expect(admin.getByRole("button", { name: "Save changes" })).toHaveCount(0);
+  await page.goto("/");
   expect(
     await page
       .locator("html")
@@ -170,13 +179,90 @@ test("branding applies name colour font and logo globally", async ({
         getComputedStyle(el).getPropertyValue("--tesseract-blue-500").trim(),
       ),
   ).toBe("#205c44");
+  // The chosen Google font is loaded and applied to headings.
+  await expect(
+    page.locator('link[href*="fonts.googleapis.com"][href*="Poppins"]'),
+  ).toHaveCount(1);
   expect(
     await page
-      .locator("body")
-      .evaluate((el) => getComputedStyle(el).fontFamily),
-  ).toContain("Mulish");
+      .locator("html")
+      .evaluate((el) =>
+        getComputedStyle(el).getPropertyValue("--tesseract-font-heading"),
+      ),
+  ).toContain("Poppins");
+});
+
+test("admin fees come from the console; doctors without one stay bookable", async ({
+  page,
+  context,
+}) => {
+  const admin = await context.newPage();
+  await admin.goto("/admin/doctors");
+  await admin
+    .getByRole("button", { name: "Continue with Tatva Practice" })
+    .click();
+  await expect(admin.getByRole("button", { name: "Add clinic" })).toHaveCount(0);
+  await expect(admin.getByText("Synced from Tatva Practice")).toBeVisible();
+  await expect(
+    admin.getByRole("columnheader", { name: "Fees", exact: true }),
+  ).toBeVisible();
+  const ananya = admin.getByRole("row", { name: /Dr. Ananya Shah/ });
+  await expect(ananya).toContainText("Not set");
+  await expect(
+    admin.getByRole("row", { name: /Dr. Meera Iyer/ }),
+  ).toContainText("₹700");
+  // Patient app: no price for Dr. Ananya Shah, and booking still works.
+  await page.goto("/doctors");
+  const card = page.locator("article", { hasText: "Dr. Ananya Shah" });
+  await expect(card).toContainText("Fee payable at the clinic");
+  await expect(card.getByRole("button", { name: "Book a visit" })).toBeEnabled();
+  // Setting a fee in the console shows it to patients.
+  await ananya.getByRole("button", { name: /Add fees/ }).click();
+  await admin.getByLabel("In-clinic fee (₹)").fill("900");
+  await admin.getByRole("button", { name: "Save fees" }).click();
+  await expect(ananya).toContainText("₹900");
   await page.reload();
-  await expect(page).toHaveTitle(/Orchid Health/);
+  await expect(card).toContainText("₹900");
+});
+
+test("hospital contacts offer call, WhatsApp and a callback the console sees", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    const brand = JSON.parse(localStorage.getItem("tatva-brand-preview"));
+    Object.assign(brand, {
+      bookingPhone: "080 4718 2000",
+      whatsappPhone: "98450 12345",
+      callbackEnabled: true,
+    });
+    localStorage.setItem("tatva-brand-preview", JSON.stringify(brand));
+  });
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Emergency hospital contacts" })
+    .click();
+  const sheet = page.getByRole("dialog");
+  await expect(
+    sheet.getByRole("link", { name: "Call appointments & front desk" }),
+  ).toHaveAttribute("href", "tel:08047182000");
+  await expect(sheet.getByRole("link", { name: "Chat whatsapp" })).toHaveAttribute(
+    "href",
+    "https://wa.me/919845012345",
+  );
+  await sheet.getByRole("button", { name: "Request", exact: true }).click();
+  await expect(sheet).toContainText("We'll call you back shortly");
+  await expect(
+    sheet.getByRole("button", { name: "Requested", exact: true }),
+  ).toBeDisabled();
+  await page.goto("/admin/overview");
+  await page
+    .getByRole("button", { name: "Continue with Tatva Practice" })
+    .click();
+  const callbacks = page.locator("section", { hasText: "Callback requests" });
+  await expect(callbacks).toContainText("Aarav Sharma");
+  await callbacks.getByRole("button", { name: "Mark as called" }).click();
+  await expect(callbacks).toContainText("Called");
 });
 
 test("OTP rejects invalid code; saved PIN signs back in", async ({ page }) => {
@@ -195,7 +281,7 @@ test("OTP rejects invalid code; saved PIN signs back in", async ({ page }) => {
   await page.getByLabel("Confirm pin", { exact: true }).fill("384926");
   await page.getByRole("button", { name: "Save pin" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page.getByRole("button", { name: "Sign out of demo" }).click();
+  await page.getByRole("button", { name: "Sign out" }).click();
   await page
     .getByRole("button", { name: "Use another sign-in method" })
     .click();
@@ -233,20 +319,17 @@ test("all screens render without crashes or horizontal overflow", async ({
     "/records",
     "/family",
     "/profile",
-    "/queue",
     "/billing",
-    "/packages",
-    "/vaccines",
-    "/home-care",
     "/hospital",
-    "/inpatient",
     "/more",
     "/notifications",
     "/settings",
-    "/branding",
     "/emergency",
     "/abha",
     "/link-records",
+    "/packages",
+    "/packages/essential",
+    "/packages?tab=bookings",
     "/feedback",
     "/assistant",
     "/welcome",
@@ -309,7 +392,7 @@ test("header sheets select a hospital, show updates, and dismiss with a gesture"
   await page.getByRole("button", { name: /Change location/ }).click();
   let dialog = page.getByRole("dialog");
   await expect(dialog).toHaveAccessibleName("Your hospital");
-  await dialog.getByRole("button", { name: /Whitefield/ }).click();
+  await dialog.getByRole("radio", { name: /Whitefield/ }).click();
   await expect(dialog).toBeHidden();
   await expect(
     page.getByRole("button", { name: /Change location/ }),
@@ -391,69 +474,75 @@ test("patients link UHID and ABHA with verification and consent, persist and unl
 }) => {
   await page.goto("/records");
   await page.getByRole("button", { name: /Link your health records/ }).click();
-  for (const [method, value] of [
-    ["UHID", "TP-10482"],
-    ["ABHA", "12-3456-7890-1234"],
-  ]) {
-    await page
-      .getByRole("button", { name: `Link ${method}`, exact: true })
-      .click();
-    const dialog = page.getByRole("dialog");
-    await dialog
-      .getByLabel(method === "UHID" ? "UHID" : "ABHA number", { exact: true })
-      .fill(value);
-    await dialog
-      .getByRole("button", { name: "Continue to demo verification" })
-      .click();
-    await dialog
-      .getByLabel("Demo verification code", { exact: true })
-      .fill("000000");
-    await dialog
-      .getByRole("button", { name: "Verify demo code", exact: true })
-      .click();
-    await expect(dialog.getByRole("alert")).toContainText("Incorrect");
-    await dialog
-      .getByLabel("Demo verification code", { exact: true })
-      .fill("123456");
-    await dialog
-      .getByRole("button", { name: "Verify demo code", exact: true })
-      .click();
-    await dialog
-      .getByRole("button", { name: "Confirm demo link", exact: true })
-      .click();
-    await expect(dialog.getByRole("alert")).toContainText("consent");
-    await dialog.getByRole("checkbox").check();
-    await dialog
-      .getByRole("button", { name: "Confirm demo link", exact: true })
-      .click();
-    await expect(dialog).toContainText(
-      "No new medical records have been imported",
-    );
-    await dialog.getByRole("button", { name: "Done", exact: true }).click();
-    await expect(dialog).toBeHidden();
-  }
+  // UHID links through the in-page verification and consent sheet.
+  await page.getByRole("button", { name: "Link UHID", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("UHID", { exact: true }).fill("TP-10482");
+  await dialog
+    .getByRole("button", { name: "Continue to verification" })
+    .click();
+  await dialog
+    .getByLabel("Demo verification code", { exact: true })
+    .fill("000000");
+  await dialog
+    .getByRole("button", { name: "Verify code", exact: true })
+    .click();
+  await expect(dialog.getByRole("alert")).toContainText("Incorrect");
+  await dialog
+    .getByLabel("Demo verification code", { exact: true })
+    .fill("123456");
+  await dialog
+    .getByRole("button", { name: "Verify code", exact: true })
+    .click();
+  await dialog
+    .getByRole("button", { name: "Confirm link", exact: true })
+    .click();
+  await expect(dialog.getByRole("alert")).toContainText("consent");
+  await dialog.getByRole("checkbox").check();
+  await dialog
+    .getByRole("button", { name: "Confirm link", exact: true })
+    .click();
+  await expect(dialog).toContainText("Your link is ready");
+  await dialog.getByRole("button", { name: "Done", exact: true }).click();
+  await expect(dialog).toBeHidden();
+  // ABHA links through the full ABHA flow (link existing by ABHA number).
+  await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
+  await expect(page).toHaveURL(/\/abha$/);
+  await page.getByRole("button", { name: "Link using ABHA number" }).click();
+  await page.getByLabel("ABHA number").fill("12345678901234");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByLabel("Digit 1").fill("123456");
+  await page.getByRole("button", { name: "Verify", exact: true }).click();
+  await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
+  await page.getByLabel("Digit 1").fill("123456");
+  await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
+  await expect(page).toHaveURL(/\/link-records$/, { timeout: 8000 });
   await page.reload();
-  await expect(page.getByText("Demo linked", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Linked", { exact: true })).toHaveCount(2);
   await page.getByRole("button", { name: /For Aarav Sharma/ }).click();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: /Rajesh Sharma/ })
     .click();
-  await expect(page.getByText("Demo linked", { exact: true })).toHaveCount(0);
+  // Rajesh has his own sample ABHA linked, and none of Aarav's links.
+  await expect(page.getByText("Linked", { exact: true })).toHaveCount(1);
   await page.getByRole("button", { name: /For Rajesh Sharma/ }).click();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: /Aarav Sharma/ })
     .click();
   await page
+    .getByRole("button", { name: "Hospital UHID linked. Manage" })
+    .click();
+  await page
+    .getByRole("dialog")
     .getByRole("button", { name: "Unlink", exact: true })
-    .first()
     .click();
   await page
     .getByRole("alertdialog")
     .getByRole("button", { name: "Unlink identity", exact: true })
     .click();
-  await expect(page.getByText("Demo linked", { exact: true })).toHaveCount(1);
+  await expect(page.getByText("Linked", { exact: true })).toHaveCount(1);
   await expect(
     page.getByRole("button", { name: "Link UHID", exact: true }),
   ).toBeVisible();
@@ -464,18 +553,16 @@ test("direct ABHA entry and reduced-motion sheets remain accessible", async ({
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/abha");
-  await expect(page.getByRole("dialog")).toHaveAccessibleName("Link your ABHA");
+  await expect(
+    page.getByRole("heading", { name: "Create your ABHA" }),
+  ).toBeVisible();
+  await expect(page.getByRole("navigation")).toHaveCount(0);
   const results = await new AxeBuilder({ page }).analyze();
   expect(
     results.violations.filter((v) =>
       ["serious", "critical"].includes(v.impact),
     ),
   ).toEqual([]);
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Close", exact: true })
-    .click();
-  await expect(page.getByRole("dialog")).toBeHidden();
 });
 
 test("home keeps patient context and banners fixed while its sheet overlays them", async ({
@@ -502,7 +589,9 @@ test("home keeps patient context and banners fixed while its sheet overlays them
   const panel = page.locator('[class*="homePanel"]');
   const beforePanel = await panel.boundingBox();
   await expect(
-    page.getByRole("button", { name: "Link ABHA", exact: true }),
+    page
+      .getByRole("region", { name: "ABHA and hospital identity" })
+      .getByRole("button", { name: "Link ABHA", exact: true }),
   ).toHaveCSS("border-radius", "12px");
   await expect(
     page.getByRole("group", { name: /1 of .*Upcoming appointment/ }),
@@ -512,15 +601,15 @@ test("home keeps patient context and banners fixed while its sheet overlays them
     page.getByRole("button", { name: "Show banner 2: New health record" }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
-    page.getByRole("group", { name: "2 of 4: New health record" }),
+    page.getByRole("group", { name: "2 of 3: New health record" }),
   ).toContainText("Complete blood count");
   await page.getByRole("button", { name: /Show banner 3:/ }).click();
   await expect(
-    page.getByRole("button", { name: "Show banner 3: Your outstanding bills" }),
+    page.getByRole("button", { name: "Show banner 3: Link your ABHA" }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
-    page.getByRole("group", { name: "3 of 4: Your outstanding bills" }),
-  ).toContainText("₹700");
+    page.getByRole("group", { name: "3 of 3: Link your ABHA" }),
+  ).toContainText("Link ABHA");
   await page.locator("main").evaluate((node) => (node.scrollTop = 480));
   const scrolled = await header.boundingBox();
   expect(Math.abs(scrolled.y - initial.y)).toBeLessThan(1);
@@ -542,8 +631,11 @@ test("home keeps patient context and banners fixed while its sheet overlays them
     "href",
     "https://abha.abdm.gov.in/abha/v3/",
   );
-  await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
-  await expect(page.getByRole("dialog")).toHaveAccessibleName("Link your ABHA");
+  await page
+    .getByRole("region", { name: "ABHA and hospital identity" })
+    .getByRole("button", { name: "Link ABHA", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/abha/);
 });
 
 test("home banners follow family context and quick actions use one colour", async ({
@@ -595,20 +687,20 @@ test("home categories, brand and rounded effect layers fit mobile and desktop", 
     await page.goto("/");
     await expect(page.locator('[class*="headerHospital"]')).toHaveCount(0);
     const cards = page.locator("[data-category]").filter({ visible: true });
-    await expect(cards).toHaveCount(12);
+    await expect(cards).toHaveCount(9);
     expect(
       await cards.evaluateAll((ns) => [
         ...new Set(ns.map((n) => n.dataset.category)),
       ]),
-    ).toEqual(["appointments", "records", "payments", "completed"]);
-    for (let i = 0; i < 4; i++) {
+    ).toEqual(["appointments", "records", "abha"]);
+    for (let i = 0; i < 3; i++) {
       await page
         .getByRole("button", { name: new RegExp(`Show banner ${i + 1}:`) })
         .click();
       const current = page.locator("[data-category]:not([inert])");
       await expect(current).toHaveAttribute(
         "data-category",
-        ["appointments", "records", "payments", "completed"][i],
+        ["appointments", "records", "abha"][i],
       );
       const geometry = await current.evaluate((n) => {
         const style = getComputedStyle(n),
@@ -634,7 +726,7 @@ test("home categories, brand and rounded effect layers fit mobile and desktop", 
       expect(geometry.glowRadius).toBe(geometry.radius);
       expect(geometry.patternHidden).toBe("true");
       expect(geometry.glowShape).toBe(geometry.shape);
-      expect(["appointments", "records", "payments", "completed"]).toContain(
+      expect(["appointments", "records", "abha"]).toContain(
         await current.locator("[data-pattern]").getAttribute("data-pattern"),
       );
     }
@@ -657,10 +749,9 @@ test("subpages have a sticky title-only header and direct-entry back fallback", 
     "/family",
     "/billing",
     "/more",
-    "/branding",
   ]) {
     await page.goto(path);
-    const header = page.locator('[class*="pageHeader"]');
+    const header = page.locator('header[class*="pageHeader"]');
     await expect(header.locator("h1")).toBeVisible();
     await expect(header.locator("p")).toHaveCount(0);
     const back = header.getByRole("button", { name: "Go back", exact: true });
@@ -690,7 +781,8 @@ test("carousel loops in both directions with angled neighbours and no arrow butt
     page.getByRole("button", { name: /Next care update|Previous care update/ }),
   ).toHaveCount(0);
   await expect(current).toHaveAttribute("data-category", "appointments");
-  for (let n = 0; n < 5; n++) {
+  // Four steps back from slide 1 of 3 wraps to slide 3; one forward returns.
+  for (let n = 0; n < 4; n++) {
     await track.evaluate((node) =>
       node.scrollBy({
         left: -(node.children[0].offsetWidth + 10),
@@ -699,7 +791,7 @@ test("carousel loops in both directions with angled neighbours and no arrow butt
     );
     await page.waitForTimeout(230);
   }
-  await expect(current).toHaveAttribute("data-category", "completed");
+  await expect(current).toHaveAttribute("data-category", "abha");
   await track.evaluate((node) =>
     node.scrollBy({
       left: node.children[0].offsetWidth + 10,
@@ -804,7 +896,7 @@ test("four-tab navigation keeps family in More and inputs use the new shared geo
   );
 });
 
-test("home shows only relevant updates, with single and empty states", async ({
+test("three Home promotions include empty reports and ABHA linking", async ({
   page,
 }) => {
   await page.goto("/");
@@ -817,33 +909,24 @@ test("home shows only relevant updates, with single and empty states", async ({
   });
   await page.reload();
   await expect(
-    page.getByRole("group", { name: "1 of 1: Book your first visit" }),
+    page.getByRole("group", { name: "1 of 3: Book your first visit" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Book visit", exact: true }),
-  ).toBeVisible();
-  await page.evaluate(() => {
-    const state = JSON.parse(localStorage.getItem("tatva-patient-demo-v1"));
-    state.bills = [
-      {
-        id: "one-bill",
-        memberId: state.activeMember,
-        date: new Date().toLocaleDateString("en-CA"),
-        status: "Unpaid",
-        amount: 100,
-        title: "Test invoice",
-      },
-    ];
-    localStorage.setItem("tatva-patient-demo-v1", JSON.stringify(state));
-  });
-  await page.reload();
-  await expect(page.locator("[data-category]")).toHaveCount(1);
   await expect(page.getByRole("button", { name: /Show banner/ })).toHaveCount(
-    0,
+    3,
   );
-  await expect(page.locator("[data-category]")).toContainText(
-    "₹100 outstanding",
-  );
+  await page.getByRole("button", { name: /Show banner 2:/ }).click();
+  await page.getByRole("button", { name: "Add a record", exact: true }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Add a health record" }),
+  ).toBeVisible();
+  await page.goto("/");
+  await page.getByRole("button", { name: /Show banner 3:/ }).click();
+  const current = page.locator("[data-category]:not([inert])");
+  await expect(
+    current.getByRole("img", { name: "ABHA", exact: true }),
+  ).toBeVisible();
+  await current.getByRole("button", { name: "Link ABHA", exact: true }).click();
+  await expect(page).toHaveURL(/\/abha$/);
 });
 
 test("header contact sheet uses configured hospital numbers and unconfigured actions stay disabled", async ({
@@ -879,65 +962,6 @@ test("header contact sheet uses configured hospital numbers and unconfigured act
   ).toHaveAttribute("href", "tel:+918000000002");
 });
 
-test("arrival validates location then shows a persistent green token on Home", async ({
-  page,
-  context,
-}) => {
-  await context.grantPermissions(["geolocation"]);
-  await context.setGeolocation({
-    latitude: 13.5,
-    longitude: 77.64,
-    accuracy: 20,
-  });
-  await page.goto("/queue");
-  await page.getByRole("button", { name: "Skip symptoms for now" }).click();
-  await page.getByRole("button", { name: "I have arrived · Check in" }).click();
-  await expect(page.getByRole("alert")).toContainText(
-    "away from this hospital",
-  );
-  await expect(page.getByText("YOUR TOKEN NUMBER")).toHaveCount(0);
-  await context.setGeolocation({
-    latitude: 12.9784,
-    longitude: 77.6408,
-    accuracy: 20,
-  });
-  await page.getByRole("button", { name: "I have arrived · Check in" }).click();
-  await expect(page.getByText("YOUR TOKEN NUMBER")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "You’re checked in" }),
-  ).toBeDisabled();
-  await page.goto("/");
-  const banner = page.locator("[data-category]:not([inert])");
-  await expect(banner).toHaveAttribute("data-state", "queue");
-  await expect(banner).toHaveAttribute("data-tone", "success");
-  await expect(banner).toContainText("Token A-001");
-  await page.reload();
-  await expect(banner).toContainText("Token A-001");
-  await page.evaluate(() => {
-    const state = JSON.parse(localStorage.getItem("tatva-patient-demo-v1"));
-    state.appointments.find((a) => a.queue?.checkedIn).queue.minutes = 45;
-    localStorage.setItem("tatva-patient-demo-v1", JSON.stringify(state));
-  });
-  await page.reload();
-  await expect(banner).toHaveAttribute("data-tone", "warning");
-  await expect(banner).toContainText("Longer wait");
-  await banner.getByRole("heading").click();
-  await expect(page).toHaveURL(/\/assistant\?appointment=TP-24091/);
-});
-
-test("denied location does not create a token", async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, "geolocation", {
-      value: { getCurrentPosition: (_ok, fail) => fail({ code: 1 }) },
-    });
-  });
-  await page.goto("/queue");
-  await page.getByRole("button", { name: "Skip symptoms for now" }).click();
-  await page.getByRole("button", { name: "I have arrived · Check in" }).click();
-  await expect(page.getByRole("alert")).toContainText("Allow location access");
-  await expect(page.getByText("YOUR TOKEN NUMBER")).toHaveCount(0);
-});
-
 test("PDF records render in a tall sheet with share, download, print and no grip", async ({
   page,
 }) => {
@@ -957,10 +981,7 @@ test("PDF records render in a tall sheet with share, download, print and no grip
     .evaluate((n) => ({ width: n.width, height: n.height }));
   expect(canvas.width).toBeGreaterThan(250);
   expect(canvas.height).toBeGreaterThan(300);
-  await sheet.getByRole("button", { name: "Zoom PDF" }).click();
-  await expect(
-    sheet.getByRole("button", { name: "Fit PDF to width" }),
-  ).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Zoom PDF" })).toHaveCount(0);
   const download = page.waitForEvent("download");
   await sheet.getByRole("button", { name: "Download sample record" }).click();
   expect((await download).suggestedFilename()).toMatch(/\.pdf$/);
@@ -1022,7 +1043,7 @@ test("account deletion is explicit, clears local files and stays signed out afte
   await page.goto("/settings");
   await page.evaluate(async () => {
     localStorage.setItem("tatva-demo-credential", "test");
-    const { saveFile } = await import("/src/services/files.js");
+    const { saveFile } = await import("/src/patient/services/files.js");
     await saveFile("delete-me", new Blob(["test"]));
   });
   await page
@@ -1030,7 +1051,7 @@ test("account deletion is explicit, clears local files and stays signed out afte
     .click();
   const sheet = page.getByRole("dialog");
   await expect(
-    sheet.getByRole("button", { name: "Delete my demo account" }),
+    sheet.getByRole("button", { name: "Delete my account" }),
   ).toBeDisabled();
   await sheet.getByRole("button", { name: "Keep my account" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -1038,7 +1059,7 @@ test("account deletion is explicit, clears local files and stays signed out afte
     .getByRole("button", { name: "Delete account", exact: true })
     .click();
   await sheet.getByRole("checkbox").check();
-  await sheet.getByRole("button", { name: "Delete my demo account" }).click();
+  await sheet.getByRole("button", { name: "Delete my account" }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect(
     await page.evaluate(() => localStorage.getItem("tatva-patient-demo-v1")),
@@ -1048,7 +1069,7 @@ test("account deletion is explicit, clears local files and stays signed out afte
   ).toBeNull();
   expect(
     await page.evaluate(async () => {
-      const { getFile } = await import("/src/services/files.js");
+      const { getFile } = await import("/src/patient/services/files.js");
       return !!(await getFile("delete-me"));
     }),
   ).toBe(false);
@@ -1060,7 +1081,7 @@ test("account deletion is explicit, clears local files and stays signed out afte
   await expect(page).toHaveURL(/\/login$/);
 });
 
-test("five welcome stories animate, stop on interaction and lead to mobile verification", async ({
+test("four welcome stories animate, stop on interaction and lead to mobile verification", async ({
   page,
 }) => {
   await page.goto("/welcome");
@@ -1074,8 +1095,9 @@ test("five welcome stories animate, stop on interaction and lead to mobile verif
     page.getByRole("button", { name: "Introduction 2" }),
   ).toHaveAttribute("aria-current", "step", { timeout: 6500 });
   await expect(
-    page.getByRole("button", { name: /Introduction [1-5]/ }),
-  ).toHaveCount(5);
+    page.getByRole("button", { name: /Introduction [1-9]/ }),
+  ).toHaveCount(4);
+  await expect(page.getByText("Know your turn.")).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: /Pause introduction|Sign in/ }),
   ).toHaveCount(0);
@@ -1143,6 +1165,19 @@ test("mobile verification distinguishes new and returning accounts without shari
   await expect(page.getByLabel("Full name", { exact: true })).toBeVisible();
   await page.getByLabel("Full name", { exact: true }).fill("Neha Test");
   await page.getByLabel("Date of birth", { exact: true }).fill("1992-04-12");
+  const gender = page.getByRole("group", { name: "Gender" });
+  await expect(gender.getByRole("button")).toHaveText([
+    "Male",
+    "Female",
+    "Other",
+  ]);
+  await page.getByRole("button", { name: "Create my profile" }).click();
+  await expect(page.getByRole("alert")).toContainText("Please select gender");
+  await expect(page).toHaveURL(/\/login$/);
+  await gender.getByRole("button", { name: "Female", exact: true }).click();
+  await expect(
+    gender.getByRole("button", { name: "Female", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Create my profile" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(
@@ -1152,6 +1187,11 @@ test("mobile verification distinguishes new and returning accounts without shari
     JSON.parse(localStorage.getItem("tatva-patient-demo-v1")),
   );
   expect(firstState.members).toHaveLength(1);
+  expect(firstState.members[0]).toMatchObject({
+    name: "Neha Test",
+    dob: "1992-04-12",
+    gender: "Female",
+  });
   for (const field of ["appointments", "records", "bills", "notifications"])
     expect(firstState[field]).toHaveLength(0);
   await verify("9000000001");
@@ -1208,23 +1248,27 @@ test("booked visits collect symptoms, retain the reviewed note and reject anothe
   await expect(page.getByText("Headache", { exact: true })).toHaveCount(0);
 });
 
-test("symptom collection leads into location-verified check-in and a queue token", async ({
+test("queue and check-in are gone: Book visit opens visits or doctors and symptoms return to the visit", async ({
   page,
-  context,
 }) => {
-  await context.grantPermissions(["geolocation"]);
-  await context.setGeolocation({
-    latitude: 12.9784,
-    longitude: 77.6408,
-    accuracy: 20,
-  });
+  await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: "Queue", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Appointments", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Book visit", exact: true }).click();
+  await expect(page).toHaveURL(/\/appointments$/);
+  await expect(page.getByRole("button", { name: "View queue" })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Book appointment" }),
+  ).toBeVisible();
   await page.goto("/queue");
   await expect(
-    page.getByRole("button", { name: "I have arrived · Check in" }),
-  ).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "Share symptoms", exact: true })
-    .click();
+    page.getByRole("heading", { name: "Page not found" }),
+  ).toBeVisible();
+  await page.goto("/assistant?appointment=TP-24091&return=queue");
   await page.getByRole("button", { name: "Start symptom collection" }).click();
   await page.getByLabel("Symptoms", { exact: true }).fill("Headache");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
@@ -1235,20 +1279,12 @@ test("symptom collection leads into location-verified check-in and a queue token
     .fill("None reported");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Skip", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Save and continue to check-in" })
-    .click();
-  await expect(page).toHaveURL(/queue\?visit=TP-24091/);
   await expect(
-    page.getByRole("heading", { name: "You’re ready to check in" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "I have arrived · Check in" }).click();
-  await expect(page.getByText("YOUR TOKEN NUMBER")).toBeVisible();
-  await page.goto("/");
-  await expect(page.locator("[data-category]:not([inert])")).toHaveAttribute(
-    "data-state",
-    "queue",
-  );
+    page.getByRole("button", { name: /continue to check-in/ }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Save to my visit" }).click();
+  await expect(page).toHaveURL(/\/appointments\?visit=TP-24091/);
+  await expect(page.locator("main")).not.toContainText(/check.?in|token/i);
 });
 
 test("booking adds and selects a family member without losing the chosen slot", async ({
@@ -1272,7 +1308,7 @@ test("booking adds and selects a family member without losing the chosen slot", 
   await expect(page.getByText("Nisha Sharma", { exact: true })).toBeVisible();
   await expect(page.getByText("09:00 AM IST", { exact: true })).toBeVisible();
   await page
-    .getByRole("button", { name: "Confirm demo appointment", exact: true })
+    .getByRole("button", { name: "Confirm appointment", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Share symptoms before your visit" })
@@ -1283,24 +1319,20 @@ test("booking adds and selects a family member without losing the chosen slot", 
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-test("queue banner keeps appointment context and symptoms without redundant Home reminders", async ({
+test("today's visit banner keeps appointment context and symptoms without redundant Home reminders", async ({
   page,
 }) => {
   await page.goto("/");
   await page.evaluate(() => {
     const state = JSON.parse(localStorage.getItem("tatva-patient-demo-v1"));
-    state.appointments.find((v) => v.id === "TP-24091").queue = {
-      checkedIn: true,
-      token: "A-012",
-      ahead: 3,
-      minutes: 18,
-    };
+    // Keep the in-clinic visit first regardless of the video slot's time.
+    state.appointments.find((v) => v.id === "TP-24095").status = "Cancelled";
     localStorage.setItem("tatva-patient-demo-v1", JSON.stringify(state));
   });
   await page.reload();
   const hero = page.locator('[data-category="appointments"]:not([inert])');
   await expect(hero).toContainText("10:30 AM");
-  await expect(hero).toContainText("min wait");
+  await expect(hero).not.toContainText(/min wait|Token|Checked in/);
   await expect(hero).toContainText("Indiranagar");
   await expect(
     hero.getByRole("button", { name: "Add symptoms", exact: true }),
@@ -1314,9 +1346,13 @@ test("queue banner keeps appointment context and symptoms without redundant Home
     name: "Add symptoms",
     exact: true,
   });
+  // The symptom action uses the brand (link) colour for icon and label.
+  const buttonColor = await symptomButton.evaluate(
+    (n) => getComputedStyle(n).color,
+  );
   await expect(symptomButton.locator("[data-tp-icon]")).toHaveCSS(
     "color",
-    "rgb(112, 66, 147)",
+    buttonColor,
   );
   const labelFits = await symptomButton.evaluate((node) => {
     const label = node.querySelector('[class*="_content_"] > span:last-child');
@@ -1333,4 +1369,170 @@ test("queue banner keeps appointment context and symptoms without redundant Home
   await page.getByRole("button", { name: "Add symptoms", exact: true }).click();
   await expect(page).toHaveURL(/assistant\?appointment=TP-24091/);
   await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("book a health package, see it under My bookings and cancel it", async ({
+  page,
+}) => {
+  await page.goto("/packages");
+  await expect(
+    page.getByRole("heading", { name: "Health packages & vaccines" }),
+  ).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Bookings/ })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /My requests/ })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(0);
+  await page.getByRole("button", { name: /^Essential health check/ }).click();
+  await expect(page).toHaveURL(/\/packages\/essential$/);
+  await expect(page.getByText("Lipid profile")).toBeVisible();
+  await expect(page.getByText("Pay at the hospital. Online payment coming soon.")).toBeVisible();
+  await page.getByRole("button", { name: "Book now" }).click();
+  const sheet = page.getByRole("dialog");
+  await sheet.getByRole("radio", { name: /Whitefield/ }).click();
+  await sheet.getByLabel("Note for the hospital (optional)").fill("Morning please");
+  await sheet.getByRole("button", { name: "Send booking request" }).click();
+  await expect(
+    page.getByText("Booking request sent. The hospital will call to confirm."),
+  ).toBeVisible();
+  await sheet.getByRole("button", { name: "View my bookings" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/packages\?tab=bookings$/);
+  const card = page.locator("article", { hasText: "Essential health check" });
+  await expect(card.getByText("Requested", { exact: true })).toBeVisible();
+  await expect(card).toContainText("Whitefield");
+  await page.reload();
+  await card.getByRole("button", { name: "Cancel booking" }).click();
+  await expect(card.getByText("Cancelled", { exact: true })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Cancel booking" })).toHaveCount(0);
+  // Older notification links still land on My bookings.
+  await page.goto("/packages?tab=requests");
+  await expect(page).toHaveURL(/\/packages\?tab=bookings$/);
+  await page.goto("/packages/bookings");
+  await expect(page).toHaveURL(/\/packages\?tab=bookings$/);
+  await page.goto("/more");
+  await page.getByRole("button", { name: "My bookings" }).click();
+  await expect(page.getByRole("radio", { name: /Bookings/ })).toBeChecked();
+});
+
+test("home shows four quick actions and the past visit card from My visits", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator('[class*="quickIcon"]')).toHaveCount(4);
+  await expect(page.getByRole("button", { name: "Packages", exact: true })).toBeVisible();
+  const past = page.getByLabel("Past consultations");
+  const card = past.locator("article").first();
+  await expect(card.getByText("Completed", { exact: true })).toBeVisible();
+  await expect(card).not.toContainText("Rx");
+  await card.getByRole("button", { name: "View details" }).click();
+  await expect(page).toHaveURL(/\/appointments\?visit=/);
+  await expect(page.getByRole("dialog")).toContainText("Appointment details");
+});
+
+test("admin uploads a PNG logo, crops a mark and a horizontal logo, and the patient app shows them live", async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(60_000);
+  // The patient tab is open before the admin saves and must update live.
+  await page.goto("/more");
+  await expect(page.locator('[data-brand-logo="name"]')).toContainText(
+    "Tatva Care Hospital",
+  );
+  const admin = await context.newPage();
+  await admin.goto("/admin/app");
+  await admin.getByRole("radio", { name: /Hospital admin/ }).click();
+  await admin
+    .getByRole("button", { name: "Continue with Tatva Practice" })
+    .click();
+  await admin.getByRole("button", { name: "Edit", exact: true }).click();
+  const file = admin.getByTestId("logo-file");
+  await expect(file).toHaveAttribute("accept", "image/png");
+  await file.setInputFiles({
+    name: "logo.jpg",
+    mimeType: "image/jpeg",
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0xff, 0xd9]),
+  });
+  await expect(admin.getByRole("alert")).toHaveText(
+    "Upload a PNG with a transparent background.",
+  );
+  const dialog = admin.getByRole("dialog", { name: "Crop your logo" });
+  await expect(dialog).toHaveCount(0);
+
+  await file.setInputFiles(
+    fileURLToPath(new URL("../fixtures/logo.png", import.meta.url)),
+  );
+  await expect(dialog).toBeVisible();
+  await expect(admin.getByRole("alert")).toHaveCount(0);
+  // Pan the mark with a drag and zoom out to leave space around it.
+  const stage = dialog.getByTestId("crop-1:1");
+  const box = await stage.boundingBox();
+  await admin.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await admin.mouse.down();
+  await admin.mouse.move(box.x + box.width / 2 + 12, box.y + box.height / 2, {
+    steps: 4,
+  });
+  await admin.mouse.up();
+  await dialog.getByLabel("Zoom").focus();
+  await admin.keyboard.press("ArrowLeft", { delay: 10 });
+  await dialog.getByRole("button", { name: "Next: horizontal logo" }).click();
+  await expect(dialog.getByTestId("crop-4:1")).toBeVisible();
+  await dialog.getByRole("button", { name: "Use these logos" }).click();
+  await expect(dialog).toHaveCount(0);
+
+  const mark = await admin
+    .getByRole("img", { name: "Logo mark" })
+    .getAttribute("src");
+  const wide = await admin
+    .getByRole("img", { name: "Horizontal logo" })
+    .getAttribute("src");
+  expect(mark).toMatch(/^data:image\/png;base64,/);
+  expect(wide).toMatch(/^data:image\/png;base64,/);
+  const size = (src) =>
+    admin.evaluate(async (s) => {
+      const img = new Image();
+      img.src = s;
+      await img.decode();
+      return [img.naturalWidth, img.naturalHeight];
+    }, src);
+  expect(await size(mark)).toEqual([512, 512]);
+  expect(await size(wide)).toEqual([800, 200]);
+  // The previews follow the form before saving.
+  await expect(
+    admin.locator('[class*="pvBar"] img[data-brand-logo="horizontal"]').first(),
+  ).toHaveAttribute("src", wide);
+  await admin.getByRole("button", { name: "Save changes" }).click();
+  await expect(
+    admin.getByRole("button", { name: "Save changes" }),
+  ).toHaveCount(0);
+
+  // The patient tab picks up the new logo without a reload…
+  await expect(
+    page.locator('img[data-brand-logo="horizontal"]'),
+  ).toHaveAttribute("src", wide);
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", mark);
+  // …as does the console's own preview frame.
+  await expect(
+    admin
+      .frameLocator('iframe[title="Patient app preview"]')
+      .locator('img[data-brand-logo="horizontal"]'),
+  ).toHaveAttribute("src", wide);
+  // The sign-in header shows the horizontal logo.
+  await page.goto("/login");
+  await expect(
+    page.locator('[class*="brandRow"] img[data-brand-logo="horizontal"]'),
+  ).toHaveAttribute("src", wide);
+
+  // Skipping the horizontal crop uses the mark beside the hospital name.
+  await admin.getByRole("button", { name: "Edit", exact: true }).click();
+  await admin
+    .getByTestId("logo-file")
+    .setInputFiles(
+      fileURLToPath(new URL("../fixtures/logo.png", import.meta.url)),
+    );
+  await dialog.getByRole("button", { name: "Next: horizontal logo" }).click();
+  await dialog.getByRole("button", { name: "Skip, use mark + name" }).click();
+  await expect(admin.getByRole("img", { name: "Horizontal logo" })).toHaveCount(0);
+  await expect(
+    admin.locator('[class*="pvBar"] [data-brand-logo="mark"]').first(),
+  ).toContainText("Tatva Care Hospital");
 });

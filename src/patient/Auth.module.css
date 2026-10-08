@@ -1,0 +1,535 @@
+/* Story layout and surface recipes adapted from the supplied Medavida/Zeva app. */
+.welcome,
+.login {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 0 24px max(24px, env(safe-area-inset-bottom));
+  color: var(--tesseract-slate-900);
+  overflow: hidden;
+  background: var(--tesseract-slate-50);
+}
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(158deg, white, var(--tesseract-blue-50));
+}
+.aurora {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(
+      ellipse at 15% 10%,
+      color-mix(in srgb, var(--tesseract-blue-300) 34%, transparent),
+      transparent 45%
+    ),
+    radial-gradient(
+      ellipse at 90% 65%,
+      color-mix(in srgb, var(--tesseract-blue-200) 22%, transparent),
+      transparent 45%
+    );
+  filter: blur(24px);
+  animation: aurora 16s ease-in-out infinite alternate;
+}
+.waves {
+  position: absolute;
+  inset: 0 0 25%;
+  opacity: 0.34;
+}
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--tesseract-blue-500) 5%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--tesseract-blue-500) 5%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 42px 42px;
+  mask-image: radial-gradient(100% 65% at 50% 15%, black, transparent 85%);
+}
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 64px;
+  flex-shrink: 0;
+}
+.brandRow > button:first-child {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  margin-left: -10px;
+}
+.storyProgress {
+  display: flex;
+  gap: 6px;
+  padding-top: 12px;
+}
+.storyProgress button {
+  height: 16px;
+  padding: 0;
+  flex: 1;
+  border: 0;
+  background: none;
+}
+.storyProgress button > span {
+  display: block;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--tesseract-blue-100);
+}
+.storyProgress i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--tesseract-blue-500);
+}
+.storyProgress i[data-filled="true"] {
+  width: 100%;
+}
+.storyProgress i[data-active="true"] {
+  animation: progress 4.6s linear forwards;
+}
+.welcome[data-paused="true"] .storyProgress i[data-active="true"] {
+  animation: none;
+  width: 100%;
+}
+.story {
+  flex: 1;
+  min-height: 0;
+  touch-action: pan-y;
+  outline-offset: -2px;
+}
+.storySlide {
+  animation: enter 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.heroStage {
+  position: relative;
+  height: clamp(230px, 34dvh, 285px);
+  display: grid;
+  place-items: center;
+  margin: 0 -12px;
+}
+.heroGlow {
+  position: absolute;
+  width: 280px;
+  height: 240px;
+  background: radial-gradient(
+    ellipse,
+    color-mix(in srgb, var(--tesseract-blue-300) 28%, transparent),
+    transparent 67%
+  );
+  filter: blur(16px);
+}
+.miniCard {
+  position: relative;
+  width: min(268px, 89%);
+  padding: 20px;
+  border-radius: 16px;
+  background: linear-gradient(158deg, white, var(--tesseract-blue-50));
+  border: 1px solid color-mix(in srgb, var(--tesseract-blue-200) 50%, white);
+  box-shadow:
+    inset 0 1px 0 white,
+    0 12px 30px -16px
+      color-mix(in srgb, var(--tesseract-blue-700) 32%, transparent);
+  transform: rotate(-4deg);
+  animation: cardIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.miniEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--tesseract-blue-700);
+}
+.miniDoctor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+.miniDoctor img {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.miniDoctor strong,
+.miniCard > strong {
+  display: block;
+  font: 700 15px var(--tesseract-font-heading);
+}
+.miniDoctor small,
+.miniCard > small {
+  display: block;
+  font-size: 10px;
+  margin-top: 5px;
+  color: var(--tesseract-slate-600);
+}
+.miniFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--tesseract-blue-100);
+  font-size: 10px;
+  color: var(--tesseract-blue-700);
+}
+.floatingPill,
+.floatingPillAlt {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  backdrop-filter: blur(18px);
+  background: color-mix(in srgb, white 82%, transparent);
+  box-shadow:
+    inset 0 1px 0 white,
+    0 8px 24px -12px
+      color-mix(in srgb, var(--tesseract-blue-900) 30%, transparent);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--tesseract-success-800);
+  bottom: 18px;
+  right: 1px;
+  animation: floatIn 0.65s 0.25s both;
+}
+.floatingPillAlt {
+  bottom: auto;
+  top: 14px;
+  left: 0;
+  right: auto;
+  color: var(--tesseract-blue-700);
+  animation-delay: 0.1s;
+}
+.report {
+  transform: rotate(3deg);
+}
+.report > strong {
+  margin: 16px 0 12px;
+}
+.paperBack {
+  position: absolute;
+  height: 185px;
+  transform: rotate(-9deg);
+  background: var(--tesseract-blue-100);
+}
+.reportLines {
+  display: grid;
+  gap: 7px;
+}
+.reportLines i {
+  display: block;
+  height: 5px;
+  border-radius: 12px;
+  background: var(--tesseract-blue-100);
+}
+.reportLines i:nth-child(2) {
+  width: 75%;
+}
+.reportLines i:nth-child(3) {
+  width: 88%;
+}
+.familyPreview {
+  text-align: center;
+}
+.people {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.people span {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  color: var(--tesseract-blue-700);
+  background: linear-gradient(150deg, white, var(--tesseract-blue-100));
+  border: 2px solid white;
+  margin-left: -6px;
+  font-size: 15px;
+  font-weight: 700;
+  animation: floatIn 0.5s var(--person-delay) both;
+}
+.people span:nth-child(2) {
+  color: var(--tesseract-success-800);
+  background: var(--tesseract-success-100);
+}
+.people span {
+  overflow: hidden;
+}
+.people img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.billPreview {
+  transform: rotate(3deg);
+}
+.billPreview > strong {
+  margin: 18px 0 14px;
+}
+.receiptRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--tesseract-slate-600);
+}
+.receiptRow b {
+  color: var(--tesseract-success-800);
+  font-weight: 600;
+}
+.storyCopy {
+  padding: 15px 0 26px;
+}
+.storyCopy > span,
+.kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--tesseract-blue-600);
+}
+.storyCopy h1 {
+  margin-top: 10px;
+  font-size: 31px;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+}
+.storyCopy h1 > span {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 2px;
+}
+.storyCopy h1 b {
+  display: block;
+  font-weight: inherit;
+  animation: titleIn 0.6s var(--line-delay) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.storyCopy p {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--tesseract-slate-600);
+  margin-top: 12px;
+  max-width: 320px;
+}
+.welcomeActions,
+.loginActions {
+  flex-shrink: 0;
+  position: relative;
+  padding-top: 10px;
+}
+.welcomeActions > p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  margin-top: 6px;
+  color: var(--tesseract-slate-600);
+}
+.welcomeActions > p > button {
+  font-size: 12px;
+}
+.welcomeActions small,
+.loginActions small {
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  color: var(--tesseract-slate-500);
+  line-height: 1.5;
+  margin-top: 10px;
+}
+.login {
+  padding-top: 10px;
+}
+.loginForm {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.loginBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 38px 0;
+  gap: 16px;
+  animation: enter 0.3s ease-out;
+}
+.loginBody h1 {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+.loginBody > p {
+  color: var(--tesseract-slate-600);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.loginBody > .demoNote {
+  font-size: 11px;
+}
+.loginBody > button {
+  align-self: flex-start;
+}
+.otpWrap > label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.otpControl {
+  position: relative;
+  margin-top: 10px;
+}
+.otpControl input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  font-size: 16px;
+  cursor: text;
+  z-index: 1;
+}
+.otpCells {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.otpCells span {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 54px;
+  border: 1px solid var(--tesseract-border-neutral);
+  background: color-mix(in srgb, white 76%, transparent);
+  border-radius: 12px;
+  font-size: 22px;
+  font-weight: 700;
+}
+.otpCells span[data-filled="true"] {
+  border-color: var(--tesseract-blue-300);
+}
+.otpControl:focus-within .otpCells span[data-active="true"],
+.otpControl:focus-within .otpCells span:last-child[data-filled="true"] {
+  outline: 2px solid var(--tesseract-blue-500);
+  outline-offset: 2px;
+}
+.codeOptions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.verified {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+}
+.verified > span {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  background: var(--tesseract-success-100);
+  color: var(--tesseract-success-700);
+  border-radius: 50%;
+  animation: cardIn 0.4s ease-out;
+}
+@keyframes aurora {
+  to {
+    transform: translate(6%, 4%) scale(1.1);
+  }
+}
+@keyframes progress {
+  to {
+    width: 100%;
+  }
+}
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes titleIn {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: none;
+  }
+}
+.background[data-paused="true"] .aurora {
+  animation-play-state: paused;
+}
+@media (max-width: 360px) {
+  .welcome,
+  .login {
+    padding-inline: 20px;
+  }
+  .storyCopy h1 {
+    font-size: 27px;
+  }
+  .heroStage {
+    height: 240px;
+  }
+  .otpCells {
+    gap: 5px;
+  }
+  .otpCells span {
+    height: 48px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome *,
+  .login * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

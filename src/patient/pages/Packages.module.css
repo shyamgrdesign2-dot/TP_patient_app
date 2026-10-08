@@ -1,0 +1,585 @@
+/* Health packages & vaccines: catalogue cards, detail page, bookings. */
+
+/* Cover ------------------------------------------------------------------ */
+/* The hospital's photo, or a generated cover: a soft tint of one ramp with a
+   large faint icon and quiet rings. Tones stay brand, neutral or green. */
+.cover {
+  --cover-from: var(--tesseract-blue-50);
+  --cover-to: var(--tesseract-blue-200);
+  --cover-ink: var(--tesseract-blue-600);
+  position: relative;
+  isolation: isolate;
+  display: block;
+  flex-shrink: 0;
+  width: 100%;
+  height: 128px;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      90% 120% at 0% 0%,
+      color-mix(in srgb, var(--tesseract-slate-0) 75%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(135deg, var(--cover-from) 0%, var(--cover-to) 100%);
+}
+.cover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: repeating-radial-gradient(
+    circle at 86% 92%,
+    transparent 0 26px,
+    color-mix(in srgb, var(--cover-ink) 9%, transparent) 26px 27px
+  );
+}
+.cover[data-tone="slate"] {
+  --cover-from: var(--tesseract-slate-50);
+  --cover-to: var(--tesseract-slate-200);
+  --cover-ink: var(--tesseract-slate-600);
+}
+.cover[data-tone="success"] {
+  --cover-from: var(--tesseract-success-50);
+  --cover-to: var(--tesseract-success-200);
+  --cover-ink: var(--tesseract-success-700);
+}
+.cover[data-image]::before {
+  content: none;
+}
+/* A light scrim keeps the chips legible on any photo. */
+.cover[data-image]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tesseract-slate-900) 22%, transparent),
+    transparent 45%
+  );
+  pointer-events: none;
+}
+.cover img {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.coverArt {
+  position: absolute;
+  top: 50%;
+  right: var(--tesseract-space-5);
+  z-index: -1;
+  display: flex;
+  color: color-mix(in srgb, var(--cover-ink) 24%, transparent);
+  transform: translateY(-38%) rotate(-10deg);
+}
+.coverChip,
+.coverDeal {
+  position: absolute;
+  top: var(--tesseract-space-2-5);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  max-width: 62%;
+  padding: var(--tesseract-space-1) var(--tesseract-space-2);
+  overflow: hidden;
+  border-radius: var(--tesseract-radius-full);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.coverChip {
+  left: var(--tesseract-space-2-5);
+  background: color-mix(in srgb, var(--tesseract-slate-0) 90%, transparent);
+  color: var(--tesseract-fg-heading);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.coverDeal {
+  right: var(--tesseract-space-2-5);
+  background: var(--tesseract-success-600);
+  color: var(--tesseract-on-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Card ------------------------------------------------------------------- */
+.itemGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tesseract-space-4);
+}
+.itemCard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-16);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+  text-align: left;
+  color: var(--tesseract-fg-primary);
+  transition:
+    box-shadow var(--tesseract-duration-150, 150ms) ease,
+    transform var(--tesseract-duration-150, 150ms) ease;
+}
+.itemCard:hover {
+  box-shadow: var(--tesseract-shadow-md);
+}
+.itemCard:active {
+  transform: scale(0.99);
+}
+.itemBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-3-5) var(--tesseract-space-4)
+    var(--tesseract-space-4);
+}
+.itemTitle {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--tesseract-space-0-5);
+  min-width: 0;
+}
+.itemTitle strong {
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+}
+.itemTitle small {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.itemFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-3);
+  padding-top: var(--tesseract-space-3);
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.itemMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  min-width: 0;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-secondary);
+  white-space: nowrap;
+}
+.itemMeta [data-tp-icon] {
+  flex-shrink: 0;
+  color: var(--tesseract-fg-tertiary);
+}
+.itemPrice {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: var(--tesseract-space-1-5);
+}
+.itemPrice strong {
+  font-size: var(--tesseract-text-body-base);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.itemPrice s,
+.itemPrice small {
+  font-size: var(--tesseract-text-caption);
+  color: var(--tesseract-fg-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.itemPrice small {
+  margin-left: calc(var(--tesseract-space-1) * -1);
+}
+/* Home rail: the same card at a fixed, peeking width. */
+.railCard {
+  flex: 0 0 min(72%, 252px);
+  scroll-snap-align: start;
+}
+.railCard .cover {
+  height: 112px;
+}
+.railCard:only-child {
+  flex-basis: 100%;
+}
+
+/* Page ------------------------------------------------------------------- */
+.bookingsButton {
+  gap: var(--tesseract-space-1-5) !important;
+  padding-inline: var(--tesseract-space-2) !important;
+  font-size: var(--tesseract-text-caption-lg) !important;
+  box-shadow: none;
+}
+.countDot {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--tesseract-size-18);
+  height: var(--tesseract-size-18);
+  padding: 0 var(--tesseract-space-1);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-fg-link);
+  color: var(--tesseract-on-dark);
+  font-size: var(--tesseract-text-caption-sm);
+  line-height: 1;
+  font-weight: var(--tesseract-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+.payNote {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+
+/* Detail ----------------------------------------------------------------- */
+.detailPage {
+  gap: var(--tesseract-space-5);
+  padding-bottom: 0 !important;
+}
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+  margin-top: var(--tesseract-space-1);
+}
+.galleryTrack {
+  display: flex;
+  overflow-x: auto;
+  border-radius: var(--tesseract-radius-16);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.galleryTrack::-webkit-scrollbar {
+  display: none;
+}
+.gallerySlide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+.gallerySlide .cover {
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+.gallerySlide .coverArt {
+  right: var(--tesseract-space-8);
+  transform: translateY(-50%) rotate(-10deg) scale(1.5);
+}
+.galleryDots {
+  display: flex;
+  justify-content: center;
+}
+.galleryDots button {
+  display: grid;
+  place-items: center;
+  width: var(--tesseract-size-24);
+  height: var(--tesseract-size-24);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.galleryDots button > span {
+  width: var(--tesseract-size-6);
+  height: var(--tesseract-size-6);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-slate-300);
+  transition: width var(--tesseract-duration-150, 150ms);
+}
+.galleryDots button[aria-pressed="true"] > span {
+  width: var(--tesseract-size-18);
+  background: var(--tesseract-fg-link);
+}
+.detailIntro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tesseract-space-2);
+}
+.detailIntro h2 {
+  font-size: var(--tesseract-text-h4);
+  line-height: var(--tesseract-text-h4-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+}
+.detailMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-2);
+  margin-top: var(--tesseract-space-1);
+}
+.detailMeta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+  padding: var(--tesseract-space-1-5) var(--tesseract-space-2-5);
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-bg-page-subtle);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.detailMeta [data-tp-icon] {
+  color: var(--tesseract-fg-tertiary);
+}
+.detailSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+}
+.detailSection > :first-child {
+  margin: 0;
+}
+.detailCta {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-3);
+  margin: auto calc(var(--tesseract-page-inset) * -1) 0;
+  padding: var(--tesseract-space-3) var(--tesseract-page-inset)
+    calc(var(--tesseract-space-3) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--tesseract-border-soft);
+  background: var(--tesseract-bg-surface);
+}
+.detailCta > button {
+  min-width: 148px;
+  min-height: var(--tesseract-size-48);
+}
+.ctaPrice {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ctaPrice strong {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.ctaPrice small {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.priceBlock {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-2);
+}
+.priceBlock strong {
+  font-size: var(--tesseract-text-h4);
+  line-height: var(--tesseract-text-h4-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.priceBlock s,
+.priceBlock small {
+  font-size: var(--tesseract-text-body-xs);
+  color: var(--tesseract-fg-tertiary);
+}
+.saveTag {
+  align-self: center;
+  padding: var(--tesseract-space-0-5) var(--tesseract-space-2);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-bg-success-soft);
+  color: var(--tesseract-fg-success);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.factList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  margin: 0;
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-page-subtle);
+}
+.factList dt {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.factList dd {
+  margin: var(--tesseract-space-0-5) 0 0;
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  color: var(--tesseract-fg-heading);
+}
+.clinicTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-2);
+}
+.clinicTags > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  padding: var(--tesseract-space-1) var(--tesseract-space-2-5);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-bg-page-subtle);
+  font-size: var(--tesseract-text-body-xs);
+  color: var(--tesseract-fg-secondary);
+}
+
+/* Bookings --------------------------------------------------------------- */
+.requestCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-16);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+}
+.requestHead {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  min-width: 0;
+}
+.requestHead > :last-child {
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.requestThumb {
+  flex: 0 0 var(--tesseract-size-48);
+  height: var(--tesseract-size-48);
+  overflow: hidden;
+  border-radius: var(--tesseract-radius-12);
+}
+.requestThumb .cover {
+  height: 100%;
+}
+.requestThumb .cover::before {
+  content: none;
+}
+.requestThumb .coverArt {
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--cover-ink);
+  transform: none;
+}
+.requestThumb .coverArt [data-tp-icon] {
+  width: var(--tesseract-size-24) !important;
+  height: var(--tesseract-size-24) !important;
+}
+.requestKind {
+  display: block;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.requestFacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: var(--tesseract-space-3);
+  margin: 0;
+  padding: var(--tesseract-space-3);
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-page-subtle);
+}
+.requestFacts dt {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.requestFacts dd {
+  margin: var(--tesseract-space-0-5) 0 0;
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.requestFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-3);
+}
+.requestFoot > button {
+  flex-shrink: 0;
+}
+.requestHint {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.sentState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-4) 0;
+  text-align: center;
+}
+.sentIcon {
+  display: grid;
+  place-items: center;
+  width: var(--tesseract-size-56);
+  height: var(--tesseract-size-56);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-bg-success-soft);
+  color: var(--tesseract-fg-success);
+}
+
+/* Packages · Vaccines · My bookings */
+.packageSegment {
+  width: 100%;
+  margin-bottom: var(--tesseract-space-1);
+}
+.segmentLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+}
+/* Three equal segments that fit a phone; the count sits inline. */
+.packageSegment > button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-inline: var(--tesseract-space-2);
+  gap: var(--tesseract-space-1-5);
+}
+.segmentLabel > .countDot {
+  min-width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+/* Sticky patient + segment band (shares .recordsTop with Records). */
+.packagesTop {
+  gap: var(--tesseract-space-2);
+  padding-bottom: var(--tesseract-space-3);
+  border-bottom: 1px solid var(--tesseract-border-soft);
+}
+.packagesTop .packageSegment {
+  margin-bottom: 0;
+}

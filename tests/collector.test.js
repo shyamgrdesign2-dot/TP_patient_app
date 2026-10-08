@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { openAgentSession } from "../src/services/agentSession.js";
-import { updateState } from "../src/state/model.js";
-import { initialState } from "../src/services/data.js";
+import { openAgentSession } from "../src/patient/services/agentSession.js";
+import { updateState } from "../src/patient/state/model.js";
+import { initialState } from "../src/shared/data.js";
 
 test("symptom notes stay with the active patient's confirmed appointment", () => {
   const state = initialState();

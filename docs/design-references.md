@@ -25,7 +25,7 @@ Tesseract is vendored internally at version 1.1.0, unmodified. It must remain in
 
 ## Photo assets
 
-Downloaded Unsplash photos are generic illustrative healthcare imagery; the sample doctor names and reviews are fictional and not the people depicted. Production must replace these with licensed/consented hospital doctor portraits and verified directory data.
+Downloaded Unsplash photos are generic illustrative healthcare imagery; the sample doctor names are fictional and not the people depicted. Production must replace these with licensed/consented hospital doctor portraits and verified directory data. Doctor star ratings and review counts are intentionally not shown: there is no verified source for them.
 
 - Care image: https://images.unsplash.com/photo-1576091160399-112ba8d25d1d
 - Doctor portrait 1: https://images.unsplash.com/photo-1612349317150-e413f6a5b16d

@@ -1,0 +1,3546 @@
+.previewStage {
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      ellipse at 64% 12%,
+      color-mix(in srgb, var(--tesseract-blue-100) 75%, transparent),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 92% 88%,
+      var(--tesseract-violet-50),
+      transparent 48%
+    ),
+    var(--tesseract-bg-page);
+}
+.previewStage:after {
+  content: "";
+  position: absolute;
+  width: 60%;
+  height: 70%;
+  top: 12%;
+  right: -26%;
+  border: 1px solid var(--tesseract-blue-100);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.previewIntro {
+  position: absolute;
+  left: calc(50% - 480px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 1;
+}
+.previewIntro > .eyebrow {
+  margin-top: var(--tesseract-space-16);
+  color: var(--tesseract-blue-600);
+}
+.previewIntro > h1 {
+  font-size: var(--tesseract-text-display);
+  line-height: 1.14;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  margin-top: var(--tesseract-space-4);
+}
+.previewIntro > h1 > span {
+  color: var(--tesseract-blue-500);
+}
+.previewIntro > p {
+  font-size: var(--tesseract-text-body-base);
+  line-height: 1.75;
+  margin-top: var(--tesseract-space-6);
+}
+.previewFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-4);
+  margin-top: var(--tesseract-space-8);
+}
+.previewFeatures > span {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  color: var(--tesseract-fg-secondary);
+}
+.previewFeatures > span > span {
+  color: var(--tesseract-blue-500);
+}
+.previewBrand {
+  border-top: 1px solid var(--tesseract-border-neutral);
+  margin-top: var(--tesseract-space-10);
+  padding-top: var(--tesseract-space-6);
+  width: 100%;
+}
+.previewBrand > small {
+  font-size: var(--tesseract-text-micro);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.previewBrand > span {
+  font-size: var(--tesseract-text-body-xs);
+  color: var(--tesseract-fg-tertiary);
+}
+.swatches {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  margin: var(--tesseract-space-3) 0;
+}
+.swatches > button:not(:last-child) {
+  height: var(--tesseract-size-24);
+  width: var(--tesseract-size-24);
+  border-radius: 50%;
+  border: 3px solid var(--tesseract-slate-0);
+  box-shadow: 0 0 0 1px var(--tesseract-border-neutral);
+}
+.swatches > button[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px var(--tesseract-blue-300);
+}
+.previewNote {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  font-size: var(--tesseract-text-body-xs);
+  color: var(--tesseract-fg-tertiary);
+  margin-top: var(--tesseract-space-10);
+}
+.liveDot,
+.miniDot {
+  height: var(--tesseract-size-6);
+  width: var(--tesseract-size-6);
+  border-radius: 50%;
+  background: var(--tesseract-success-500);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.phone {
+  position: absolute;
+  left: var(--tesseract-patient-phone-center);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--tesseract-patient-phone-width);
+  height: var(--tesseract-patient-phone-height);
+  border: var(--tesseract-patient-border-width) solid
+    var(--tesseract-border-neutral);
+  border-radius: var(--tesseract-patient-device-radius);
+  background: var(--tesseract-bg-page);
+  box-shadow:
+    var(--tesseract-shadow-2xl),
+    0 0 0 1px var(--tesseract-slate-300);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+}
+.deviceStatus {
+  height: var(--tesseract-space-10);
+  flex-shrink: 0;
+  padding: var(--tesseract-space-2) var(--tesseract-space-6) 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--tesseract-fg-heading);
+  font-weight: 600;
+  font-size: var(--tesseract-text-body-xs);
+  background: var(--tesseract-bg-page);
+  position: relative;
+}
+.deviceStatus > div {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+}
+.dynamicIsland {
+  position: absolute;
+  top: var(--tesseract-space-2);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 96px;
+  height: var(--tesseract-size-24);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-slate-900);
+}
+.appViewport {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  isolation: isolate;
+}
+.scrollArea {
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.scrollArea::-webkit-scrollbar {
+  display: none;
+}
+.homeIndicator {
+  height: var(--tesseract-size-4);
+  width: 120px;
+  background: var(--tesseract-slate-800);
+  position: absolute;
+  bottom: var(--tesseract-space-1-5);
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: var(--tesseract-radius-full);
+  z-index: 20;
+  pointer-events: none;
+}
+.previewFoot {
+  position: absolute;
+  left: var(--tesseract-patient-phone-center);
+  bottom: var(--tesseract-space-2);
+  transform: translateX(-50%);
+  font-size: var(--tesseract-text-micro);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--tesseract-fg-tertiary);
+}
+.previewFoot > span {
+  margin: 0 var(--tesseract-space-2);
+}
+.navbar {
+  position: absolute;
+  bottom: var(--tesseract-space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--tesseract-space-2);
+  gap: var(--tesseract-space-1);
+  border: 1px solid var(--tesseract-border-soft);
+  background: color-mix(in srgb, var(--tesseract-bg-surface) 92%, transparent);
+  box-shadow: var(--tesseract-shadow-lg);
+  border-radius: var(--tesseract-radius-full);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  z-index: 20;
+  transition:
+    opacity 0.25s,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.navItem {
+  display: flex !important;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 48px !important;
+  min-width: 44px !important;
+  flex: 1 1 44px;
+  padding: 0 !important;
+  gap: var(--tesseract-space-2) !important;
+  color: var(--tesseract-fg-secondary) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: var(--tesseract-radius-full) !important;
+  transition:
+    background var(--tesseract-duration-150, 150ms),
+    color var(--tesseract-duration-150, 150ms),
+    transform var(--tesseract-duration-150, 150ms);
+}
+.navItem[data-active="true"] {
+  flex: 2 0 auto;
+  padding: 0 var(--tesseract-space-3-5) !important;
+}
+:global(body[data-sheet-open="true"]) .navbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 120%);
+}
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+.eyebrow {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--tesseract-fg-secondary);
+  display: block;
+}
+.iconButton {
+  position: relative;
+  width: var(--tesseract-patient-touch) !important;
+  height: var(--tesseract-patient-touch) !important;
+  min-width: var(--tesseract-patient-touch) !important;
+  padding: 0 !important;
+}
+.iconButton[data-variant="outline"] {
+  background: var(--tesseract-bg-surface) !important;
+  border-color: var(--tesseract-border-neutral) !important;
+}
+.notificationCount {
+  position: absolute;
+  right: var(--tesseract-space-1);
+  top: var(--tesseract-space-1);
+  pointer-events: none;
+}
+.avatarButton {
+  border: 0;
+  background: none;
+  padding: 0;
+  border-radius: var(--tesseract-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tesseract-patient-touch);
+  min-height: var(--tesseract-patient-touch);
+}
+.recordCard i {
+  height: 2px;
+  width: 2px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  margin: 0 var(--tesseract-space-1);
+}
+.agentIcon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: linear-gradient(
+    135deg,
+    var(--tesseract-blue-500),
+    var(--tesseract-blue-700)
+  );
+  color: var(--tesseract-slate-0);
+  box-shadow: 0 4px 12px -4px var(--tesseract-blue-300);
+}
+.sectionTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  margin: var(--tesseract-space-8) 0 var(--tesseract-space-4);
+  min-height: var(--tesseract-size-32);
+}
+.sectionTitle h2 {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+  color: var(--tesseract-fg-heading);
+}
+/* "View all" style action: a quiet link with one chevron, never underlined. */
+.sectionTitle button {
+  flex-shrink: 0;
+  min-height: var(--tesseract-patient-touch) !important;
+  gap: var(--tesseract-space-0-5) !important;
+  padding: 0 !important;
+  text-decoration: none !important;
+  font-weight: var(--tesseract-weight-semibold);
+}
+.sectionTitle button * {
+  text-decoration: none !important;
+}
+.appointmentCard {
+  border-radius: var(--tesseract-radius-14);
+  overflow: hidden;
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+}
+.appointmentDate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  background: var(--tesseract-bg-page-subtle);
+  border-bottom: 1px solid var(--tesseract-border-soft);
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  color: var(--tesseract-fg-heading);
+}
+.appointmentDate > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+  font-weight: var(--tesseract-weight-semibold);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.appointmentDate > span:first-child [data-tp-icon] {
+  color: var(--tesseract-fg-tertiary);
+}
+.doctorRow {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+}
+.doctorRow h3 {
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+  margin-bottom: var(--tesseract-space-0-5);
+}
+.doctorRow p {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.doctorRow small {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-tertiary);
+  display: block;
+  margin-top: var(--tesseract-space-1);
+}
+.appointmentCard > .doctorRow {
+  padding: var(--tesseract-space-4);
+}
+.appointmentCard .doctorProfileButton {
+  padding: var(--tesseract-space-4);
+}
+.appointmentCard .doctorProfileButton > [data-tp-icon],
+.doctorCard .doctorProfileButton > [data-tp-icon] {
+  color: var(--tesseract-fg-tertiary);
+  flex-shrink: 0;
+}
+.cardSubtitle {
+  display: block;
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+  margin-top: var(--tesseract-space-0-5);
+}
+.appointmentBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-3);
+  padding: 0 var(--tesseract-space-4) var(--tesseract-space-4);
+}
+.appointmentMeta {
+  flex: 1;
+  min-width: 0;
+}
+.appointmentBottom > span {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+}
+.appointmentBottom > button {
+  flex-shrink: 0;
+  min-height: var(--tesseract-patient-touch);
+}
+/* Narrow phones: stack visit type over location so a wrapped line never
+   starts with the separator dot. */
+@media (max-width: 360px) {
+  .appointmentBottom > .appointmentMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--tesseract-space-0-5);
+  }
+  .appointmentMeta small::before {
+    content: none;
+  }
+}
+.inlineLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  color: var(--tesseract-fg-link);
+  font-size: var(--tesseract-text-body-xs);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.rowCard {
+  overflow: hidden;
+}
+.row {
+  display: flex;
+  gap: var(--tesseract-space-4);
+  align-items: center;
+  width: 100%;
+  padding: var(--tesseract-space-4);
+  background: none;
+  border: 0;
+  color: var(--tesseract-fg-primary);
+  text-align: left;
+}
+.row + .row {
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.row strong {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.row small {
+  display: block;
+  margin-top: var(--tesseract-space-0-5);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.row > span:last-child:not(.grow) {
+  flex-shrink: 0;
+}
+.row:hover {
+  background: var(--tesseract-bg-surface-hover);
+}
+.rowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-fg-link);
+  flex-shrink: 0;
+}
+.addCircle {
+  width: var(--tesseract-patient-touch);
+  height: var(--tesseract-patient-touch);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px dashed var(--tesseract-blue-200);
+  border-radius: 50%;
+  color: var(--tesseract-blue-500);
+}
+.homeFooter {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+  margin-top: var(--tesseract-space-10);
+  padding: var(--tesseract-space-4) 0;
+  color: var(--tesseract-fg-tertiary);
+}
+.homeFooter p {
+  font-size: var(--tesseract-text-body-xs);
+}
+.homeFooter small {
+  font-size: var(--tesseract-text-caption-sm);
+}
+.page {
+  --tesseract-page-inset: var(--tesseract-space-5);
+  padding: 0 var(--tesseract-page-inset) var(--tesseract-patient-bottom-space);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-4);
+  min-height: 100%;
+}
+.page > .sectionTitle {
+  margin-top: var(--tesseract-space-2);
+  margin-bottom: 0;
+}
+.pageHeader {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  min-height: 64px;
+  flex-shrink: 0;
+  margin: 0 calc(-1 * var(--tesseract-page-inset, var(--tesseract-space-6)));
+  padding: var(--tesseract-space-2)
+    var(--tesseract-page-inset, var(--tesseract-space-6))
+    var(--tesseract-space-2)
+    calc(
+      var(--tesseract-page-inset, var(--tesseract-space-6)) -
+        var(--tesseract-space-3)
+    );
+  background: var(--tesseract-bg-surface);
+  border-bottom: 1px solid var(--tesseract-border-soft);
+}
+.pageHeader h1 {
+  font-size: var(--tesseract-text-h4);
+  line-height: var(--tesseract-text-h4-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+  color: var(--tesseract-fg-heading);
+}
+.pageHeaderTrailing {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  flex-shrink: 0;
+}
+.pageHeader > button {
+  flex-shrink: 0;
+}
+.pageHeader .headerBack {
+  width: var(--tesseract-patient-touch);
+  height: var(--tesseract-patient-touch);
+  min-width: var(--tesseract-patient-touch);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--tesseract-fg-secondary);
+}
+/* Patient context: a floating liquid-glass pill, centred on the page and
+   sticky under the header so content scrolls beneath it. */
+.memberContext {
+  position: sticky;
+  top: calc(64px + var(--tesseract-space-2));
+  z-index: 20;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  width: fit-content;
+  max-width: 100%;
+  min-height: var(--tesseract-size-32);
+  padding: var(--tesseract-space-1) var(--tesseract-space-3)
+    var(--tesseract-space-1) var(--tesseract-space-1);
+  /* Liquid glass: translucent fill, blurred and saturated backdrop, a bright
+     inner rim on top and a soft lift below. */
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tesseract-bg-surface) 70%, transparent),
+      color-mix(in srgb, var(--tesseract-bg-surface) 40%, transparent)
+    );
+  border: 0;
+  border-radius: var(--tesseract-radius-full);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--tesseract-bg-surface) 95%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--tesseract-bg-surface) 55%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--tesseract-border-neutral) 40%, transparent),
+    var(--tesseract-shadow-md);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  text-align: left;
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-medium);
+  color: var(--tesseract-fg-heading);
+}
+/* Tonal neutral tag: grounded on the white band, not floating. */
+.memberContextPlain {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+  max-width: 100%;
+  min-height: var(--tesseract-size-36);
+  margin: var(--tesseract-space-1) 0;
+  padding: 0 var(--tesseract-space-3) 0 var(--tesseract-space-2);
+  border: 0;
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-slate-100);
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+  transition: background var(--tesseract-duration-150);
+}
+.memberContextPlain:hover {
+  background: var(--tesseract-slate-200);
+}
+.memberContextPlain > [data-tp-icon]:first-child {
+  color: var(--tesseract-fg-secondary);
+}
+.memberContextPlain > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 44px hit area around the compact pill. */
+.memberContext::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--tesseract-space-1-5) * -1) 0;
+}
+.memberContext > span:nth-child(2) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-4);
+  min-width: 0;
+}
+.stack > p {
+  line-height: 1.6;
+}
+.twoColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tesseract-space-3);
+}
+.twoColumns > * {
+  min-width: 0;
+}
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+}
+.fieldLabel {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+/* Filter strip: one scrolling row that bleeds to the page edge. */
+.chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--tesseract-space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-inline: var(--tesseract-page-inset, var(--tesseract-space-5));
+  margin-inline: calc(
+    var(--tesseract-page-inset, var(--tesseract-space-5)) * -1
+  );
+}
+.chips::-webkit-scrollbar,
+.horizontalChips::-webkit-scrollbar {
+  display: none;
+}
+/* Form choices wrap in place. */
+.chips[data-layout="wrap"] {
+  flex-wrap: wrap;
+  overflow: visible;
+  padding-inline: 0;
+  margin-inline: 0;
+}
+.chip {
+  min-height: var(--tesseract-patient-touch);
+  flex-shrink: 0;
+  max-width: 100%;
+}
+.chip:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: var(--tesseract-space-0-5);
+}
+.horizontalChips {
+  display: flex;
+  gap: var(--tesseract-space-2);
+  overflow: auto;
+  margin-inline: calc(
+    var(--tesseract-page-inset, var(--tesseract-space-5)) * -1
+  );
+  padding: 0 var(--tesseract-page-inset, var(--tesseract-space-5))
+    var(--tesseract-space-1);
+  scrollbar-width: none;
+}
+.horizontalChips > * {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tesseract-space-2-5);
+  padding: var(--tesseract-space-3) var(--tesseract-space-3-5);
+  border-radius: var(--tesseract-radius-12);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+  background: var(--tesseract-bg-page-subtle);
+  border: 0;
+}
+.notice > span {
+  flex-shrink: 0;
+}
+.notice:is([data-tone="neutral"], [data-tone="info"]) {
+  background: var(--tesseract-bg-brand-soft);
+}
+.notice:is([data-tone="neutral"], [data-tone="info"]) > span {
+  color: var(--tesseract-fg-link);
+}
+.notice[data-tone="warning"] {
+  background: var(--tesseract-bg-warning-soft);
+}
+.notice[data-tone="warning"] > span {
+  color: var(--tesseract-fg-warning);
+}
+.notice[data-tone="success"] {
+  background: var(--tesseract-bg-success-soft);
+}
+.notice[data-tone="success"] > span {
+  color: var(--tesseract-fg-success);
+}
+.error {
+  color: var(--tesseract-error-700);
+  background: var(--tesseract-bg-error-soft);
+  padding: var(--tesseract-space-3);
+  border-radius: var(--tesseract-radius-12);
+  font-size: var(--tesseract-text-body-xs);
+}
+.sheet {
+  position: fixed !important;
+  left: var(--tesseract-patient-phone-center) !important;
+  right: auto !important;
+  bottom: calc(
+    (100dvh - var(--tesseract-patient-phone-height)) / 2 +
+      var(--tesseract-patient-border-width)
+  ) !important;
+  transform: translateX(-50%) !important;
+  width: calc(
+    var(--tesseract-patient-phone-width) - 2 *
+      var(--tesseract-patient-border-width)
+  ) !important;
+  max-height: calc(
+    var(--tesseract-patient-phone-height) - var(--tesseract-space-16)
+  ) !important;
+  height: auto !important;
+  border-radius: var(--tesseract-patient-sheet-radius) !important;
+  animation: none !important;
+  overflow: hidden;
+  background: var(--tesseract-bg-page) !important;
+  border: 1px solid var(--tesseract-slate-0) !important;
+  box-shadow: var(--tesseract-shadow-2xl) !important;
+}
+.sheetBody {
+  padding: var(--tesseract-space-5) !important;
+  overflow: auto !important;
+}
+.sheet :global(h2) {
+  white-space: normal !important;
+}
+.sheet button {
+  min-height: var(--tesseract-patient-touch);
+}
+.sheet > div:last-child {
+  padding-bottom: var(--tesseract-space-6);
+}
+.selectionCard {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  text-align: left;
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  color: var(--tesseract-fg-primary);
+}
+.selectionCard[data-selected="true"] {
+  border-color: var(--tesseract-border-primary);
+  background: var(--tesseract-bg-selected);
+}
+.selectionCard strong,
+.selectionCard small {
+  display: block;
+}
+.selectionCard small {
+  margin-top: var(--tesseract-space-1);
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--tesseract-space-8) var(--tesseract-space-4);
+  gap: var(--tesseract-space-3);
+}
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tesseract-size-56, 56px);
+  height: var(--tesseract-size-56, 56px);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-fg-link);
+}
+.empty p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  max-width: 280px;
+}
+.empty h3 {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+}
+.identityList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+  overflow: hidden;
+}
+.identityRow {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  min-height: var(--tesseract-size-56);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.identityRow + .identityRow {
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.identityRow strong {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.identityRow small {
+  display: block;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.identityValue {
+  color: var(--tesseract-fg-secondary) !important;
+  font-variant-numeric: tabular-nums;
+}
+.identityRow > [data-tp-icon]:last-child {
+  color: var(--tesseract-fg-tertiary);
+}
+.identityIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-fg-link);
+}
+.identityIcon[data-kind="abha"] {
+  background: var(--tesseract-bg-success-soft);
+}
+.identityIcon img {
+  width: 24px;
+  height: 24px;
+}
+.verifiedCard {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-4);
+  padding-top: var(--tesseract-space-5);
+  border: 1px solid var(--tesseract-success-200);
+  border-radius: var(--tesseract-radius-14);
+  background: linear-gradient(
+    120deg,
+    var(--tesseract-bg-success-soft),
+    var(--tesseract-bg-surface) 75%
+  );
+}
+.verifiedCard strong {
+  display: block;
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.verifiedId {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+  font-weight: var(--tesseract-weight-medium);
+  color: var(--tesseract-fg-primary);
+  font-variant-numeric: tabular-nums;
+}
+.verifiedCard small {
+  font-size: var(--tesseract-text-caption);
+  color: var(--tesseract-fg-tertiary);
+}
+.verifiedTag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  padding: var(--tesseract-space-0-5) var(--tesseract-space-2-5);
+  border-bottom-left-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-success-100);
+  color: var(--tesseract-success-800);
+  font-size: var(--tesseract-text-caption);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.consentCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+}
+/* Keep the checkbox square and top-aligned when the label wraps. */
+.consentCard label {
+  align-items: flex-start;
+}
+/* Sheets give buttons a 44px touch height; a checkbox box must stay square
+   (the label row is still the 44px-tall tap target). */
+.consentCard label > button,
+.sheet label > button[role="checkbox"] {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  min-height: 0 !important;
+  margin-top: 2px;
+}
+.consentCard small {
+  padding-left: var(--tesseract-space-6);
+  font-size: var(--tesseract-text-caption);
+  color: var(--tesseract-fg-tertiary);
+}
+.softCard,
+.detailCard {
+  padding: var(--tesseract-space-5);
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+}
+.softCard {
+  background: linear-gradient(
+    145deg,
+    var(--tesseract-blue-50),
+    var(--tesseract-bg-surface)
+  );
+  border-color: var(--tesseract-blue-100);
+}
+.softCard > span:first-child {
+  color: var(--tesseract-blue-500);
+}
+.softCard p,
+.detailCard p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: 1.7;
+}
+.detailCard h3 {
+  font-size: var(--tesseract-text-h5);
+}
+.listMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.doctorCard {
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  overflow: hidden;
+}
+.doctorProfileButton {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-4);
+  padding: var(--tesseract-space-4);
+  background: none;
+  border: 0;
+  text-align: left;
+  width: 100%;
+  color: var(--tesseract-fg-primary);
+}
+.doctorProfileButton p {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+}
+.doctorInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tesseract-space-1);
+}
+.locationChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  max-width: 44vw;
+  min-height: var(--tesseract-size-36);
+  padding: 0 var(--tesseract-space-2-5);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-bg-surface);
+  color: var(--tesseract-fg-heading);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  position: relative;
+}
+/* 44px hit area around the compact chip. */
+.locationChip::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--tesseract-space-1) * -1) 0;
+}
+.locationChip > span:not([data-tp-icon]) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.locationChip > [data-tp-icon] {
+  flex-shrink: 0;
+  color: var(--tesseract-fg-link);
+}
+.locationChip > [data-tp-icon]:last-child {
+  color: var(--tesseract-fg-tertiary);
+}
+.doctorExp {
+  font-size: var(--tesseract-text-caption);
+  line-height: inherit;
+  font-weight: var(--tesseract-weight-regular);
+  color: var(--tesseract-fg-tertiary);
+  white-space: nowrap;
+}
+.experience {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+/* Specialty tag first, then the languages the doctor consults in. */
+.doctorMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  min-width: 0;
+  padding: 0 var(--tesseract-space-4) var(--tesseract-space-4);
+  font-size: var(--tesseract-text-caption-lg);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.doctorCard .doctorProfileButton {
+  align-items: flex-start;
+}
+.doctorCard .doctorProfileButton > [data-tp-icon] {
+  margin-top: var(--tesseract-space-1);
+}
+.doctorMeta > span:first-child {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.metaDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: var(--tesseract-size-12);
+  background: var(--tesseract-border-neutral);
+}
+.doctorMeta > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.education {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.doctorBooking {
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-3);
+}
+.doctorBooking strong {
+  display: block;
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.doctorBooking small {
+  display: block;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.doctorBooking > button {
+  flex-shrink: 0;
+  min-height: var(--tesseract-patient-touch);
+}
+.steps {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-2) 0 var(--tesseract-space-4);
+}
+.steps > span {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+  font-size: var(--tesseract-text-body-xs);
+  color: var(--tesseract-fg-tertiary);
+}
+.steps b {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tesseract-size-24);
+  height: var(--tesseract-size-24);
+  border-radius: 50%;
+  background: var(--tesseract-slate-100);
+  font-size: var(--tesseract-text-body-xs);
+}
+.steps > span[data-active="true"] {
+  color: var(--tesseract-blue-600);
+  font-weight: 600;
+}
+.steps > span[data-active="true"] b {
+  background: var(--tesseract-blue-500);
+  color: var(--tesseract-slate-0);
+}
+.bookingStep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-4);
+  transform-origin: top center;
+  animation: stepIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Continue folds the open section up before its summary card appears. */
+.bookingStep[data-leaving] {
+  animation: stepOut 0.26s cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+.bookingSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-blue-100);
+  border-radius: var(--tesseract-radius-14);
+  background: linear-gradient(
+    120deg,
+    var(--tesseract-bg-brand-soft) 0%,
+    var(--tesseract-bg-surface) 85%
+  );
+  box-shadow: var(--tesseract-shadow-xs);
+  transform-origin: top center;
+  animation: summaryIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.bookingKind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-link);
+}
+.bookingKind [data-tp-icon] {
+  color: var(--tesseract-fg-link);
+}
+.bookingKind > span {
+  color: inherit;
+}
+.patientPicker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+}
+.patientOption {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  text-align: left;
+  transition:
+    border-color var(--tesseract-duration-150),
+    background var(--tesseract-duration-150);
+}
+.patientOption strong {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.patientOption strong span {
+  font-weight: var(--tesseract-weight-regular);
+  color: var(--tesseract-fg-secondary);
+}
+.patientOption small {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.patientOption[aria-checked="true"] {
+  border-color: var(--tesseract-border-primary);
+  background: var(--tesseract-bg-brand-soft);
+}
+.radioMark {
+  flex-shrink: 0;
+  width: var(--tesseract-size-20);
+  height: var(--tesseract-size-20);
+  border: 2px solid var(--tesseract-border-strong);
+  border-radius: var(--tesseract-radius-full);
+  transition: border var(--tesseract-duration-150);
+}
+.radioMark[data-checked],
+.patientOption[aria-checked="true"] .radioMark {
+  border: 6px solid var(--tesseract-blue-600);
+}
+.confirmingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tesseract-space-4);
+  background: color-mix(in srgb, var(--tesseract-bg-page) 92%, transparent);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease both;
+}
+.confirmingOverlay p {
+  font-size: var(--tesseract-text-body-sm);
+  color: var(--tesseract-fg-secondary);
+}
+.confirmingRing {
+  width: var(--tesseract-size-56);
+  height: var(--tesseract-size-56);
+  border: 4px solid var(--tesseract-blue-100);
+  border-top-color: var(--tesseract-blue-600);
+  border-radius: var(--tesseract-radius-full);
+  animation: spin 0.8s linear infinite;
+}
+/* The tick lands mid-screen where the loader was, then rises to the top
+   while the confirmation details fade in beneath it. */
+.successArrive > span:first-child {
+  animation: tickRise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.successArrive ~ *,
+.successArrive > :not(:first-child) {
+  animation: rise 0.45s 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes stepIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes stepOut {
+  to {
+    opacity: 0;
+    transform: scaleY(0.6) translateY(-12px);
+    filter: blur(2px);
+  }
+}
+@keyframes summaryIn {
+  from {
+    opacity: 0;
+    transform: scaleY(1.8) translateY(-6px);
+  }
+}
+@keyframes tickRise {
+  0% {
+    opacity: 0;
+    transform: translateY(28vh) scale(0.6);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(28vh) scale(1.25);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bookingStep,
+  .bookingStep[data-leaving],
+  .bookingSummary,
+  .successArrive > *,
+  .successArrive ~ *,
+  .confirmingRing {
+    animation: none;
+  }
+}
+.bookingSummaryValue {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.bookingSummaryValue > span + span::before {
+  content: "·";
+  margin: 0 var(--tesseract-space-1-5);
+  color: var(--tesseract-fg-tertiary);
+  font-weight: var(--tesseract-weight-regular);
+}
+.dateStrip {
+  display: flex;
+  gap: var(--tesseract-space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: var(--tesseract-space-1) 0;
+}
+.dateStrip > button {
+  min-width: var(--tesseract-size-56, 56px);
+  flex: 1;
+  padding: var(--tesseract-space-2) var(--tesseract-space-1);
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-surface);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: var(--tesseract-space-0-5);
+  color: var(--tesseract-fg-heading);
+  transition: background var(--tesseract-duration-150, 150ms);
+}
+.dateStrip > button > strong {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.dateStrip small {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.dateStrip > button[data-selected="true"] {
+  background: var(--tesseract-blue-600);
+  border-color: var(--tesseract-blue-600);
+  color: var(--tesseract-fg-inverse);
+}
+.dateStrip > button[data-selected="true"] small {
+  color: var(--tesseract-fg-inverse);
+}
+.slotGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+}
+.slotGroup + .slotGroup {
+  margin-top: var(--tesseract-space-4);
+}
+.slotLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+}
+.slotLabel [data-tp-icon] {
+  color: var(--tesseract-fg-tertiary);
+}
+.slotGroup > span {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--tesseract-space-2);
+  font-variant-numeric: tabular-nums;
+}
+.slots > * {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--tesseract-patient-touch);
+  justify-content: center;
+}
+.continueHint {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.sectionLabel {
+  display: contents;
+}
+.sectionLabel .fieldLabel {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+}
+.sectionLabel > .sectionTitle {
+  margin: var(--tesseract-space-2) 0 0;
+}
+.stickyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-3);
+  position: sticky;
+  bottom: 0;
+  background: color-mix(in srgb, var(--tesseract-bg-page) 95%, transparent);
+  backdrop-filter: blur(12px);
+  padding: var(--tesseract-space-4) 0;
+  margin-top: var(--tesseract-space-4);
+}
+.stickyActions > button {
+  flex: 1;
+  min-height: var(--tesseract-patient-control-height) !important;
+}
+.details,
+.detailCard dl {
+  display: grid;
+  grid-template-columns: 38% 1fr;
+  gap: var(--tesseract-space-3);
+  margin: 0;
+  font-size: var(--tesseract-text-body-xs);
+  line-height: 1.6;
+}
+.details dt,
+.detailCard dt {
+  color: var(--tesseract-fg-tertiary);
+}
+.details dd,
+.detailCard dd {
+  margin: 0;
+  text-align: right;
+  font-weight: var(--tesseract-weight-medium);
+  color: var(--tesseract-fg-heading);
+  overflow-wrap: anywhere;
+}
+.total {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--tesseract-border-neutral);
+  padding-top: var(--tesseract-space-4);
+  margin-top: var(--tesseract-space-2);
+}
+.total strong {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+.footnote {
+  font-size: var(--tesseract-text-body-xs);
+  text-align: center;
+  color: var(--tesseract-fg-tertiary);
+  line-height: 1.6;
+}
+.successHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--tesseract-space-4);
+  padding: var(--tesseract-space-8) var(--tesseract-space-2);
+}
+.successHero > span:first-child {
+  color: var(--tesseract-success-500);
+}
+.successHero h1 {
+  font-size: var(--tesseract-text-h4);
+  line-height: var(--tesseract-text-h4-lh);
+  font-weight: var(--tesseract-weight-bold);
+}
+.successArrive {
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-4) var(--tesseract-space-2)
+    var(--tesseract-space-2);
+}
+/* Highlighted confirmation: a thin blue stroke that fades out on the left
+   and right sides, with a soft blue-tinted shadow. */
+.confirmCard {
+  position: relative;
+  border-color: transparent !important;
+  background: var(--tesseract-bg-surface) !important;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--tesseract-blue-600) 6%, transparent),
+    0 6px 16px color-mix(in srgb, var(--tesseract-blue-600) 8%, transparent) !important;
+}
+.confirmCard::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--tesseract-blue-200) 25%, transparent),
+    var(--tesseract-blue-200) 25%,
+    var(--tesseract-blue-200) 75%,
+    color-mix(in srgb, var(--tesseract-blue-200) 25%, transparent)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+/* Symptom prompt: a soft AI-tinted surface with a gradient stroke. */
+.symptomCard {
+  position: relative;
+  border-color: transparent !important;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--tesseract-slate-0) 90%, transparent),
+      color-mix(in srgb, var(--tesseract-slate-0) 90%, transparent)
+    ),
+    var(--tesseract-gradient-ai-card) !important;
+}
+.symptomCard::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--tesseract-gradient-ai-card);
+  opacity: 0.55;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.visitSegment {
+  width: 100%;
+}
+.bookingDoctor {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-3);
+  border: 1px solid var(--tesseract-blue-100);
+  border-radius: var(--tesseract-radius-14);
+  background: linear-gradient(
+    120deg,
+    var(--tesseract-bg-brand-soft),
+    var(--tesseract-bg-surface) 80%
+  );
+  box-shadow: var(--tesseract-shadow-xs);
+}
+.bookingDoctor h3 {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.bookingDoctor p {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.bookingDoctor > strong {
+  flex-shrink: 0;
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.detailCard.visitSummary {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+}
+.visitSummary > span:first-child {
+  flex-shrink: 0;
+}
+.visitSummary .grow > * {
+  display: block;
+}
+.timeline {
+  display: flex;
+  flex-direction: column;
+  padding: var(--tesseract-space-4) 0;
+}
+.timeline > div {
+  display: flex;
+  gap: var(--tesseract-space-4);
+  padding-bottom: var(--tesseract-space-6);
+  position: relative;
+}
+.timeline > div:last-child {
+  padding-bottom: 0;
+}
+.timeline > div:not(:last-child):before {
+  content: "";
+  position: absolute;
+  left: var(--tesseract-space-3-5);
+  top: var(--tesseract-space-6);
+  height: calc(100% - 20px);
+  border-left: 1px solid var(--tesseract-border-neutral);
+}
+.timeline > div > span {
+  background: var(--tesseract-bg-page-subtle);
+  border-radius: 50%;
+  height: var(--tesseract-size-28);
+  width: var(--tesseract-size-28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.timeline > div[data-done="true"] > span {
+  color: var(--tesseract-success-600);
+  background: var(--tesseract-success-50);
+}
+.timeline strong {
+  font-size: var(--tesseract-text-body-sm);
+}
+.timeline p {
+  font-size: var(--tesseract-text-body-xs);
+  margin-top: var(--tesseract-space-1);
+}
+.recordsSummary {
+  display: flex;
+  gap: var(--tesseract-space-2);
+  align-items: center;
+}
+.recordCard {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-4);
+  width: 100%;
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  text-align: left;
+  color: var(--tesseract-fg-primary);
+}
+.recordCard .metaText {
+  display: block;
+  margin-top: var(--tesseract-space-0-5);
+}
+.recordTitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-2);
+}
+/* Category tag pinned flush into the card's top-right corner. */
+.cornerTag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: var(--tesseract-space-0-5) var(--tesseract-space-2-5);
+  border-bottom-left-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-slate-100);
+  color: var(--tesseract-fg-secondary);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.recordCard:has(.cornerTag) .grow {
+  padding-top: var(--tesseract-space-2);
+}
+/* White band for the patient pill and tabs, pinned under the header. */
+.recordsTop {
+  position: sticky;
+  top: var(--tesseract-patient-header-height, 64px);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-1);
+  /* Flush under the header: cancel the page's row gap above it. */
+  margin: calc(var(--tesseract-space-4) * -1)
+    calc(var(--tesseract-page-inset) * -1) 0;
+  padding: var(--tesseract-space-2) var(--tesseract-page-inset) 0;
+  background: var(--tesseract-bg-surface);
+}
+.recordsTop > .recordTabs {
+  margin: 0 calc(var(--tesseract-page-inset) * -1);
+}
+/* Compact linked-ABHA row: address, sync status, and a green Sync. */
+.abhaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-2) var(--tesseract-space-2)
+    var(--tesseract-space-2) var(--tesseract-space-3);
+  border: 1px solid var(--tesseract-success-200);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-success-soft);
+}
+.abhaRowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2-5);
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.abhaRowMain strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--tesseract-text-body-sm);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.abhaRowMain small {
+  font-size: var(--tesseract-text-caption);
+  color: var(--tesseract-success-700);
+}
+.abhaRowSync {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  min-height: var(--tesseract-size-36);
+  padding: 0 var(--tesseract-space-3);
+  border: 0;
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-success-600);
+  color: var(--tesseract-fg-inverse);
+  font-size: var(--tesseract-text-body-xs);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.abhaBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+}
+.abhaSync {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  text-align: left;
+  color: var(--tesseract-fg-link);
+}
+.abhaSync strong {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.abhaSync small {
+  font-size: var(--tesseract-text-caption);
+  color: var(--tesseract-fg-tertiary);
+}
+.filterPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  padding: var(--tesseract-space-0-5) var(--tesseract-space-2);
+  border: 1px solid var(--tesseract-success-200);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-bg-success-soft);
+  color: var(--tesseract-success-700);
+  font-size: var(--tesseract-text-caption);
+  font-weight: var(--tesseract-weight-semibold);
+}
+/* Full-bleed tab strip: the divider runs edge to edge; edges fade only
+   where more tabs are scrolled out of view. */
+.recordTabs {
+  margin: 0 calc(var(--tesseract-page-inset) * -1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  --fade: var(--tesseract-space-8);
+}
+.recordTabs::-webkit-scrollbar {
+  display: none;
+}
+.recordTabs [role="tablist"] {
+  width: max-content;
+  min-width: 100%;
+  padding: 0 var(--tesseract-page-inset);
+}
+.recordTabs[data-fade-right] {
+  mask-image: linear-gradient(
+    to right,
+    #000 calc(100% - var(--fade)),
+    transparent
+  );
+}
+.recordTabs[data-fade-left] {
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade));
+}
+.recordTabs[data-fade-left][data-fade-right] {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--fade),
+    #000 calc(100% - var(--fade)),
+    transparent
+  );
+}
+.recordTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-1);
+  margin-top: var(--tesseract-space-1-5);
+}
+.documentIcon {
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-fg-link);
+  flex-shrink: 0;
+}
+.newDot {
+  width: var(--tesseract-size-6);
+  height: var(--tesseract-size-6);
+  border-radius: 50%;
+  background: var(--tesseract-blue-500);
+  flex-shrink: 0;
+}
+.inlineMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-2);
+  font-size: var(--tesseract-text-body-xs);
+}
+.inlineMeta h3 {
+  font-size: var(--tesseract-text-body-sm);
+}
+.report {
+  padding: var(--tesseract-space-5);
+  background: var(--tesseract-bg-surface);
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+}
+.reportHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-1);
+  padding-bottom: var(--tesseract-space-4);
+  border-bottom: 1px solid var(--tesseract-border-neutral);
+}
+.reportHeader strong {
+  color: var(--tesseract-blue-600);
+}
+.reportHeader small {
+  letter-spacing: 0.1em;
+  font-size: var(--tesseract-text-micro);
+}
+.reportTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--tesseract-text-body-xs);
+}
+.reportTable th,
+.reportTable td {
+  text-align: left;
+  padding: var(--tesseract-space-2) var(--tesseract-space-1);
+  border-bottom: 1px solid var(--tesseract-border-soft);
+}
+.reportTable th {
+  color: var(--tesseract-fg-tertiary);
+  font-weight: 500;
+}
+.reportImage {
+  width: 100%;
+  height: auto;
+}
+.pdfPreview {
+  width: 100%;
+  height: 360px;
+  border: 0;
+}
+.uploadZone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-6) var(--tesseract-space-3);
+  border: 1px dashed var(--tesseract-blue-300);
+  border-radius: 14px;
+  background: var(--tesseract-blue-50);
+  color: var(--tesseract-blue-600);
+  cursor: pointer;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.uploadZone input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.uploadZone strong {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.uploadZone:focus-within {
+  outline: 2px solid var(--tesseract-blue-500);
+  outline-offset: 3px;
+}
+
+.familyIntro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-1);
+}
+.familyIntro .sectionTitle {
+  margin: 0;
+}
+.familyCard {
+  padding: var(--tesseract-space-4);
+}
+/* Active profile: blue gradient surface with a gradient stroke. */
+.familyCard[data-selected="true"] {
+  position: relative;
+  border-color: transparent !important;
+  background: linear-gradient(
+    135deg,
+    var(--tesseract-bg-brand-soft),
+    var(--tesseract-bg-surface) 80%
+  ) !important;
+}
+.familyCard[data-selected="true"]::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    var(--tesseract-blue-400),
+    var(--tesseract-blue-100) 60%,
+    var(--tesseract-blue-300)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.familyActions {
+  display: flex;
+  gap: var(--tesseract-space-1);
+  flex-shrink: 0;
+}
+.familyAction {
+  display: grid;
+  place-items: center;
+  width: var(--tesseract-size-36);
+  height: var(--tesseract-size-36);
+  border: 0;
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-slate-100);
+  color: var(--tesseract-fg-secondary);
+  transition: background var(--tesseract-duration-150);
+}
+.familyAction:hover {
+  background: var(--tesseract-slate-200);
+}
+.familyAction[data-tone="primary"] {
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-fg-link);
+}
+.familyMember {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tesseract-space-3);
+}
+.familyMember > button {
+  flex-shrink: 0;
+  margin-top: calc(-1 * var(--tesseract-space-2));
+}
+.familyMember .metaText {
+  display: block;
+  margin-top: var(--tesseract-space-0-5);
+}
+.familyBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-1-5);
+  margin-top: var(--tesseract-space-2);
+}
+.familyCardFooter {
+  margin-top: var(--tesseract-space-3);
+  padding-top: var(--tesseract-space-3);
+  border-top: 1px solid var(--tesseract-border-soft);
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+}
+.familyCardFooter > button:last-child {
+  margin-left: auto;
+}
+.profileHero {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-4);
+  padding: var(--tesseract-space-1) 0 var(--tesseract-space-2);
+}
+.profileHero h2 {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+  color: var(--tesseract-fg-heading);
+}
+.profileMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  margin-top: var(--tesseract-space-1);
+}
+.profileSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+  text-align: left;
+  color: var(--tesseract-fg-primary);
+}
+.profileSummary .metaText {
+  display: block;
+  margin-top: var(--tesseract-space-0-5);
+}
+.profileSummary .inlineLink {
+  margin-top: var(--tesseract-space-1-5);
+}
+.balanceCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-1);
+  padding: var(--tesseract-space-5);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-16);
+  background: var(--tesseract-bg-brand-soft);
+}
+.balanceLabel {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-secondary);
+}
+.balanceAmount {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-3);
+}
+.balanceAmount > strong {
+  font-size: var(--tesseract-text-h2);
+  line-height: var(--tesseract-text-h2-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.billCard {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  padding: var(--tesseract-space-4);
+  text-align: left;
+  color: var(--tesseract-fg-primary);
+}
+.billBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+}
+.billRow {
+  display: flex;
+  gap: var(--tesseract-space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+.billRow > strong {
+  white-space: nowrap;
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.billPaid {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-success);
+}
+.invoiceHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-1-5);
+}
+.invoiceHead h3 {
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.invoiceMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+}
+.invoiceLines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2-5);
+  margin: 0;
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+}
+.invoiceLines dt {
+  color: var(--tesseract-fg-secondary);
+}
+.invoiceLines dd {
+  margin: 0;
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.invoiceTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.invoiceTotal strong {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.invoiceLine {
+  grid-column: 1/-1;
+  display: flex;
+  justify-content: space-between;
+}
+.packageCard {
+  padding: var(--tesseract-space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tesseract-space-2-5);
+}
+.packageCardArt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+}
+.packageIcon {
+  display: grid;
+  place-items: center;
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-fg-link);
+  margin-right: var(--tesseract-space-1);
+}
+.packageCard h2 {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+  color: var(--tesseract-fg-heading);
+}
+.packagePrice {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  width: 100%;
+  padding-top: var(--tesseract-space-3);
+  border-top: 1px solid var(--tesseract-border-soft);
+  margin-top: var(--tesseract-space-1);
+}
+.packagePrice strong {
+  font-size: var(--tesseract-text-h4);
+  line-height: var(--tesseract-text-h4-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.packagePrice s {
+  font-size: var(--tesseract-text-body-xs);
+  color: var(--tesseract-fg-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.packagePrice button {
+  margin-left: auto;
+}
+.checkList {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  margin: 0;
+}
+.checkList li {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+}
+.checkList li > span {
+  color: var(--tesseract-success-500);
+}
+.carePhoto {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 14px;
+}
+.hospitalHero {
+  padding: var(--tesseract-space-8) var(--tesseract-space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--tesseract-space-4);
+  border-radius: 14px;
+  background: radial-gradient(
+    ellipse at top,
+    var(--tesseract-blue-100),
+    transparent 80%
+  );
+}
+.hospitalHero > span:first-child {
+  color: var(--tesseract-blue-500);
+}
+.notificationList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+  overflow: hidden;
+}
+.notificationCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  padding: var(--tesseract-space-4);
+  border: 0;
+  background: none;
+  text-align: left;
+  color: var(--tesseract-fg-primary);
+}
+.notificationCard[data-unread="true"] {
+  background: color-mix(in srgb, var(--tesseract-bg-brand-soft) 45%, transparent);
+}
+.notificationCard + .notificationCard {
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.notificationIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-bg-page-subtle);
+  color: var(--tesseract-fg-link);
+}
+.notificationHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--tesseract-space-2);
+}
+/* Unread indicator sits at the top, on the heading line. */
+.notificationDot {
+  flex-shrink: 0;
+  width: var(--tesseract-size-8);
+  height: var(--tesseract-size-8);
+  margin-top: var(--tesseract-space-1-5);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-fg-link);
+}
+.notificationCard strong {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-medium);
+  color: var(--tesseract-fg-heading);
+}
+.notificationCard[data-unread="true"] strong {
+  font-weight: var(--tesseract-weight-semibold);
+}
+.notificationBody {
+  display: block;
+  margin: var(--tesseract-space-0-5) 0 var(--tesseract-space-1-5);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.notificationBody b {
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.notificationCard small {
+  display: block;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.settingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-4);
+  padding: var(--tesseract-space-2) 0;
+}
+.settingRow > div {
+  flex: 1;
+}
+.settingRow strong {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.settingRow p {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+  margin-top: var(--tesseract-space-0-5);
+}
+.settingRow + .settingRow {
+  border-top: 1px solid var(--tesseract-border-soft);
+  padding-top: var(--tesseract-space-4);
+}
+/* Hospital logos of any shape sit on one fixed height, vertically centred. */
+.brandImage {
+  display: block;
+  flex-shrink: 0;
+  height: var(--brand-logo-h, var(--tesseract-size-28));
+  width: auto;
+  max-width: min(200px, 100%);
+  object-fit: contain;
+}
+.brandLockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  min-width: 0;
+  max-width: 100%;
+  height: var(--brand-logo-h, var(--tesseract-size-28));
+  font-family: var(--tesseract-font-heading);
+  font-size: var(--tesseract-text-body-lg);
+  font-weight: var(--tesseract-weight-bold);
+  line-height: 1.2;
+  color: var(--tesseract-fg-heading);
+}
+.brandLockup img {
+  flex-shrink: 0;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+.brandLockup span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.brandMark {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--brand-mark-size, var(--tesseract-size-32));
+  height: var(--brand-mark-size, var(--tesseract-size-32));
+  border-radius: 24%;
+  overflow: hidden;
+}
+.brandMark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.brandMark[data-monogram] {
+  background: var(--brand-mark-bg, var(--tesseract-blue-500));
+  color: var(--tesseract-fg-inverse);
+  font-family: var(--tesseract-font-heading);
+  font-size: calc(var(--brand-mark-size, 32px) * 0.4);
+  font-weight: var(--tesseract-weight-extrabold);
+  letter-spacing: 0.02em;
+}
+.brandPresets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--tesseract-space-2);
+}
+.brandPresets > button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  background: var(--tesseract-bg-surface);
+  border: 1px solid var(--tesseract-border-neutral);
+  padding: var(--tesseract-space-3) var(--tesseract-space-2);
+  border-radius: var(--tesseract-radius-14);
+  color: var(--tesseract-fg-primary);
+}
+.brandPresets > button[data-selected="true"] {
+  border-color: var(--tesseract-border-primary);
+  background: var(--tesseract-bg-selected);
+}
+.brandPresets > button > span {
+  height: var(--tesseract-size-32);
+  width: var(--tesseract-size-32);
+  border-radius: 50%;
+}
+.brandPresets strong {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.brandPresets small {
+  font-size: var(--tesseract-text-caption-sm);
+  color: var(--tesseract-fg-tertiary);
+}
+.colourDot {
+  width: var(--tesseract-size-16);
+  height: var(--tesseract-size-16);
+  border-radius: 50%;
+  border: 1px solid var(--tesseract-border-neutral);
+}
+.feedbackHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-5);
+  padding: var(--tesseract-space-8) 0;
+}
+.feedbackHero > span {
+  color: var(--tesseract-fg-link);
+}
+.starButtons {
+  display: flex;
+  gap: var(--tesseract-space-1);
+}
+.starButtons > button {
+  color: var(--tesseract-amber-500) !important;
+  min-width: var(--tesseract-patient-touch) !important;
+  padding: var(--tesseract-space-1) !important;
+}
+.welcome {
+  padding: var(--tesseract-space-5) var(--tesseract-space-6)
+    var(--tesseract-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-4);
+  min-height: 100%;
+  background: radial-gradient(
+    ellipse at 90% 40%,
+    var(--tesseract-blue-100),
+    transparent 65%
+  );
+}
+.welcomeBrand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--tesseract-space-4);
+}
+.welcomeVisual {
+  position: relative;
+  min-height: 230px;
+  height: 30dvh;
+  max-height: 290px;
+  margin: 0 0 var(--tesseract-space-4);
+}
+.welcomeVisual > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+}
+.floatingTag,
+.floatingTag2 {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-3);
+  border-radius: 14px;
+  border: 1px solid var(--tesseract-bg-surface);
+  background: color-mix(in srgb, var(--tesseract-slate-0) 85%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--tesseract-shadow-md);
+  font-size: var(--tesseract-text-body-xs);
+  font-weight: 600;
+  color: var(--tesseract-blue-700);
+}
+.floatingTag {
+  left: -12px;
+  top: var(--tesseract-space-5);
+  transform: rotate(-4deg);
+}
+.floatingTag2 {
+  right: -12px;
+  bottom: var(--tesseract-space-5);
+  transform: rotate(4deg);
+}
+.welcomeContent {
+  animation: pageIn 0.25s ease-out;
+}
+.welcomeContent .eyebrow {
+  color: var(--tesseract-blue-600);
+}
+.welcomeContent h1 {
+  font-size: var(--tesseract-text-h1);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  margin: var(--tesseract-space-3) 0;
+}
+.welcomeContent p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: 1.75;
+}
+.slideControls {
+  display: flex;
+  gap: var(--tesseract-space-2);
+  margin-bottom: var(--tesseract-space-2);
+}
+.slideControls > button {
+  height: var(--tesseract-size-6);
+  width: var(--tesseract-size-6);
+  border: 0;
+  padding: 0;
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-slate-300);
+  position: relative;
+}
+.slideControls > button:after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+.slideControls > button[aria-current="step"] {
+  width: var(--tesseract-size-24);
+  background: var(--tesseract-blue-500);
+}
+.auth {
+  padding: 0 var(--tesseract-space-6) var(--tesseract-space-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-5);
+  background: radial-gradient(
+    ellipse at 90% 20%,
+    var(--tesseract-blue-50),
+    transparent 70%
+  );
+  min-height: 100%;
+}
+.auth .pageHeader {
+  margin-bottom: 0;
+}
+.authBrand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tesseract-space-4);
+}
+.authIcon {
+  width: 88px;
+  height: 88px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(
+    140deg,
+    var(--tesseract-blue-100),
+    var(--tesseract-slate-0)
+  );
+  border: 1px solid var(--tesseract-blue-100);
+  border-radius: 14px;
+  box-shadow: var(--tesseract-shadow-sm);
+  margin-top: var(--tesseract-space-4);
+  color: var(--tesseract-blue-500);
+}
+.authBrand > .eyebrow {
+  color: var(--tesseract-blue-600);
+  margin-top: var(--tesseract-space-2);
+}
+.authBrand h1 {
+  white-space: pre-line;
+  font-size: var(--tesseract-text-h1);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.authBrand p {
+  font-size: var(--tesseract-text-body-sm);
+}
+.assistantHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-5) 0;
+}
+.assistantHero .agentIcon {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+}
+.assistantHero p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: 1.7;
+  max-width: 300px;
+}
+.chatBubble {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-4);
+  background: var(--tesseract-violet-50);
+  border: 1px solid var(--tesseract-violet-100);
+  border-radius: 14px;
+}
+.chatBubble p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: 1.75;
+}
+.chatAvatar {
+  color: var(--tesseract-violet-600);
+  flex-shrink: 0;
+  padding-top: var(--tesseract-space-1);
+}
+.userBubble {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  background: var(--tesseract-blue-500);
+  color: var(--tesseract-slate-0);
+  border-radius: 14px;
+  font-size: var(--tesseract-text-body-sm);
+  overflow-wrap: anywhere;
+}
+.assistantDoctor {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  text-align: left;
+  padding: var(--tesseract-space-3);
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: 14px;
+  background: var(--tesseract-bg-surface);
+  color: var(--tesseract-fg-primary);
+}
+.assistantDoctor strong {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+}
+.assistantDoctor small {
+  display: block;
+  margin-top: var(--tesseract-space-1);
+}
+/* Tesseract Toast, dropped in from the top of the app. */
+.toastHost {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + var(--tesseract-space-3));
+  left: var(--tesseract-space-4);
+  right: var(--tesseract-space-4);
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  animation:
+    toastIn 0.36s cubic-bezier(0.22, 1, 0.36, 1) both,
+    toastOut 0.3s ease-in 2.9s forwards;
+}
+.toast {
+  pointer-events: auto;
+  width: 100%;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+}
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toastHost {
+    animation: none;
+  }
+}
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 1100px) {
+  .previewIntro {
+    display: none;
+  }
+  .previewFoot {
+    font-size: var(--tesseract-text-micro);
+  }
+  .previewStage:after {
+    display: none;
+  }
+}
+@media (max-width: 520px) {
+  .phone {
+    border-radius: 0;
+    box-shadow: none;
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .deviceStatus,
+  .homeIndicator,
+  .previewFoot {
+    display: none;
+  }
+  .navbar {
+    bottom: calc(var(--tesseract-space-4) + env(safe-area-inset-bottom));
+  }
+  .sheet {
+    border-radius: var(--tesseract-patient-sheet-radius)
+      var(--tesseract-patient-sheet-radius) 0 0 !important;
+    bottom: 0 !important;
+    max-height: 92dvh !important;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .page {
+    padding-top: 0;
+  }
+  .welcome {
+    padding-top: var(--tesseract-space-8);
+  }
+  .welcomeVisual {
+    min-height: 250px;
+    max-height: 360px;
+  }
+  .previewStage {
+    background: var(--tesseract-bg-page);
+  }
+}
+@media (max-width: 360px) {
+  .page {
+    --tesseract-page-inset: 16px;
+    padding-left: var(--tesseract-space-4);
+    padding-right: var(--tesseract-space-4);
+  }
+  .navItem {
+    padding: 0 var(--tesseract-space-2) !important;
+  }
+  .appointmentDate {
+    padding: var(--tesseract-space-3);
+    gap: var(--tesseract-space-1);
+  }
+  .appointmentDate > span:first-child {
+    font-size: var(--tesseract-text-micro);
+  }
+  .twoColumns {
+    grid-template-columns: 1fr;
+  }
+  .packagePrice {
+    flex-wrap: wrap;
+  }
+}
+.selectionCard[data-selected="true"] small {
+  color: var(--tesseract-fg-secondary);
+}
+@media (max-width: 360px) {
+  .horizontalChips {
+    margin-left: calc(-1 * var(--tesseract-space-4));
+    margin-right: calc(-1 * var(--tesseract-space-4));
+    padding-left: var(--tesseract-space-4);
+    padding-right: var(--tesseract-space-4);
+  }
+}
+
+/* Patient surfaces share a quiet tonal hierarchy; glass is reserved for floating controls. */
+.button {
+  min-height: var(--tesseract-patient-touch);
+}
+/* The icon slot inherits the label's line-height, which makes it taller than
+   the icon and shifts it off the text's centre. Size it to the icon. */
+.button [class*="_icon_"] {
+  align-self: center;
+  line-height: 0;
+}
+/* Fallback for an icon that stays inside the label (conditional or wrapped
+   children): centre it on the text instead of sitting on the baseline. */
+.button [class*="_content_"] > span:has(> [data-tp-icon]) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+}
+.button[data-variant="link"] {
+  min-height: 36px !important;
+}
+.navItem[data-active="true"] {
+  color: var(--tesseract-fg-link) !important;
+  background: var(--tesseract-bg-brand-soft) !important;
+}
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--tesseract-size-24);
+}
+.navLabel {
+  font-size: var(--tesseract-text-caption-lg);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  letter-spacing: normal;
+}
+.navItem:active {
+  transform: scale(0.95);
+}
+/* Shared type ladder for card and list content (packages 2/3 build on these). */
+.cardTitle {
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+  color: var(--tesseract-fg-heading);
+}
+.rowTitle {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.bodyText {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-regular);
+  color: var(--tesseract-fg-secondary);
+}
+.metaText {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  font-weight: var(--tesseract-weight-regular);
+  color: var(--tesseract-fg-tertiary);
+}
+.page > section > .sectionTitle {
+  margin-top: var(--tesseract-space-3);
+}
+.sheetHeader {
+  flex-shrink: 0;
+  padding: var(--tesseract-space-3) var(--tesseract-space-5)
+    var(--tesseract-space-4);
+  touch-action: none;
+  cursor: grab;
+}
+.sheetHeader:active {
+  cursor: grabbing;
+}
+.sheetGrip {
+  display: block;
+  margin: 0 auto var(--tesseract-space-4);
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-4);
+  background: var(--tesseract-slate-300);
+  border-radius: var(--tesseract-radius-full);
+}
+.sheetHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+}
+.sheetHeading h2 {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: normal;
+  color: var(--tesseract-fg-heading);
+}
+.sheetHeading p {
+  margin-top: var(--tesseract-space-0-5);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.sheetIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-fg-link);
+}
+.sheetBody {
+  padding-top: 0 !important;
+  overscroll-behavior: contain;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .navbar,
+  .memberContext {
+    background: var(--tesseract-bg-surface);
+    backdrop-filter: none;
+  }
+}
+.linkRecordsBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-blue-100);
+  border-radius: 14px;
+  background: linear-gradient(
+    120deg,
+    var(--tesseract-blue-50),
+    var(--tesseract-bg-surface)
+  );
+  text-align: left;
+  color: var(--tesseract-blue-600);
+}
+.linkRecordsBanner strong {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+  color: var(--tesseract-fg-heading);
+}
+.linkRecordsBanner small {
+  display: block;
+  margin-top: var(--tesseract-space-1);
+}
+.linkIntro,
+.linkSuccess {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  text-align: center;
+  padding: var(--tesseract-space-5) 0;
+}
+.linkIntro h2,
+.linkSuccess h2 {
+  font-size: var(--tesseract-text-h4);
+  letter-spacing: -0.025em;
+}
+.linkIntro p,
+.linkSuccess p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: 1.7;
+  max-width: 280px;
+}
+.linkEmblem {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  color: var(--tesseract-blue-600);
+  background: linear-gradient(
+    135deg,
+    var(--tesseract-blue-100),
+    var(--tesseract-blue-50)
+  );
+  border: 1px solid var(--tesseract-slate-0);
+}
+.identityCard {
+  padding: var(--tesseract-space-5);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: 14px;
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-4);
+}
+.identityCard p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: 1.7;
+}
+.identityPatient {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  padding-bottom: var(--tesseract-space-2);
+}
+.identityPatient strong,
+.identityPatient small {
+  display: block;
+}
+
+/* Compact patient context stays above the foreground home sheet. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Compact home rhythm: 16px card insets and 20px section intervals. */
+
+@media (max-width: 360px) {
+  .navbar {
+    width: calc(100% - var(--tesseract-space-6));
+    padding: var(--tesseract-space-1-5);
+    gap: var(--tesseract-space-0-5);
+  }
+  .navItem[data-active="true"] {
+    padding: 0 var(--tesseract-space-2) !important;
+  }
+}
+
+/* Tesseract's global squircle rule must not disagree with rounded borders,
+   clipping containers, or decorative pseudo-elements in the patient app. */
+:global([data-tp-theme]) .appViewport,
+:global([data-tp-theme]) .appViewport *,
+:global([data-tp-theme]) .appViewport *::before,
+:global([data-tp-theme]) .appViewport *::after,
+:global([data-tp-theme]) .sheet,
+:global([data-tp-theme]) .sheet * {
+  corner-shape: round;
+}
+
+.patientName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.abhaLogo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+/* Smaller beside a name so it reads as a mark, not an image. */
+.patientName .abhaLogo {
+  width: 16px;
+  height: 16px;
+}
+.rowIcon > .abhaLogo {
+  width: 30px;
+  height: 30px;
+}
+:global([data-tp-theme])
+  .appViewport
+  :is(input:not([type="checkbox"]):not([type="radio"]), textarea, select),
+:global([data-tp-theme])
+  .sheet
+  :is(input:not([type="checkbox"]):not([type="radio"]), textarea, select),
+:global([data-tp-theme]) :is(.appViewport, .sheet) [data-tp-input-box] {
+  border-radius: 12px !important;
+}
+@media (max-width: 520px), (display-mode: standalone) {
+  .phone {
+    border: 0;
+    border-radius: 0;
+  }
+}
+@media (display-mode: standalone) {
+  .previewIntro,
+  .previewFoot,
+  .previewStage::after {
+    display: none;
+  }
+  .phone {
+    inset: 0;
+    transform: none;
+    width: 100%;
+    height: 100dvh;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  .sheet {
+    left: 50% !important;
+    bottom: 0 !important;
+    width: min(100%, 520px) !important;
+    max-height: 92dvh !important;
+  }
+}
+
+:global([data-tp-theme]) .sheet .sheetClose {
+  width: var(--tesseract-patient-touch) !important;
+  height: var(--tesseract-patient-touch) !important;
+  margin-right: calc(var(--tesseract-space-3) * -1);
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none;
+  border-radius: var(--tesseract-radius-full) !important;
+}
+:global([data-tp-theme]) .sheet .sheetClose:hover {
+  background: var(--tesseract-bg-surface-hover) !important;
+}
+
+.floatingActionSlot {
+  align-self: flex-end;
+  max-width: 100%;
+}
+.careDock {
+  position: absolute;
+  bottom: calc(94px + env(safe-area-inset-bottom));
+  left: var(--tesseract-space-5);
+  right: var(--tesseract-space-5);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+}
+.appViewport[data-has-nav="false"] .careDock {
+  bottom: calc(var(--tesseract-space-5) + env(safe-area-inset-bottom));
+}
+.appViewport {
+  --tesseract-patient-bottom-space: calc(
+    124px + var(--patient-dock-space, 0px)
+  );
+}
+/* A page with a floating primary action reserves room for it, so the last
+   card always scrolls fully clear of the button. */
+.appViewport:has(.floatingActionSlot:not(:empty)) .page {
+  padding-bottom: calc(
+    var(--tesseract-patient-bottom-space) + var(--tesseract-size-56, 56px) +
+      var(--tesseract-space-4)
+  ) !important;
+}
+:global(body[data-sheet-open="true"]) .careDock {
+  visibility: hidden;
+  pointer-events: none;
+}
+.floatingActionSlot:empty {
+  display: none;
+}
+.appViewport[data-has-nav="false"] .floatingActionSlot {
+  bottom: calc(20px + env(safe-area-inset-bottom));
+}
+.floatingAction > button {
+  min-height: var(--tesseract-size-48, 48px);
+  padding-inline: var(--tesseract-space-4-5);
+  box-shadow: var(--tesseract-shadow-lg);
+  border-radius: var(--tesseract-btn-radius, var(--tesseract-radius-12));
+}
+:global(body[data-sheet-open="true"]) .floatingActionSlot {
+  visibility: hidden;
+  pointer-events: none;
+}
+/* One flat card surface for every list card: hairline + resting shadow. */
+:is(
+  .appointmentCard,
+  .doctorCard,
+  .recordCard,
+  .familyCard,
+  .billCard,
+  .packageCard,
+  .rowCard,
+  .detailCard
+) {
+  position: relative;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+}
+.documentSheet {
+  height: calc(var(--tesseract-patient-phone-height) * 0.92) !important;
+  max-height: calc(var(--tesseract-patient-phone-height) * 0.92) !important;
+}
+.documentSheet .sheetHeader {
+  padding: var(--tesseract-space-3-5) var(--tesseract-space-4-5);
+  background: var(--tesseract-slate-0);
+  border-bottom: 1px solid var(--tesseract-border-soft);
+  touch-action: auto;
+  cursor: default;
+}
+.documentSheet .sheetHeading {
+  padding: 0;
+  gap: var(--tesseract-space-2-5);
+}
+.documentSheet .sheetHeading > span {
+  color: var(--tesseract-blue-600);
+}
+.documentSheet .sheetHeading h2 {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+}
+.documentSheet .sheetBody {
+  padding: 12px !important;
+  background: var(--tesseract-slate-100);
+}
+.documentSheet .sheetBody > div {
+  height: 100%;
+}
+/* The sheet footer becomes a transparent overlay; only the bar takes taps. */
+.documentSheet > [class*="_footer_"] {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 0 var(--tesseract-space-5) !important;
+  background: transparent !important;
+  border: 0 !important;
+  pointer-events: none;
+}
+.documentBar {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-0-5);
+  padding: var(--tesseract-space-1);
+  border-radius: var(--tesseract-radius-full);
+  background: color-mix(in srgb, var(--tesseract-slate-900) 72%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--tesseract-shadow-lg);
+  color: var(--tesseract-fg-inverse);
+  pointer-events: auto;
+  transition:
+    opacity var(--tesseract-duration-150),
+    translate 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.documentBar[data-hidden="true"] {
+  opacity: 0;
+  translate: 0 var(--tesseract-space-4);
+  pointer-events: none;
+}
+.documentBar > button {
+  display: grid;
+  place-items: center;
+  width: var(--tesseract-patient-touch);
+  height: var(--tesseract-patient-touch);
+  border: 0;
+  border-radius: var(--tesseract-radius-full);
+  background: transparent;
+  color: inherit;
+}
+.documentBar > button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--tesseract-slate-0) 14%, transparent);
+}
+.documentBar > button:disabled {
+  opacity: 0.4;
+}
+.documentBarPage {
+  min-width: var(--tesseract-size-40);
+  text-align: center;
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.documentBarDivider {
+  width: 1px;
+  height: var(--tesseract-size-20);
+  margin: 0 var(--tesseract-space-1);
+  background: color-mix(in srgb, var(--tesseract-slate-0) 25%, transparent);
+}
+.pdfViewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2-5);
+  padding-bottom: calc(var(--tesseract-patient-touch) + var(--tesseract-space-8));
+}
+.pdfCanvasFrame {
+  overflow: auto;
+  width: 100%;
+}
+.pdfCanvasFrame canvas {
+  display: block;
+  background: white;
+}
+@media (max-width: 520px), (display-mode: standalone) {
+  .documentSheet {
+    height: 92dvh !important;
+    max-height: 92dvh !important;
+  }
+}
+
+.consentLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+}
+.consentLabel input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--tesseract-blue-600);
+}
+
+.recordCard > [data-tp-icon] {
+  color: var(--tesseract-fg-tertiary);
+  flex-shrink: 0;
+}
+.cardTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-2);
+}
+
+/* Hospital contacts (sheet and hospital page) and clinic photos. */
+.contactsTitle {
+  margin: var(--tesseract-space-2) 0 0;
+  font-size: var(--tesseract-text-body-sm);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.clinicPhotos {
+  display: flex;
+  gap: var(--tesseract-space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.clinicPhotos img {
+  flex: none;
+  width: 132px;
+  height: 92px;
+  border-radius: var(--tesseract-radius-10);
+  object-fit: cover;
+}
+.shiftList {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--tesseract-space-1) var(--tesseract-space-4);
+  margin: 0;
+  font-size: var(--tesseract-text-body-sm);
+}
+.shiftList dt {
+  color: var(--tesseract-fg-secondary);
+}
+.shiftList dd {
+  margin: 0;
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+.shiftList dd span {
+  display: block;
+}
+
+/* Cold-start splash inside the app viewport. */
+.splash {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tesseract-space-4);
+  padding: var(--tesseract-space-8);
+  background: radial-gradient(
+    120% 70% at 50% 42%,
+    color-mix(in srgb, var(--tesseract-blue-500) 7%, var(--tesseract-bg-surface)),
+    var(--tesseract-bg-surface) 70%
+  );
+  transition: opacity 320ms ease;
+}
+.splash[data-phase="out"] {
+  opacity: 0;
+  pointer-events: none;
+}
+.splash > * {
+  animation: splashIn 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.splash strong {
+  max-width: 100%;
+  font-family: var(--tesseract-font-heading);
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  text-align: center;
+  animation-delay: 90ms;
+}
+.splashMark[data-monogram] {
+  box-shadow: var(--tesseract-shadow-md);
+}
+@keyframes splashIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash,
+  .splash > * {
+    animation: none;
+    transition: none;
+  }
+}

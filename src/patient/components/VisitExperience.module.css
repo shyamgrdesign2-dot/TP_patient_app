@@ -1,0 +1,144 @@
+/* Symptom collector action: Tesseract AI gradient. A soft tint of the AI
+   card gradient behind a label and icon painted with the AI hero gradient. */
+.aiAction.aiAction[data-variant] {
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--tesseract-slate-0) 88%, transparent),
+      color-mix(in srgb, var(--tesseract-slate-0) 88%, transparent)
+    ),
+    var(--tesseract-gradient-ai-card) !important;
+  color: var(--tesseract-violet-700) !important;
+  border: 1px solid var(--tesseract-violet-200) !important;
+  box-shadow: none !important;
+}
+.aiAction [class*="_content_"] > span:last-child {
+  background: var(--tesseract-gradient-ai-hero);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+/* Icons are CSS masks, so the gradient can fill them directly. */
+.aiAction.aiAction [data-tp-icon] {
+  background: var(--tesseract-gradient-ai-hero) !important;
+}
+.visitActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2-5);
+  width: 100%;
+}
+.visitActions > button {
+  width: 100%;
+  min-height: var(--tesseract-patient-touch);
+}
+.secondaryActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tesseract-space-2-5);
+}
+.secondaryActions > button {
+  width: 100%;
+  min-height: var(--tesseract-patient-touch);
+  padding-inline: var(--tesseract-space-2-5);
+}
+@media (max-width: 360px) {
+  .secondaryActions {
+    grid-template-columns: 1fr;
+  }
+}
+/* Soft AI-tinted surface with a gradient stroke; no shadow. */
+.symptomNudge {
+  position: relative;
+  border: 0;
+  border-radius: var(--tesseract-radius-14);
+  padding: var(--tesseract-space-4);
+  box-shadow: none;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--tesseract-slate-0) 88%, transparent),
+      color-mix(in srgb, var(--tesseract-slate-0) 88%, transparent)
+    ),
+    var(--tesseract-gradient-ai-card);
+}
+.symptomNudge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--tesseract-gradient-ai-card);
+  opacity: 0.55;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.symptomNudge h3 {
+  font-size: var(--tesseract-text-h6);
+  line-height: var(--tesseract-text-h6-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+  margin-bottom: var(--tesseract-space-1);
+}
+.symptomNudge p {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+  margin-bottom: var(--tesseract-space-3);
+}
+
+.visitType {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-secondary);
+  min-width: 0;
+}
+.visitType [data-tp-icon] {
+  color: var(--tesseract-fg-tertiary);
+  flex: none;
+}
+.visitType[data-compact] [data-tp-icon] {
+  color: var(--tesseract-fg-link);
+}
+.visitType[data-icon-only],
+.visitType[data-icon-only] [data-tp-icon] {
+  color: inherit;
+}
+
+
+.visitType[data-compact] {
+  min-width: 0;
+  max-width: 100%;
+}
+.visitType[data-compact] > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.joinChecklist {
+  list-style: none;
+  margin: 0;
+  padding: var(--tesseract-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  border: 1px solid var(--tesseract-border-neutral);
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  color: var(--tesseract-fg-primary);
+}
+.joinChecklist li {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+}
+.joinChecklist [data-tp-icon] {
+  color: var(--tesseract-success-500);
+}

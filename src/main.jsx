@@ -9,11 +9,20 @@ import "@fontsource/mulish/latin-600.css";
 import "@fontsource/mulish/latin-700.css";
 import "@fontsource/mulish/latin-800.css";
 import "@dhspl-tatvacare/tesseract-ui/styles.css";
-import "./global.css";
-import App from "./App";
+import "./shared/global.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import PatientApp from "./patient/App";
+import AdminRoot from "./admin/AdminRoot";
+// One build, two apps: /admin/* is the hospital console, everything else is
+// the patient app. Each mounts its own providers; they share src/shared.
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/admin/*" element={<AdminRoot />} />
+        <Route path="*" element={<PatientApp />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>,
 );
 

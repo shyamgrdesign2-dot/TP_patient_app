@@ -1,0 +1,164 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--tesseract-space-2);
+}
+.header h2 {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+}
+.monthButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1-5);
+  min-height: var(--tesseract-patient-touch);
+  margin-left: calc(var(--tesseract-space-1) * -1);
+  padding: 0 var(--tesseract-space-1);
+  border: 0;
+  background: none;
+  color: var(--tesseract-fg-heading);
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-bold);
+}
+.monthButton [data-tp-icon] {
+  color: var(--tesseract-fg-secondary);
+}
+/* Every bookable day in one row; swipe snaps a full week at a time. */
+.days {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 6 * var(--tesseract-space-1)) / 7);
+  gap: var(--tesseract-space-1);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+/* Fade on the right edge only: there are no past dates to the left. */
+.days {
+  mask-image: linear-gradient(
+    to right,
+    #000 calc(100% - var(--tesseract-space-8)),
+    transparent
+  );
+}
+.days::-webkit-scrollbar {
+  display: none;
+}
+.days > button:nth-child(7n + 1) {
+  scroll-snap-align: start;
+}
+.days > button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-0-5);
+  min-height: var(--tesseract-size-56);
+  padding: var(--tesseract-space-2) 0;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-surface);
+  color: var(--tesseract-fg-heading);
+  transition: background var(--tesseract-duration-150);
+}
+.days small {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.days strong {
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.days > button[data-selected="true"] {
+  background: var(--tesseract-blue-600);
+  border-color: var(--tesseract-blue-600);
+  color: var(--tesseract-fg-inverse);
+}
+.days > button[data-selected="true"] small {
+  color: var(--tesseract-fg-inverse);
+}
+.page {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--tesseract-size-28);
+  height: var(--tesseract-size-56);
+  border: 0;
+  border-radius: var(--tesseract-radius-10);
+  background: transparent;
+  color: var(--tesseract-fg-secondary);
+}
+.page:disabled {
+  color: var(--tesseract-fg-disabled, var(--tesseract-slate-300));
+}
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+}
+.monthNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.monthNav strong {
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.monthNav .page {
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--tesseract-space-1);
+  text-align: center;
+}
+.weekday {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+  padding-bottom: var(--tesseract-space-1);
+}
+.cell {
+  aspect-ratio: 1;
+  max-height: var(--tesseract-size-48);
+  border: 0;
+  border-radius: var(--tesseract-radius-full);
+  background: transparent;
+  color: var(--tesseract-fg-heading);
+  font-size: var(--tesseract-text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+.cell:disabled {
+  color: var(--tesseract-fg-disabled, var(--tesseract-slate-300));
+}
+.cell[data-today="true"] {
+  box-shadow: inset 0 0 0 1px var(--tesseract-border-neutral);
+}
+.cell[data-selected="true"] {
+  background: var(--tesseract-blue-600);
+  color: var(--tesseract-fg-inverse);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.hint {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+  text-align: center;
+}

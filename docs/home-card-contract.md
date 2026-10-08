@@ -1,6 +1,6 @@
 # Home care-card contract
 
-`src/services/careUpdates.js` selects patient-scoped events from synchronous demo state. The hero is not a permanent list of categories.
+`src/patient/services/careUpdates.js` selects patient-scoped events from synchronous demo state. The hero is not a permanent list of categories.
 
 ## Eligibility and precedence
 
@@ -8,11 +8,11 @@
 | -------- | ---------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0        | Checked-in appointment | Confirmed, today, check-in complete             | Deep green token banner; amber with “Longer wait” above the supplied expected wait, or 30 minutes if absent. Add symptoms while pending; review symptoms once shared. |
 | 10       | Appointment today      | Confirmed, same day                             | Brand gradient, doctor and time. Share symptoms, then check in for in-clinic visits; view details for video visits.                                                   |
-| 15       | Overdue bill           | Unpaid with a past due date                     | Amber payment banner. View bills.                                                                                                                                     |
+| 15       | Overdue bill           | Outstanding with a past due date                     | Amber payment banner. View bills.                                                                                                                                     |
 | 20       | New hospital record    | Released, unseen, published in last 7 days      | Blue-tonal report banner. Open that document.                                                                                                                         |
 | 30       | Upcoming appointment   | Confirmed within next 30 days                   | Brand gradient, nearest date/time first. Open visit details.                                                                                                          |
 | 40       | Recent hospital record | Released within last 7 days, already seen       | Blue-tonal report banner. Open document.                                                                                                                              |
-| 50       | New bill               | Unpaid, issued within last 14 days or due today | Amber payment banner. View bills.                                                                                                                                     |
+| 50       | New bill               | Outstanding, issued within last 14 days or due today | Amber payment banner. View bills.                                                                                                                                     |
 | 60       | Latest completed visit | Completed within last 30 days                   | Deep green banner. Open completed-visit details.                                                                                                                      |
 
 One card per category (appointments, records, payments, completed). Multiple relevant bills are summed; paid bills disappear. Recent means today through the inclusive day boundary. Unreleased records and patient uploads do not trigger a hospital-update banner. Unseen records rank ahead of seen ones. Other family members’ events never enter this selection.

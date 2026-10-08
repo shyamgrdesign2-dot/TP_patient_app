@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { defaultBrand, validBrand } from "../src/config/brand.js";
+import { defaultBrand, validBrand } from "../src/shared/brand.js";
 // Build-time identity must be chosen before native projects are generated.
 if (!validBrand(defaultBrand))
   throw new Error("Invalid tenant brand configuration.");
