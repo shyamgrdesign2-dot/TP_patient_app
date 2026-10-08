@@ -19,7 +19,7 @@
     "@capacitor/android": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
-    "@dhspl-tatvacare/tesseract-ui": "^1.1.0",
+    "@dhspl-tatvacare/tesseract-ui": "file:vendor/dhspl-tatvacare-tesseract-ui-1.1.0.tgz",
     "@fontsource/inter": "^5.2.0",
     "@fontsource/mulish": "^5.2.0",
     "ogl": "^1.0.11",

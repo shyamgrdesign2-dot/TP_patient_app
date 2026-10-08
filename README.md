@@ -4,17 +4,12 @@ A working **mobile-first patient experience preview**, built with the real Tatva
 
 ## Run
 
-The Tesseract design system (`@dhspl-tatvacare/tesseract-ui`) installs from GitHub Packages. Use a GitHub token with `read:packages` and access to the DHSPL-Tatvacare organisation:
-
 ```sh
-export NODE_AUTH_TOKEN=<your GitHub token with read:packages>
 npm ci
 npm run dev
 ```
 
-The project `.npmrc` reads the token from `NODE_AUTH_TOKEN`; never commit a token.
-
-**Deploying (Vercel or any CI):** add an environment variable `NODE_AUTH_TOKEN` with a GitHub token that has `read:packages` and access to the DHSPL-Tatvacare packages, for Production and Preview. `vercel.json` rewrites every route to `index.html`, so `/admin` and other deep links work on refresh.
+The Tesseract design system (`@dhspl-tatvacare/tesseract-ui` 1.1.0) is committed as `vendor/dhspl-tatvacare-tesseract-ui-1.1.0.tgz`, so installs and deploys (Vercel included) need no npm token. `vercel.json` rewrites every route to `index.html`, so `/admin` and other deep links work on refresh. Keep this repository private.
 
 Open **http://127.0.0.1:5178/**. Desktop shows a phone preview with hospital-brand controls; phones get the full-screen app. `/welcome` opens the introduction and `/login` opens authentication. The home route starts with an explicitly sample patient session for design review. Mobile OTP code: **123456**. No SMS is sent.
 
@@ -100,7 +95,7 @@ The Playwright configuration uses locally installed Chrome. CI can install Chrom
 
 ## Internal dependency
 
-`@dhspl-tatvacare/tesseract-ui` (^1.1.0) is installed from the organisation's GitHub Packages registry (see `.npmrc`). Local installs and CI need `NODE_AUTH_TOKEN` set to a token with `read:packages`; in CI inject it as a secret. Keep this repository private.
+`vendor/dhspl-tatvacare-tesseract-ui-1.1.0.tgz` is the exact private Tesseract package (same as GitHub Packages 1.1.0 and the TP_Shyam_design repo). To take a newer version, replace the file and the path in `package.json`, or switch to the GitHub Packages registry with a `NODE_AUTH_TOKEN` build secret.
 
 The Capacitor CLI’s `xcode` dependency is overridden to use UUID 11’s patched compatible CommonJS API. `npm audit` should remain clean; native sync is tested with the resolved versions.
 
