@@ -1,3 +1,4 @@
+import { formatValue, rangeLabel } from "../../shared/labAnalysis";
 export async function makeSamplePdf(record, member, brand) {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const pdf = await PDFDocument.create();
@@ -43,9 +44,17 @@ export async function makeSamplePdf(record, member, brand) {
   text(`Date: ${record.date}`);
   text(`Prepared by: ${record.author}`);
   y -= 20;
-  if (record.values) {
-    text("Test / Result / Unit", 12, bold);
-    for (const values of record.values) text(values.join("    |    "));
+  const rows =
+    record.values ||
+    record.params?.map((p) => [
+      p.name,
+      formatValue(p),
+      p.unit,
+      rangeLabel(p),
+    ]);
+  if (rows) {
+    text("Test / Result / Unit / Reference range", 12, bold);
+    for (const values of rows) text(values.join("    |    "));
     y -= 18;
   }
   if (record.rx) {
@@ -78,6 +87,59 @@ export async function makeSamplePdf(record, member, brand) {
         text(value);
         y -= 8;
       }
+  }
+  if (record.discharge) {
+    const d = record.discharge;
+    for (const [label, value] of [
+      ["Admitted", d.admitted],
+      ["Discharged", d.discharged],
+      ["Ward", d.ward],
+      ["Diagnosis", d.diagnosis],
+      ["Procedures", d.procedures?.join(", ")],
+      ["Hospital course", d.course],
+    ])
+      if (value) {
+        text(label, 12, bold);
+        text(value);
+        y -= 8;
+      }
+    if (d.medicines?.length) {
+      text("Medicines on discharge", 12, bold);
+      d.medicines.forEach(([name, dose, when, days], i) =>
+        text(`${i + 1}. ${name} - ${dose}, ${when}, ${days}`),
+      );
+      y -= 8;
+    }
+    for (const [label, value] of [
+      ["Advice", d.advice],
+      ["Follow-up", d.followUp],
+    ])
+      if (value) {
+        text(label, 12, bold);
+        text(value);
+        y -= 8;
+      }
+  }
+  if (record.certificate) {
+    const c = record.certificate;
+    text(record.type ? `${record.type} certificate` : "Certificate", 14, bold, accent);
+    text(
+      `This is to certify that ${member.name} (Hospital ID ${member.mrn}) was examined by ${record.author} on ${record.date}.`,
+    );
+    for (const [label, value] of [
+      ["Purpose", c.purpose],
+      ["Valid from", c.from],
+      ["Valid to", c.to],
+      ["Remarks", c.remarks],
+    ])
+      if (value) {
+        text(label, 12, bold);
+        text(value);
+        y -= 8;
+      }
+    y -= 20;
+    text(record.author, 12, bold);
+    text(brand.hospitalName, 11, normal, muted);
   }
   if (record.note) text(record.note);
   return new Blob([await pdf.save()], { type: "application/pdf" });

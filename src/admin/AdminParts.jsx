@@ -1,4 +1,5 @@
 import { locations } from "../shared/brand";
+import { packagesEnabled } from "../shared/catalog";
 import { Icon } from "../shared/ui";
 import s from "./Admin.module.css";
 
@@ -67,4 +68,17 @@ export function readFileAsDataUrl(file, maxMb = 2) {
     r.onerror = () => reject(new Error("That file could not be read."));
     r.readAsDataURL(file);
   });
+}
+
+// Shown where packages are managed or reported while the feature is switched
+// off for patients (the default), with a way to switch it on.
+export function PackagesOffNote({ config }) {
+  if (packagesEnabled(config)) return null;
+  return (
+    <InfoNote>
+      Health packages &amp; vaccines are currently off in the patient app, so
+      patients don’t see them.{" "}
+      <a href="/admin/app#features">Turn on in Features</a>
+    </InfoNote>
+  );
 }

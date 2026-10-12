@@ -265,11 +265,19 @@
   letter-spacing: normal;
   color: var(--tesseract-on-dark);
 }
-/* Linked ABHA: the address is the headline; a lone action spans the row. */
-.careBanner[data-state="linked"] .bannerContent h2 {
-  font-weight: var(--tesseract-weight-bold);
+/* Required content wraps instead of disappearing behind clipped labels. */
+.bannerContent h2,
+.bannerContent p {
   overflow-wrap: anywhere;
 }
+.careBanner [data-tp-icon] {
+  flex-shrink: 0;
+}
+.bannerActionLabel {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+/* Linked ABHA: the address is the headline; a lone action spans the row. */
 .careBanner[data-state="linked"] .bannerContent p {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
@@ -336,25 +344,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: var(--tesseract-space-2);
   padding-top: var(--tesseract-space-3);
   border-top: 1px solid
     color-mix(in srgb, var(--tesseract-on-dark) 20%, transparent);
 }
 .bannerSchedule {
-  flex: 1 1 0;
+  flex: 1 1 130px;
   min-width: 0;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: var(--tesseract-space-0-5);
 }
 .bannerSchedule strong {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-size: var(--tesseract-text-body-sm);
   line-height: var(--tesseract-text-body-sm-lh);
   font-weight: var(--tesseract-weight-semibold);
@@ -363,19 +368,17 @@
   display: flex;
   align-items: center;
   gap: var(--tesseract-space-1);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-size: var(--tesseract-text-caption);
   line-height: var(--tesseract-text-caption-lh);
   color: color-mix(in srgb, var(--tesseract-on-dark) 88%, transparent);
 }
 .bannerBottom > button {
   margin-left: auto;
-  max-width: 54%;
+  max-width: 100%;
   min-width: 0;
   min-height: var(--tesseract-size-36);
-  height: var(--tesseract-size-36);
+  height: auto;
   flex-shrink: 0;
   padding-inline: var(--tesseract-space-2-5) !important;
   font-family: var(--tesseract-font-body);
@@ -391,7 +394,7 @@
 }
 .careBanner .bannerBottom > button[data-ai="true"] {
   padding-inline: var(--tesseract-space-2) !important;
-  max-width: 56%;
+  max-width: 100%;
 }
 .careBanner:is([data-tone="success"], [data-tone="warning"])
   .bannerBottom
@@ -753,19 +756,6 @@
   .bannerContent {
     gap: var(--tesseract-space-2);
   }
-  /* Keep the full date and time visible beside the action on narrow phones. */
-  .bannerBottom {
-    gap: var(--tesseract-space-1);
-  }
-  .bannerSchedule strong {
-    font-size: var(--tesseract-text-caption);
-    line-height: var(--tesseract-text-caption-lh);
-  }
-  .bannerBottom > button,
-  .careBanner .bannerBottom > button[data-ai="true"] {
-    padding-inline: var(--tesseract-space-1-5) !important;
-    font-size: var(--tesseract-text-caption-sm);
-  }
   .quickActions > button {
     font-size: var(--tesseract-text-caption);
   }
@@ -790,7 +780,8 @@
   display: flex;
   gap: var(--tesseract-space-2-5);
   margin: 0 calc(var(--tesseract-home-inset) * -1);
-  padding: var(--tesseract-space-0-5) var(--tesseract-home-inset) var(--tesseract-space-1);
+  padding: var(--tesseract-space-0-5) var(--tesseract-home-inset)
+    var(--tesseract-space-1);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: var(--tesseract-home-inset);

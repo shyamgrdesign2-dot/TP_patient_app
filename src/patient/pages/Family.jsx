@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Checkbox } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../state/AppContext";
-import { dateKey, formatDate } from "../../shared/data";
+import { formatDate } from "../../shared/data";
+import { ageLabel, memberMeta } from "../../shared/age";
+import { MemberForm } from "../components/MemberForm";
 import {
   Button,
   PatientName,
@@ -12,128 +13,15 @@ import {
   Icon,
   PageHeader,
   SectionTitle,
-  Field,
-  ChoiceGroup,
   Sheet,
   Notice,
-  ErrorText,
+  Meta,
   Row,
   BrandLogo,
   Status,
-  useAction,
   IconButton,
 } from "../components/ui";
 import s from "../App.module.css";
-export function MemberForm({ member, onClose, onSave }) {
-  const { dispatch, notify } = useApp();
-  const [values, setValues] = useState(
-    member || {
-      name: "",
-      relation: "Father",
-      dob: "",
-      gender: "Male",
-      phone: "",
-      blood: "",
-      allergies: "",
-    },
-  );
-  const [consent, setConsent] = useState(!!member);
-  const { busy, error, run } = useAction();
-  const field = (key, value) => setValues((v) => ({ ...v, [key]: value }));
-  function submit(e) {
-    e.preventDefault();
-    run(() => {
-      if (!consent)
-        throw new Error("Confirm permission to manage this family profile.");
-      const profile = {
-        ...values,
-        name: values.name.trim(),
-        id: member?.id || crypto.randomUUID(),
-        mrn: member?.mrn || `TP-${Math.floor(10000 + Math.random() * 89999)}`,
-        access: "Full access",
-        demoConsent: true,
-      };
-      dispatch({ type: "SAVE_MEMBER", member: profile });
-      notify(member ? "Profile updated." : "Family member added.");
-      onSave?.(profile);
-      onClose();
-    });
-  }
-  return (
-    <form className={s.stack} onSubmit={submit}>
-      <Field
-        label="Full name"
-        required
-        maxLength={80}
-        value={values.name}
-        onChange={(e) => field("name", e.target.value)}
-      />
-      {values.relation !== "Self" && (
-        <ChoiceGroup
-          label="Relationship"
-          options={["Father", "Mother", "Spouse", "Child", "Sibling", "Other"]}
-          value={values.relation}
-          onChange={(v) => field("relation", v)}
-        />
-      )}
-      <div className={s.twoColumns}>
-        <Field
-          label="Date of birth"
-          type="date"
-          required
-          max={dateKey()}
-          value={values.dob}
-          onChange={(e) => field("dob", e.target.value)}
-        />
-        <Field
-          label="Blood group (optional)"
-          placeholder="e.g. B+"
-          maxLength={5}
-          value={values.blood}
-          onChange={(e) => field("blood", e.target.value)}
-        />
-      </div>
-      <ChoiceGroup
-        label="Gender"
-        options={["Male", "Female", "Other", "Prefer not to say"]}
-        value={values.gender}
-        onChange={(v) => field("gender", v)}
-      />
-      <Field
-        label="Mobile number"
-        leftAddon="+91"
-        inputMode="numeric"
-        required
-        pattern="[6-9][0-9]{9}"
-        maxLength={10}
-        value={values.phone}
-        onChange={(e) => field("phone", e.target.value.replace(/\D/g, ""))}
-      />
-      <Field
-        label="Known allergies (optional)"
-        value={values.allergies}
-        onChange={(e) => field("allergies", e.target.value)}
-      />
-      {!member && (
-        <>
-          <Checkbox
-            checked={consent}
-            onCheckedChange={setConsent}
-            label="I have permission to manage this person’s care, or I am their legal guardian."
-          />
-          <Notice>
-            Demo consent only. Live family access requires verified consent or
-            guardianship before any existing records can be shared.
-          </Notice>
-        </>
-      )}
-      <ErrorText>{error}</ErrorText>
-      <Button type="submit" loading={busy} fullWidth>
-        {member ? "Save changes" : "Add family member"}
-      </Button>
-    </form>
-  );
-}
 export default function Family() {
   const { state, activeMember, dispatch, notify } = useApp();
   const navigate = useNavigate();
@@ -181,9 +69,10 @@ export default function Family() {
                     <h3 className={s.cardTitle}>
                       <PatientName member={m} />
                     </h3>
-                    <span className={s.metaText}>
-                      {m.relation} · {m.gender} · {m.mrn}
-                    </span>
+                    <Meta
+                      className={s.metaText}
+                      items={[m.relation, ...memberMeta(m), m.mrn]}
+                    />
                     <span className={s.familyBadges}>
                       {active && (
                         <Badge variant="soft" color="primary" size="sm">
@@ -264,9 +153,10 @@ export function Profile() {
             <PatientName member={activeMember} />
           </h2>
           <span className={s.profileMeta}>
-            <span className={s.metaText}>
-              {activeMember.relation} · {activeMember.mrn}
-            </span>
+            <Meta className={s.metaText}>
+              {activeMember.relation}
+              {activeMember.mrn}
+            </Meta>
             <Status status={activeMember.access} />
           </span>
         </div>
@@ -282,10 +172,24 @@ export function Profile() {
           />
         </div>
         <dl>
-          <dt>Date of birth</dt>
-          <dd>{formatDate(activeMember.dob, { year: "numeric" })}</dd>
+          {activeMember.dobFromAge ? (
+            <>
+              <dt>Age</dt>
+              <dd>{ageLabel(activeMember) || "Not added"}</dd>
+            </>
+          ) : (
+            <>
+              <dt>Date of birth</dt>
+              <dd>
+                <Meta>
+                  {formatDate(activeMember.dob, { year: "numeric" })}
+                  {ageLabel(activeMember)}
+                </Meta>
+              </dd>
+            </>
+          )}
           <dt>Gender</dt>
-          <dd>{activeMember.gender}</dd>
+          <dd>{activeMember.gender || "Not added"}</dd>
           <dt>Blood group</dt>
           <dd>{activeMember.blood || "Not added"}</dd>
           <dt>Mobile</dt>
@@ -322,3 +226,4 @@ export function Profile() {
     </div>
   );
 }
+export { MemberForm };

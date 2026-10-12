@@ -1,13 +1,17 @@
 import { dateKey, doctors, formatDate, money } from "../../shared/data.js";
+import { recordPath } from "./records.js";
 import { needsSymptoms } from "./symptomReminders.js";
 import { abhaAddress, maskAbha } from "./abha.js";
+import { listedCatalog, packagesEnabled } from "../../shared/catalog.js";
+import { readAdminConfig } from "../../shared/hospitalConfig.js";
 import { locations } from "../../shared/brand.js";
 
-// Three stable categories; each derives its state from the active patient.
+// Stable categories; packages only appear when enabled by the hospital.
 export const CARE_CATEGORIES = Object.freeze([
   { id: "appointments", label: "Appointments", icon: "calendar-2" },
   { id: "records", label: "Health records", icon: "document-text" },
   { id: "abha", label: "Connected health", icon: "abha" },
+  { id: "packages", label: "Preventive care", icon: "health" },
 ]);
 export const CARE_WINDOWS = Object.freeze({
   upcoming: 30,
@@ -96,7 +100,11 @@ export function selectCareUpdates(
       image: doctor?.image,
       entityId: visit.id,
       visitType: visit.type,
-      detail: `${visit.date === today ? "Today" : formatDate(visit.date)} · ${visit.time}`,
+      // Day and time as separate parts, joined by the meta divider on screen.
+      detail: [
+        visit.date === today ? "Today" : formatDate(visit.date),
+        visit.time,
+      ],
       meta:
         hospitalLocations.find((item) => item.id === visit.location)?.name ||
         "Your hospital",
@@ -135,7 +143,7 @@ export function selectCareUpdates(
       entityId: record.id,
       action: {
         label: "View report",
-        path: `/records?record=${encodeURIComponent(record.id)}`,
+        path: recordPath(record),
       },
     };
 
@@ -176,7 +184,7 @@ export function selectCareUpdates(
         : "Hospital reports will appear here. You can add your own too.",
       detail: count
         ? `${count} saved ${count === 1 ? "record" : "records"}`
-        : "Reports · Prescriptions · Scans",
+        : "Visits · Lab results · Medical records",
       action: {
         label: count ? "View records" : "Add a record",
         path: count ? "/records" : "/records?upload=1",
@@ -213,10 +221,53 @@ export function selectCareUpdates(
         detail: "One health identity",
         action: { label: "Link ABHA", path: "/abha" },
       };
-  return CARE_CATEGORIES.map((category) => ({
-    ...content[category.id],
-    id: category.id,
-    category,
-    memberId,
-  }));
+  const config = directory.config ?? readAdminConfig();
+  if (packagesEnabled(config)) {
+    const catalog = listedCatalog(config);
+    const request = (state.packageRequests || []).find(
+      (item) =>
+        item.memberId === memberId &&
+        ["Requested", "Confirmed"].includes(item.status) &&
+        item.date >= today,
+    );
+    const prices = catalog.packages
+      .map((item) => Number(item.price))
+      .filter((price) => price > 0);
+    const hasCatalog =
+      catalog.packages.length > 0 || catalog.vaccines.length > 0;
+    content.packages = request
+      ? {
+          state: "requested",
+          tone: "primary",
+          label: "Your preventive care booking",
+          status: request.status === "Confirmed" ? "Confirmed" : "Request sent",
+          title: request.itemName,
+          description: "Your next step towards better health.",
+          detail: formatDate(request.date),
+          meta: request.clinicName,
+          action: { label: "View booking", path: "/packages?tab=bookings" },
+        }
+      : {
+          state: hasCatalog ? "available" : "empty",
+          tone: "primary",
+          label: "Explore preventive care",
+          status: "Stay a step ahead",
+          title: "A little check-in. A healthier you.",
+          description: hasCatalog
+            ? "Explore health checks, laboratory tests and more."
+            : "Your hospital’s preventive care, in one place.",
+          detail: prices.length
+            ? `Health checks from ${money(Math.min(...prices))}`
+            : "Care for your whole family",
+          action: { label: "Explore packages", path: "/packages" },
+        };
+  }
+  return CARE_CATEGORIES.filter((category) => content[category.id]).map(
+    (category) => ({
+      ...content[category.id],
+      id: category.id,
+      category,
+      memberId,
+    }),
+  );
 }

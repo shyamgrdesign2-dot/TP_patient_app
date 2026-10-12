@@ -1,0 +1,314 @@
+/* Visit summary: one card for who, when, how, where and the fee. Used by the
+   manual review step, the assistant's summary and the confirmation screen. */
+.summary {
+  display: flex;
+  flex-direction: column;
+  padding: var(--tesseract-space-1) var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+}
+.summary > * {
+  padding: var(--tesseract-space-3) 0;
+}
+.summary > * + * {
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.person,
+.line,
+.fee {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  min-width: 0;
+}
+.line {
+  align-items: flex-start;
+}
+.lineIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-blue-600);
+}
+.lineBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-0-5);
+}
+.lineBody strong {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.lineBody small,
+.sub {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  font-weight: var(--tesseract-weight-regular);
+  color: var(--tesseract-fg-secondary);
+}
+.lineLabel {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-2);
+  margin-top: var(--tesseract-space-2);
+}
+.contact > * {
+  min-height: var(--tesseract-size-36);
+  font-variant-numeric: tabular-nums;
+}
+.fee > strong {
+  flex-shrink: 0;
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chooser: assistant or manual, one tap each. */
+.chooser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+}
+.chooser h2 {
+  font-size: var(--tesseract-text-h5);
+  line-height: var(--tesseract-text-h5-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+  margin-top: var(--tesseract-space-2);
+}
+.option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--tesseract-duration-150),
+    box-shadow var(--tesseract-duration-150),
+    border-color var(--tesseract-duration-150);
+}
+.option:hover {
+  border-color: var(--tesseract-border-strong);
+  box-shadow: var(--tesseract-shadow-md);
+}
+.option:active {
+  transform: scale(0.985);
+}
+.option:focus-visible {
+  outline: 2px solid var(--tesseract-blue-600);
+  outline-offset: 2px;
+}
+.option strong {
+  display: block;
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.option small {
+  display: block;
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.optionIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: calc(var(--tesseract-size-40) + var(--tesseract-space-2));
+  height: calc(var(--tesseract-size-40) + var(--tesseract-space-2));
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-blue-600);
+}
+.option > [data-tp-icon] {
+  flex-shrink: 0;
+  color: var(--tesseract-fg-tertiary);
+}
+/* The assistant option carries the AI gradient (reserved for assistant CTAs). */
+.option[data-ai] {
+  border-color: transparent;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--tesseract-slate-0) 88%, transparent),
+      color-mix(in srgb, var(--tesseract-slate-0) 88%, transparent)
+    ),
+    var(--tesseract-gradient-ai-card);
+}
+.option[data-ai]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--tesseract-gradient-ai-card);
+  opacity: 0.7;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.option[data-ai] .optionIcon {
+  background: var(--tesseract-slate-0);
+}
+.option[data-ai] .optionIcon [data-tp-icon] {
+  background: var(--tesseract-gradient-ai-hero) !important;
+}
+.option[data-ai] strong {
+  width: fit-content;
+  background: var(--tesseract-gradient-ai-hero);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.chooserNote {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  text-align: center;
+  color: var(--tesseract-fg-tertiary);
+}
+/* Quiet switch to the assistant from the manual steps. */
+.switchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-2);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+
+/* Assistant chat: extras on top of the collector's own styles. */
+.assistant {
+  position: absolute;
+  inset: 0;
+}
+.manualPill {
+  flex-shrink: 0;
+  padding: var(--tesseract-space-2) var(--tesseract-space-3);
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: var(--tesseract-radius-full);
+  background: var(--tesseract-bg-surface);
+  font-size: var(--tesseract-text-caption);
+  line-height: 1;
+  font-weight: var(--tesseract-weight-medium);
+  color: var(--tesseract-fg-secondary);
+}
+.manualPill:hover {
+  background: var(--tesseract-bg-surface-hover);
+}
+.agentBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+}
+.chatSummary {
+  animation: summaryRise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.chipsScroll {
+  flex-wrap: nowrap !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-top: var(--tesseract-space-1);
+  scroll-padding-inline: var(--tesseract-space-4);
+}
+.chipsScroll::-webkit-scrollbar {
+  display: none;
+}
+.chipsScroll > button {
+  flex-shrink: 0;
+}
+.confirmDock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+  padding: 0 var(--tesseract-space-4) var(--tesseract-space-3);
+}
+.confirmDock button:disabled {
+  opacity: 0.6;
+}
+.mic {
+  color: var(--tesseract-violet-700);
+}
+.mic:disabled {
+  opacity: 0.4;
+}
+@keyframes summaryRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Confirmation screen. */
+.successCard {
+  position: relative;
+  border-color: transparent;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--tesseract-blue-600) 6%, transparent),
+    0 8px 20px color-mix(in srgb, var(--tesseract-blue-600) 9%, transparent);
+}
+.successCard::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--tesseract-blue-200) 25%, transparent),
+    var(--tesseract-blue-200) 25%,
+    var(--tesseract-blue-200) 75%,
+    color-mix(in srgb, var(--tesseract-blue-200) 25%, transparent)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.successActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2-5);
+}
+.successActions > button {
+  width: 100%;
+  min-height: var(--tesseract-patient-control-height);
+}
+@media (prefers-reduced-motion: reduce) {
+  .chatSummary {
+    animation: none;
+  }
+  .option {
+    transition: none;
+  }
+}

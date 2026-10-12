@@ -25,6 +25,7 @@ import {
   Empty,
   Sheet,
   Notice,
+  Meta,
   ErrorText,
   Status,
   Row,
@@ -83,9 +84,10 @@ export function Billing() {
           <button className={s.billCard} key={b.id} onClick={() => setBill(b)}>
             <span className={s.billBody}>
               <span className={s.inlineMeta}>
-                <span className={s.metaText}>
-                  {b.id} · {formatDate(b.date)}
-                </span>
+                <Meta className={s.metaText}>
+                  {b.id}
+                  {formatDate(b.date)}
+                </Meta>
                 <Status status={b.status} />
               </span>
               <span className={s.billRow}>
@@ -93,12 +95,12 @@ export function Billing() {
                 <strong>{money(b.amount)}</strong>
               </span>
               {b.status === "Paid" && b.method && (
-                <span className={s.billPaid}>
+                <Meta className={s.billPaid}>
                   {b.paidOn
                     ? `Paid on ${formatDate(b.paidOn)}`
-                    : "Paid at hospital"}{" "}
-                  · {b.method}
-                </span>
+                    : "Paid at hospital"}
+                  {b.method}
+                </Meta>
               )}
             </span>
             <Icon
@@ -126,9 +128,11 @@ export function Billing() {
             <div className={s.invoiceHead}>
               <h3>{bill.title}</h3>
               <span className={s.invoiceMeta}>
-                <span className={s.metaText}>
-                  {bill.id} · {formatDate(bill.date)} · For {activeMember.name}
-                </span>
+                <Meta className={s.metaText}>
+                  {bill.id}
+                  {formatDate(bill.date)}
+                  {`For ${activeMember.name}`}
+                </Meta>
                 <Status status={bill.status} />
               </span>
             </div>

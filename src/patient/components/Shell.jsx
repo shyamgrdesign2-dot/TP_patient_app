@@ -46,7 +46,8 @@ export default function Shell() {
       "/link-records",
     ].includes(location.pathname) &&
     !location.pathname.startsWith("/packages") &&
-    !location.pathname.startsWith("/book");
+    !location.pathname.startsWith("/book") &&
+    !location.pathname.startsWith("/appointments/confirmed");
   useEffect(() => {
     const node = dock.current;
     if (!node) return;

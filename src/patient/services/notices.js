@@ -28,7 +28,8 @@ export function noticeTime(notice, now = new Date()) {
 }
 
 // Resolves a notification into icon + structured subtext parts.
-// Appointment subtext: "Your appointment with <Dr> is on <date · time> at <place>."
+// Appointment subtext: "Your appointment with <Dr> is on <date | time> at <place>."
+// A part with `items` is a meta run, drawn with the thin divider.
 export function describeNotice(notice, appointments = []) {
   if (notice.type !== "appointment")
     return {
@@ -56,13 +57,12 @@ export function describeNotice(notice, appointments = []) {
       : offset === 1
         ? "Tomorrow"
         : formatDate(visit.date, { weekday: "short" });
-  const when = `${day} · ${visit.time}`;
   const cancelled = visit.status === "Cancelled";
   const parts = [
     { text: "Your appointment with " },
     { text: doctor?.name || "your doctor", strong: true },
     { text: cancelled ? " on " : " is on " },
-    { text: when, strong: true },
+    { text: `${day}, ${visit.time}`, items: [day, visit.time], strong: true },
     { text: video ? " as " : " at " },
     { text: place, strong: !video },
     { text: cancelled ? " was cancelled." : "." },

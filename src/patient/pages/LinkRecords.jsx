@@ -15,6 +15,7 @@ import {
   Sheet,
   Field,
   Notice,
+  Meta,
   ErrorText,
   Row,
   useAction,
@@ -304,7 +305,10 @@ export default function LinkRecords({ initialMethod }) {
                     <PatientName member={activeMember} />
                   </strong>
                   <small>
-                    {activeMember.relation} · {brand.hospitalName}
+                    <Meta>
+                      {activeMember.relation}
+                      {brand.hospitalName}
+                    </Meta>
                   </small>
                 </span>
               </div>
@@ -369,14 +373,17 @@ export default function LinkRecords({ initialMethod }) {
                     <strong>
                       <PatientName member={activeMember} />
                     </strong>
-                    <span className={s.verifiedId}>
-                      {label} · {sampleIdentity(activeMember, method)}
-                    </span>
+                    <Meta className={s.verifiedId}>
+                      {label}
+                      {sampleIdentity(activeMember, method)}
+                    </Meta>
                     <small>
-                      {activeMember.relation} ·{" "}
-                      {method === "uhid"
-                        ? brand.hospitalName
-                        : "Ayushman Bharat Digital Mission"}
+                      <Meta>
+                        {activeMember.relation}
+                        {method === "uhid"
+                          ? brand.hospitalName
+                          : "Ayushman Bharat Digital Mission"}
+                      </Meta>
                     </small>
                   </div>
                 </div>

@@ -172,4 +172,4 @@ export function listedCatalog(config = readAdminConfig()) {
 }
 
 export const packagesEnabled = (config = readAdminConfig()) =>
-  config.features?.packages !== false;
+  config.features?.packages === true;

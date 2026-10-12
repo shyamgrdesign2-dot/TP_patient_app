@@ -1,6 +1,11 @@
-import { useState } from "react";
-import { useLocation } from "react-router-dom";
-import { useNavigate, useSearchParams, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+  useParams,
+} from "react-router-dom";
 import {
   ConfirmDialog,
   Chip,
@@ -36,13 +41,23 @@ import {
   Notice,
   ErrorText,
   Status,
-  Tag,
+  Meta,
+  Sep,
   useAction,
 } from "../components/ui";
 import s from "../App.module.css";
 import v from "../components/VisitExperience.module.css";
 import VisitType from "../components/VisitType";
-import { MemberForm } from "./Family";
+import { MemberForm } from "../components/MemberForm";
+import { memberMeta } from "../../shared/age";
+import BookingAssistant from "../components/booking/BookingAssistant";
+import VisitSummary from "../components/booking/VisitSummary";
+import {
+  useBookVisit,
+  clinicFor,
+  videoEnabled,
+} from "../components/booking/useBookVisit";
+import b from "../components/booking/Booking.module.css";
 import SymptomPrompt from "../components/SymptomPrompt";
 import DatePicker from "../components/DatePicker";
 import { LocationChip } from "../components/LocationSheet";
@@ -116,7 +131,7 @@ export function Doctors() {
             </button>
             <div className={s.doctorMeta}>
               <span>{d.experience} y exp</span>
-              <span className={s.metaDivider} aria-hidden="true" />
+              <Sep />
               <span>{d.languages}</span>
             </div>
             <Divider />
@@ -245,22 +260,50 @@ function SlotPicker({ options, value, onChange, isBooked = () => false }) {
     </div>
   ));
 }
+const MODE_KEY = "tatva-booking-mode";
+function rememberedMode() {
+  try {
+    const mode = sessionStorage.getItem(MODE_KEY);
+    return ["assistant", "manual"].includes(mode) ? mode : null;
+  } catch {
+    return null;
+  }
+}
+// Compact doctor card at the top of every booking screen.
+function BookingDoctor({ doctor }) {
+  return (
+    <div className={s.bookingDoctor}>
+      <Avatar
+        src={doctor.image}
+        name={doctor.name.replace("Dr. ", "")}
+        color="primary"
+        size={44}
+        shape="rounded"
+        radius={10}
+      />
+      <div className={s.grow}>
+        <h3>
+          <DoctorName doctor={doctor} />
+        </h3>
+        <p>{doctor.specialty}</p>
+      </div>
+      {feeFor(doctor) != null && (
+        <strong aria-label={`Consultation fee ${money(feeFor(doctor))}`}>
+          {money(feeFor(doctor))}
+        </strong>
+      )}
+    </div>
+  );
+}
+// Booking for one doctor. The way of booking lives in the URL (?mode=), is
+// chosen once and remembered for the session; each flow can switch to the
+// other without losing what was already answered.
 export function Booking() {
-  const { state, activeMember, dispatch, notify, openAgent } = useApp();
   const navigate = useNavigate();
   const { doctorId } = useParams();
+  const [params] = useSearchParams();
   const routeState = useLocation().state;
   const doctor = doctors.find((d) => d.id === doctorId);
-  const [step, setStep] = useState(0);
-  const [memberId, setMemberId] = useState(activeMember.id);
-  const [date, setDate] = useState(dateKey(1));
-  const [time, setTime] = useState("");
-  const [type, setType] = useState("In-person");
-  const [addingMember, setAddingMember] = useState(false);
-  const [confirmed, setConfirmed] = useState(null);
-  const [leaving, setLeaving] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const { busy, error, run, setError } = useAction();
   if (!doctor)
     return (
       <div className={s.page}>
@@ -273,235 +316,222 @@ export function Booking() {
         />
       </div>
     );
+  const mode = params.get("mode");
+  const path = (next) => `/book/${doctor.id}?mode=${next}`;
+  // Replaces the current entry, so Back always leaves booking in one step.
+  function choose(next, extra) {
+    try {
+      sessionStorage.setItem(MODE_KEY, next);
+    } catch {
+      /* the choice then lasts for this screen only */
+    }
+    navigate(path(next), {
+      replace: true,
+      state: { ...routeState, prefill: undefined, ...extra },
+    });
+  }
+  if (mode === "assistant")
+    return (
+      <BookingAssistant
+        key={doctor.id}
+        doctor={doctor}
+        intake={routeState}
+        onManual={({ memberId, type, date, time }) =>
+          choose("manual", { prefill: { memberId, type, date, time } })
+        }
+      />
+    );
+  if (mode === "manual")
+    return (
+      <ManualBooking
+        key={doctor.id}
+        doctor={doctor}
+        onAssistant={() => choose("assistant")}
+      />
+    );
+  if (rememberedMode())
+    return <Navigate to={path(rememberedMode())} replace state={routeState} />;
+  return (
+    <div className={s.page}>
+      <PageHeader title="Book an appointment" />
+      <BookingDoctor doctor={doctor} />
+      <section className={b.chooser} aria-labelledby="booking-way">
+        <h2 id="booking-way">How would you like to book?</h2>
+        <button
+          type="button"
+          className={b.option}
+          data-ai
+          onClick={() => choose("assistant")}
+        >
+          <span className={b.optionIcon} aria-hidden="true">
+            <Icon
+              name="message-text"
+              family="emails-messages"
+              corner="rounded"
+              size={24}
+              bulk
+            />
+          </span>
+          <span className={s.grow}>
+            <strong>Book with assistant</strong>
+            <small>Chat or speak. Mira books it for you.</small>
+          </span>
+          <Icon name="chevron-right" size={16} />
+        </button>
+        <button
+          type="button"
+          className={b.option}
+          onClick={() => choose("manual")}
+        >
+          <span className={b.optionIcon} aria-hidden="true">
+            <Icon name="calendar-2" size={24} bulk />
+          </span>
+          <span className={s.grow}>
+            <strong>Book manually</strong>
+            <small>Pick the day, time and patient yourself.</small>
+          </span>
+          <Icon name="chevron-right" size={16} />
+        </button>
+        <p className={b.chooserNote}>You can switch at any time.</p>
+      </section>
+    </div>
+  );
+}
+function ManualBooking({ doctor, onAssistant }) {
+  const { state, activeMember } = useApp();
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const location = useLocation();
+  const routeState = location.state;
+  const prefill = routeState?.prefill || {};
+  const video = videoEnabled();
+  const [memberId, setMemberId] = useState(
+    state.members.some((m) => m.id === prefill.memberId)
+      ? prefill.memberId
+      : activeMember.id,
+  );
+  const [date, setDate] = useState(
+    prefill.date >= dateKey(1) ? prefill.date : dateKey(1),
+  );
+  const [time, setTime] = useState(
+    prefill.date >= dateKey(1) && prefill.time ? prefill.time : "",
+  );
+  const [type, setType] = useState(
+    video && prefill.type === "Video consultation"
+      ? "Video consultation"
+      : "In-person",
+  );
+  const [addingMember, setAddingMember] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const { book, confirming } = useBookVisit();
+  const { busy, error, run, setError } = useAction();
+  // The step lives in the URL, so browser Back walks the steps too. A step
+  // reached without a chosen time (a refresh) starts again from the top.
+  const wanted = Math.min(2, Math.max(0, Number(params.get("step")) || 0));
+  const step = time ? wanted : 0;
+  const stepPath = (n) =>
+    `/book/${doctor.id}?mode=manual${n ? `&step=${n}` : ""}`;
+  useEffect(() => {
+    if (wanted !== step)
+      navigate(stepPath(step), { replace: true, state: routeState });
+  }, [wanted, step]);
   const member = state.members.find((m) => m.id === memberId);
-  const location = doctor.locations.includes(state.location)
-    ? state.location
-    : doctor.locations[0];
+  const clinic = clinicFor(doctor, state.location);
   const booked = state.appointments
     .filter(
       (a) =>
         a.doctorId === doctor.id && a.date === date && a.status === "Confirmed",
     )
     .map((a) => a.time);
-  function confirm() {
-    run(async () => {
-      setConfirming(true);
-      await new Promise((r) =>
-        setTimeout(
-          r,
-          window.matchMedia("(prefers-reduced-motion: reduce)").matches
-            ? 0
-            : 2000,
-        ),
-      );
-      const booking = {
-        id: `TP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-        doctorId: doctor.id,
-        memberId,
-        date,
-        time,
-        type,
-        location,
-        source: "Patient",
-        ...(routeState?.memberId === memberId && routeState?.intakeAnswers
-          ? {
-              symptomIntake: {
-                note: routeState.intakeNote,
-                answers: routeState.intakeAnswers,
-                source: "local-demo",
-                updatedAt: new Date().toISOString(),
-              },
-            }
-          : {}),
-      };
-      dispatch({ type: "BOOK", booking });
-      dispatch({ type: "SELECT_MEMBER", id: memberId });
-      setConfirmed(booking);
-      setConfirming(false);
-      notify("Appointment booked successfully.");
-    });
-  }
-  if (confirmed)
-    return (
-      <div className={s.page}>
-        <PageHeader title="You’re all booked" />
-        <div className={`${s.successHero} ${s.successArrive}`}>
-          <span>
-            <Icon name="tick-circle" size={40} bulk />
-          </span>
-          <h1>
-            A little closer
-            <br />
-            to feeling better.
-          </h1>
-          <p>Your appointment is confirmed.</p>
-          <Badge color="success">{confirmed.id}</Badge>
-        </div>
-        <div className={`${s.detailCard} ${s.confirmCard}`}>
-          <div className={s.doctorRow}>
-            <Avatar
-              src={doctor.image}
-              name={doctor.name.replace("Dr. ", "")}
-              size={56}
-              color="primary"
-            />
-            <div>
-              <h3>
-                <DoctorName doctor={doctor} />
-              </h3>
-              <p>{doctor.specialty}</p>
-            </div>
-          </div>
-          <dl>
-            <dt>Patient</dt>
-            <dd>
-              <PatientName member={member} />
-            </dd>
-            <dt>When</dt>
-            <dd>
-              {formatDate(date)} · {time}
-            </dd>
-            <dt>Where</dt>
-            <dd>
-              {type === "Video consultation"
-                ? "Online"
-                : locations.find((l) => l.id === location).name}
-            </dd>
-            <dt>Visit type</dt>
-            <dd>
-              <VisitType type={type} />
-            </dd>
-            <dt>Payment</dt>
-            <dd>
-              {feeFor(doctor, type) != null
-                ? `${money(feeFor(doctor, type))} · Pay at hospital`
-                : "Fee payable at the clinic"}
-            </dd>
-          </dl>
-        </div>
-        <Notice icon="calendar-tick" tone="warning">
-          Please arrive 15 minutes before your appointment and bring any
-          previous reports.
-        </Notice>
-        <div className={v.visitActions}>
-          <Button
-            variant="solid"
-            className={v.aiAction}
-            fullWidth
-            onClick={() =>
-              openAgent({ kind: "symptoms", appointmentId: confirmed.id })
-            }
-          >
-            <Icon name="add-plain" /> Share symptoms before your visit
-          </Button>
-          <div className={v.secondaryActions}>
-            <Button variant="outline" onClick={() => navigate("/appointments")}>
-              View my appointments
-            </Button>
-            <Button
-              variant="outline"
-              fullWidth
-              onClick={() =>
-                download(
-                  "appointment.ics",
-                  calendarFile(
-                    confirmed,
-                    doctor,
-                    locations.find((l) => l.id === location),
-                  ),
-                  "text/calendar",
-                )
-              }
-            >
-              Add to calendar
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  const placeName = locations.find((l) => l.id === location).name;
   return (
     <div className={s.page}>
-      <PageHeader
-        title="Book an appointment"
-        onBack={() => {
-          if (step === 0) return false;
-          setStep(step - 1);
-          return true;
-        }}
-      />
-      {/* Compact info card for the doctor being booked. */}
-      <div className={s.bookingDoctor}>
-        <Avatar
-          src={doctor.image}
-          name={doctor.name.replace("Dr. ", "")}
-          color="primary"
-          size={44}
-          shape="rounded"
-          radius={10}
-        />
-        <div className={s.grow}>
-          <h3>
-            <DoctorName doctor={doctor} />
-          </h3>
-          <p>{doctor.specialty}</p>
+      <PageHeader title="Book an appointment" />
+      <BookingDoctor doctor={doctor} />
+      {step === 0 && (
+        <div className={b.switchRow}>
+          <span>Prefer to chat or speak?</span>
+          <Button
+            size="sm"
+            className={v.aiAction}
+            leftIcon={
+              <Icon
+                name="message-text"
+                family="emails-messages"
+                corner="rounded"
+                size={16}
+              />
+            }
+            onClick={onAssistant}
+          >
+            Book with assistant
+          </Button>
         </div>
-        {feeFor(doctor) != null && (
-          <strong aria-label={`Consultation fee ${money(feeFor(doctor))}`}>
-            {money(feeFor(doctor))}
-          </strong>
-        )}
-      </div>
+      )}
       <BookingStep
         title="When"
         open={step === 0}
         done={step > 0}
-        onEdit={() => setStep(0)}
+        onEdit={() => navigate(-step)}
         leaving={leaving && step === 0}
-        kind={<VisitType type={type} />}
-        summary={
+        kind={
           <>
-            <span>{formatDate(date, { weekday: "short" })}</span>
-            <span>{time} IST</span>
+            <Icon
+              name={type === "Video consultation" ? "video" : "hospital"}
+              family={
+                type === "Video consultation" ? "video-audio-image" : "building"
+              }
+              corner="rounded"
+              size={16}
+              bulk
+            />
+            {type === "Video consultation" ? "Video consultation" : "In clinic"}
           </>
+        }
+        summary={
+          <Meta>
+            {formatDate(date, { weekday: "short" })}
+            {`${time} IST`}
+          </Meta>
         }
       >
         <div className={s.sectionLabel}>
-          <SegmentedControl
-            aria-label="Visit type"
-            className={s.visitSegment}
-            variant="block"
-            radius={10}
-            fullWidth
-            options={[
-              {
-                value: "In-person",
-                label: "In clinic",
-                icon: (
-                  <Icon
-                    name="hospital"
-                    family="building"
-                    corner="rounded"
-                    size={16}
-                  />
-                ),
-              },
-              {
-                value: "Video consultation",
-                label: "Video consultation",
-                icon: (
-                  <Icon
-                    name="video"
-                    family="video-audio-image"
-                    corner="rounded"
-                    size={16}
-                  />
-                ),
-              },
-            ]}
-            value={type}
-            onValueChange={setType}
-          />
+          {video && (
+            <SegmentedControl
+              aria-label="Visit type"
+              className={s.visitSegment}
+              variant="block"
+              radius={10}
+              fullWidth
+              options={[
+                {
+                  value: "In-person",
+                  label: "In clinic",
+                  icon: (
+                    <Icon
+                      name="hospital"
+                      family="building"
+                      corner="rounded"
+                      size={16}
+                    />
+                  ),
+                },
+                {
+                  value: "Video consultation",
+                  label: "Video consultation",
+                  icon: (
+                    <Icon
+                      name="video"
+                      family="video-audio-image"
+                      corner="rounded"
+                      size={16}
+                    />
+                  ),
+                },
+              ]}
+              value={type}
+              onValueChange={setType}
+            />
+          )}
           <DatePicker
             value={date}
             onChange={(d) => {
@@ -523,19 +553,21 @@ export function Booking() {
           title="Patient"
           open={step === 1}
           done={step > 1}
-          onEdit={() => setStep(1)}
+          onEdit={() => navigate(1 - step)}
           leaving={leaving && step === 1}
           kind={
-            <span className={s.bookingKind}>
-              <Icon name="profile-circle" size={16} />
+            <>
+              <Icon name="user" size={16} />
               {member.relation}
-            </span>
+            </>
           }
           summary={
-            <>
-              <PatientName member={member} />
-              <span>{memberMeta(member)}</span>
-            </>
+            <Meta
+              items={[
+                <PatientName key="name" member={member} />,
+                ...memberMeta(member),
+              ]}
+            />
           }
         >
           <PatientPicker
@@ -572,28 +604,15 @@ export function Booking() {
         )}
       </Sheet>
       {step === 2 && (
-        <div className={s.detailCard}>
-          <dl>
-            <dt>Hospital</dt>
-            <dd>{type === "Video consultation" ? "Online" : placeName}</dd>
-            <dt>Visit</dt>
-            <dd>
-              <VisitType type={type} />
-            </dd>
-          </dl>
-          <div className={s.total}>
-            <span>Consultation fee</span>
-            <strong>
-              {feeFor(doctor, type) != null
-                ? money(feeFor(doctor, type))
-                : "Payable at the clinic"}
-            </strong>
-          </div>
+        <>
+          <VisitSummary
+            visit={{ doctorId: doctor.id, location: clinic, date, time, type }}
+            member={member}
+          />
           <p className={s.footnote}>
-            Pay at the hospital. No payment is collected now. You can reschedule
-            or cancel from My visits.
+            You can reschedule or cancel from My visits.
           </p>
-        </div>
+        </>
       )}
       <ErrorText>{error}</ErrorText>
       {confirming && (
@@ -609,12 +628,23 @@ export function Booking() {
           loading={busy}
           onClick={() => {
             setError("");
-            if (step === 2) return confirm();
+            if (step === 2)
+              return run(() =>
+                book({
+                  doctor,
+                  memberId,
+                  date,
+                  time,
+                  type,
+                  intake: routeState,
+                  stepsBack: step,
+                }),
+              );
             // Collapse the open section, then reveal its summary card.
             setLeaving(true);
             setTimeout(
               () => {
-                setStep(step + 1);
+                navigate(stepPath(step + 1), { state: routeState });
                 setLeaving(false);
               },
               window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -670,25 +700,6 @@ function BookingStep({
     </section>
   );
 }
-const ageOf = (dob) => {
-  if (!dob) return null;
-  const born = new Date(`${dob}T12:00:00`);
-  const now = new Date();
-  let age = now.getFullYear() - born.getFullYear();
-  if (
-    now.getMonth() < born.getMonth() ||
-    (now.getMonth() === born.getMonth() && now.getDate() < born.getDate())
-  )
-    age -= 1;
-  return age;
-};
-const memberMeta = (m) =>
-  [
-    ageOf(m.dob) != null && `${ageOf(m.dob)} yrs`,
-    m.gender && m.gender !== "Prefer not to say" && m.gender,
-  ]
-    .filter(Boolean)
-    .join(" · ");
 // Stacked radio cards: name (relation), age and gender, selection mark.
 function PatientPicker({ members, value, onChange }) {
   return (
@@ -712,7 +723,9 @@ function PatientPicker({ members, value, onChange }) {
             <strong>
               <PatientName member={m} /> <span>({m.relation})</span>
             </strong>
-            {memberMeta(m) && <small>{memberMeta(m)}</small>}
+            <small>
+              <Meta items={memberMeta(m)} />
+            </small>
           </span>
           <span className={s.radioMark} aria-hidden="true" />
         </button>
@@ -783,7 +796,10 @@ function JoinVideoSheet({ visit, onClose }) {
                 <DoctorName doctor={doctor} />
               </h3>
               <p>
-                {doctor.specialty} · {visit.time}
+                <Meta>
+                  {doctor.specialty}
+                  {visit.time}
+                </Meta>
               </p>
             </div>
           </div>
@@ -833,7 +849,10 @@ export function AppointmentCard({
       <div className={s.appointmentDate}>
         <span>
           <Icon name="calendar-2" size={16} bulk />
-          {formatDate(visit.date)} · {visit.time}
+          <Meta>
+            {formatDate(visit.date)}
+            {visit.time}
+          </Meta>
         </span>
         <Status status={visit.status} />
       </div>
@@ -934,6 +953,19 @@ export function Appointments() {
     <div className={s.page}>
       <PageHeader
         title="My visits"
+        trailing={
+          hasUpcoming && (
+            <Button
+              size="sm"
+              variant="tonal"
+              aria-label="Book a new appointment"
+              leftIcon={<Icon name="add" size={16} />}
+              onClick={() => navigate("/doctors")}
+            >
+              Book
+            </Button>
+          )
+        }
         action={
           hasUpcoming && (
             <Button size="sm" onClick={() => navigate("/doctors")}>
@@ -1009,7 +1041,10 @@ export function Appointments() {
                   <dd>{selected.id}</dd>
                   <dt>Date & time</dt>
                   <dd>
-                    {formatDate(refreshSelected.date)} · {refreshSelected.time}
+                    <Meta>
+                      {formatDate(refreshSelected.date)}
+                      {refreshSelected.time}
+                    </Meta>
                   </dd>
                   <dt>Patient</dt>
                   <dd>

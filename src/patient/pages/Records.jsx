@@ -24,6 +24,7 @@ import {
   Empty,
   Sheet,
   Notice,
+  Meta,
   ErrorText,
   Tag,
   useAction,
@@ -58,8 +59,8 @@ const UPLOAD_LABEL = {
   "Discharge summaries": "Upload a discharge summary",
   "Other documents": "Upload a document",
 };
-// Who it came from, then when: "Dr. Meera Iyer · 5 Oct, 10:30 AM".
-function recordSource(r) {
+// Who it came from, then when: "Dr. Meera Iyer | 5 Oct, 10:30 AM".
+export function recordSource(r) {
   const doctor = doctors.find((d) => d.id === r.doctorId);
   const who = r.uploaded
     ? "Uploaded by you"
@@ -67,9 +68,7 @@ function recordSource(r) {
       ? doctor.name
       : r.author || doctor?.name || "Hospital";
   const when = [formatDate(r.date), r.time].filter(Boolean).join(", ");
-  return r.source === "abha"
-    ? `${who} · via ABHA · ${when}`
-    : `${who} · ${when}`;
+  return r.source === "abha" ? [who, "via ABHA", when] : [who, when];
 }
 export default function Records() {
   const { state, activeMember, dispatch, notify, brand } = useApp();
@@ -362,7 +361,11 @@ export default function Records() {
           <button
             key={r.id}
             className={s.recordCard}
-            onClick={() => setParams({ record: r.id })}
+            onClick={() =>
+              r.params?.length
+                ? navigate(`/records/${r.id}`)
+                : setParams({ record: r.id })
+            }
           >
             <span className={s.documentIcon} data-category={r.category}>
               <Icon
@@ -386,8 +389,13 @@ export default function Records() {
                     New
                   </Badge>
                 )}
+                {r.params?.length > 0 && (
+                  <Badge variant="soft" color="violet" size="sm">
+                    AI analysis
+                  </Badge>
+                )}
               </span>
-              <span className={s.metaText}>{recordSource(r)}</span>
+              <Meta className={s.metaText} items={recordSource(r)} />
             </span>
             <Icon name="chevron-right" size={16} />
           </button>

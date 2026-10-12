@@ -3,7 +3,7 @@ import { locations } from "../shared/brand";
 import { allDoctors, dateKey } from "../shared/data";
 import { Icon } from "../shared/ui";
 import { Button } from "../patient/components/ui";
-import { PageTitle } from "./AdminParts";
+import { PageTitle, PackagesOffNote } from "./AdminParts";
 import s from "./Admin.module.css";
 
 const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0);
@@ -122,6 +122,7 @@ export default function Overview({ config }) {
         </Card>
 
         <Card title="Package & vaccine requests" sub={`${requests.length} requests`}>
+          <PackagesOffNote config={config} />
           <Bars
             label="Package and vaccine requests by status"
             rows={[

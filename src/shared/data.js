@@ -201,7 +201,7 @@ const hoursAgo = (h) => new Date(Date.now() - h * 3600000).toISOString();
 export function initialState() {
   return {
     version: 1,
-    seedVersion: 3,
+    seedVersion: 5,
     activeMember: "self",
     location: "indiranagar",
     members: [
@@ -215,8 +215,26 @@ export function initialState() {
         phone: "9000000001",
         email: "aarav@example.com",
         mrn: "TP-10482",
-        allergies: "No known allergies",
         access: "Full access",
+        history: {
+          conditions: [
+            { name: "Vitamin D insufficiency", since: "2026", status: "Under treatment" },
+            { name: "Allergic contact dermatitis", since: "2026", status: "Resolved" },
+          ],
+          allergies: [{ name: "Dust mites", reaction: "Sneezing, watery eyes", severity: "Mild" }],
+          medications: [{ name: "Cholecalciferol 60,000 IU", dose: "Once a week", since: "Sep 2026" }],
+          surgeries: [{ name: "Appendectomy", year: "2012", place: "City Hospital, Pune" }],
+          vaccinations: [
+            { name: "Influenza", date: "Aug 2026" },
+            { name: "Tetanus booster", date: "Mar 2023" },
+            { name: "COVID-19 (2 doses)", date: "2021" },
+          ],
+          family: [
+            { relation: "Father", condition: "Hypertension" },
+            { relation: "Mother", condition: "Osteoarthritis, hypothyroidism" },
+          ],
+          lifestyle: "Non-smoker · Occasional alcohol · Walks 3 days a week · Vegetarian",
+        },
       },
       {
         id: "father",
@@ -227,8 +245,25 @@ export function initialState() {
         blood: "B+",
         phone: "9000000002",
         mrn: "TP-10483",
-        allergies: "Penicillin",
         access: "Full access",
+        history: {
+          conditions: [
+            { name: "Essential hypertension", since: "2019", status: "Controlled" },
+            { name: "Dyslipidaemia", since: "2024", status: "Under treatment" },
+          ],
+          allergies: [],
+          medications: [
+            { name: "Telmisartan 40 mg", dose: "Once a day, morning", since: "2019" },
+            { name: "Atorvastatin 10 mg", dose: "Once a day, night", since: "2024" },
+          ],
+          surgeries: [{ name: "Cataract surgery, left eye", year: "2022", place: "Tatva Practice, Indiranagar" }],
+          vaccinations: [
+            { name: "Influenza", date: "Aug 2026" },
+            { name: "Pneumococcal", date: "Jan 2024" },
+          ],
+          family: [{ relation: "Brother", condition: "Type 2 diabetes" }],
+          lifestyle: "Former smoker, quit in 2015 · No alcohol · Morning walk daily",
+        },
       },
       {
         id: "mother",
@@ -239,8 +274,19 @@ export function initialState() {
         blood: "O+",
         phone: "9000000003",
         mrn: "TP-10484",
-        allergies: "No known allergies",
         access: "Full access",
+        history: {
+          conditions: [
+            { name: "Osteoarthritis, right knee", since: "2026", status: "Under treatment" },
+            { name: "Hypothyroidism", since: "2018", status: "Controlled" },
+          ],
+          allergies: [{ name: "Penicillin", reaction: "Rash", severity: "Moderate" }],
+          medications: [{ name: "Levothyroxine 50 mcg", dose: "Once a day, empty stomach", since: "2018" }],
+          surgeries: [{ name: "Caesarean section", year: "1994", place: "City Hospital, Pune" }],
+          vaccinations: [{ name: "Influenza", date: "Aug 2026" }],
+          family: [{ relation: "Mother", condition: "Hypothyroidism" }],
+          lifestyle: "Non-smoker · No alcohol · Yoga twice a week",
+        },
       },
     ],
     appointments: [
@@ -346,17 +392,153 @@ export function initialState() {
         id: "r1",
         memberId: "self",
         title: "Complete blood count",
-        category: "Lab reports",
+        category: "Lab results",
         date: dateKey(-2),
         time: "10:42 AM",
         author: "Hospital laboratory",
         doctorId: "meera",
         format: "PDF",
         new: true,
-        values: [
-          ["Haemoglobin", "14.2", "g/dL"],
-          ["White blood cells", "7,200", "/µL"],
-          ["Platelets", "2,45,000", "/µL"],
+        params: [
+          {
+            id: "hb",
+            name: "Haemoglobin",
+            value: 14.2,
+            unit: "g/dL",
+            low: 13,
+            high: 17,
+            about:
+              "Haemoglobin is the protein in red blood cells that carries oxygen around the body.",
+            impact:
+              "Low haemoglobin can mean anaemia, which causes tiredness, breathlessness and pale skin. High levels can thicken the blood.",
+            action:
+              "Keep iron-rich foods such as leafy greens, lentils and dates in your diet, and repeat the test at your next check-up.",
+          },
+          {
+            id: "wbc",
+            name: "White blood cells",
+            value: 7200,
+            unit: "/µL",
+            low: 4000,
+            high: 11000,
+            about:
+              "White blood cells are the immune cells that fight infection.",
+            impact:
+              "A high count usually points to an infection or inflammation. A low count can leave you more open to infections.",
+            action:
+              "No action is needed while the count is in range. Mention any fever or recurring infections to your doctor.",
+          },
+          {
+            id: "plt",
+            name: "Platelets",
+            value: 160000,
+            unit: "/µL",
+            low: 150000,
+            high: 410000,
+            about:
+              "Platelets are the cell fragments that help blood clot after an injury.",
+            impact:
+              "A low platelet count can cause easy bruising, nosebleeds or gums that bleed. Very low counts need prompt attention.",
+            action:
+              "Your count is just above the lower limit. Repeat the test in 4 to 6 weeks and tell your doctor about any unusual bruising or bleeding.",
+          },
+          {
+            id: "rbc",
+            name: "Red blood cells",
+            value: 4.9,
+            unit: "million/µL",
+            low: 4.5,
+            high: 5.9,
+            about:
+              "Red blood cells carry oxygen from the lungs to the rest of the body.",
+            impact:
+              "A low count goes with anaemia. A high count can follow dehydration or lung and heart conditions.",
+            action:
+              "No action is needed. Stay hydrated and keep up a balanced diet.",
+          },
+          {
+            id: "mcv",
+            name: "Mean corpuscular volume (MCV)",
+            value: 88,
+            unit: "fL",
+            low: 80,
+            high: 100,
+            about:
+              "MCV is the average size of your red blood cells.",
+            impact:
+              "Small cells can point to iron deficiency. Large cells can point to a shortage of vitamin B12 or folate.",
+            action:
+              "No action is needed while the size is in range.",
+          },
+        ],
+      },
+      {
+        id: "r12",
+        memberId: "self",
+        title: "Diabetes screening",
+        category: "Lab results",
+        date: dateKey(-9),
+        time: "08:50 AM",
+        author: "Hospital laboratory",
+        doctorId: "meera",
+        format: "PDF",
+        params: [
+          {
+            id: "fbg",
+            name: "Glucose, fasting",
+            value: 112,
+            unit: "mg/dL",
+            low: 70,
+            high: 100,
+            about:
+              "Fasting glucose measures the level of sugar in the blood after an overnight fast.",
+            impact:
+              "A fasting glucose above the ideal range can be an early sign of prediabetes. Over time, high sugar levels strain the heart, kidneys, eyes and nerves.",
+            action:
+              "Consult your doctor to confirm the result and discuss diet, activity and a repeat test. Cut sugary drinks and refined carbohydrates, and aim for 30 minutes of walking a day.",
+          },
+          {
+            id: "hba1c",
+            name: "HbA1c",
+            value: 5.6,
+            unit: "%",
+            low: 4,
+            high: 5.6,
+            about:
+              "HbA1c shows your average blood sugar over the past 2 to 3 months.",
+            impact:
+              "Your HbA1c sits at the upper limit of the ideal range. Values above it fall in the prediabetes band, which raises the long-term risk of diabetes.",
+            action:
+              "Keep an eye on sugar intake, stay active and repeat the test in 3 months so your doctor can watch the trend.",
+          },
+          {
+            id: "eag",
+            name: "Estimated average glucose (eAG)",
+            value: 114,
+            unit: "mg/dL",
+            low: 68,
+            high: 114,
+            about:
+              "eAG converts your HbA1c into the average blood sugar reading you would see on a glucose meter.",
+            impact:
+              "It mirrors HbA1c, so it sits at the upper limit too. It helps you relate the lab result to day-to-day readings.",
+            action:
+              "No separate action. Follow the plan for your HbA1c and fasting glucose.",
+          },
+          {
+            id: "ppbg",
+            name: "Glucose, post-prandial",
+            value: 128,
+            unit: "mg/dL",
+            low: 70,
+            high: 140,
+            about:
+              "Post-prandial glucose is measured 2 hours after a meal and shows how your body handles sugar from food.",
+            impact:
+              "High readings after meals can point to insulin resistance even when fasting results look normal.",
+            action:
+              "No action is needed while the reading is in range. Pair meals with protein and fibre to keep spikes low.",
+          },
         ],
       },
       {
@@ -387,11 +569,155 @@ export function initialState() {
         id: "r3",
         memberId: "self",
         title: "Chest X-ray report",
-        category: "Scans & imaging",
+        category: "Medical records",
+        type: "Radiology",
         date: dateKey(-30),
         time: "04:20 PM",
         author: "Radiology department",
         format: "PDF",
+        note: "Chest X-ray, PA view. Both lung fields are clear. Heart size and mediastinum are normal. No pleural effusion. Bony thorax is normal. Impression: Normal chest radiograph.",
+        summary: {
+          headline: "A normal chest X-ray",
+          points: [
+            "Both lungs are clear, with no signs of infection, fluid or masses.",
+            "The heart is a normal size and the surrounding structures look normal.",
+            "The ribs and spine show no abnormality.",
+          ],
+          next: "No action is needed for this report. Keep it for reference if you need imaging again.",
+        },
+      },
+      {
+        id: "r14",
+        memberId: "self",
+        title: "Urine routine & microscopy",
+        category: "Medical records",
+        type: "Pathology",
+        date: dateKey(-16),
+        time: "09:35 AM",
+        author: "Hospital laboratory",
+        format: "PDF",
+        note: "Colour pale yellow. Appearance clear. pH 6.0. Specific gravity 1.015. Protein nil. Glucose nil. Ketones nil. Pus cells 1-2/hpf. RBCs nil. Epithelial cells occasional. Casts and crystals absent. Impression: Normal urine examination.",
+        summary: {
+          headline: "A normal urine test",
+          points: [
+            "No protein, sugar or ketones were found, which is reassuring for kidney and sugar health.",
+            "Cell counts are within normal limits, with no sign of infection.",
+            "No crystals or casts, so there is no indication of stones or kidney irritation.",
+          ],
+          next: "No follow-up is needed. Drink enough water through the day.",
+        },
+      },
+      {
+        id: "r15",
+        memberId: "father",
+        title: "ECG report",
+        category: "Medical records",
+        type: "Other",
+        date: dateKey(-45),
+        time: "10:15 AM",
+        author: "Cardiology department",
+        doctorId: "arjun",
+        format: "PDF",
+        note: "12-lead resting ECG. Rate 72/min, regular sinus rhythm. PR 160 ms, QRS 90 ms, QTc 410 ms. Normal axis. Voltage criteria for left ventricular hypertrophy not met. No ST-T changes. Impression: Normal sinus rhythm, no acute changes.",
+        summary: {
+          headline: "A normal heart rhythm",
+          points: [
+            "The heart is beating at a regular rate and rhythm.",
+            "Electrical timings are within normal limits.",
+            "There is no sign of strain from blood pressure or of a past heart attack.",
+          ],
+          next: "Continue your blood pressure treatment and repeat the ECG when Dr. Arjun Rao advises.",
+        },
+      },
+      {
+        id: "r16",
+        memberId: "mother",
+        title: "Right knee X-ray",
+        category: "Medical records",
+        type: "Radiology",
+        date: dateKey(-19),
+        time: "11:50 AM",
+        author: "Radiology department",
+        format: "PDF",
+        note: "Right knee, standing AP and lateral views. Mild narrowing of the medial joint space. Small marginal osteophytes at the medial tibial plateau. No fracture or loose body. Impression: Early degenerative changes (grade 2), right knee.",
+        summary: {
+          headline: "Early wear in the right knee",
+          points: [
+            "The gap on the inner side of the knee joint has narrowed slightly, a sign of early osteoarthritis.",
+            "Small bony spurs have formed at the joint edge.",
+            "There is no fracture and nothing loose inside the joint.",
+          ],
+          next: "Keep up the quadriceps exercises Dr. Rohan Menon advised and bring this X-ray to the follow-up visit.",
+        },
+      },
+      {
+        id: "r13",
+        memberId: "father",
+        title: "Lipid profile",
+        category: "Lab results",
+        date: dateKey(-12),
+        time: "07:40 AM",
+        author: "Hospital laboratory",
+        doctorId: "arjun",
+        format: "PDF",
+        params: [
+          {
+            id: "tc",
+            name: "Total cholesterol",
+            value: 218,
+            unit: "mg/dL",
+            low: null,
+            high: 200,
+            about:
+              "Total cholesterol adds up the fatty particles carried in your blood.",
+            impact:
+              "High cholesterol builds up in artery walls over time and raises the risk of heart attack and stroke.",
+            action:
+              "Continue the statin your cardiologist prescribed, limit fried and processed food, and repeat the lipid profile before your next visit.",
+          },
+          {
+            id: "ldl",
+            name: "LDL cholesterol",
+            value: 142,
+            unit: "mg/dL",
+            low: null,
+            high: 100,
+            about:
+              "LDL is the \"bad\" cholesterol that deposits in artery walls.",
+            impact:
+              "With blood pressure already being treated, a high LDL adds to the strain on the heart and arteries.",
+            action:
+              "Take your atorvastatin every night as prescribed. Swap ghee and butter for small amounts of mustard or olive oil, and walk 30 minutes a day.",
+          },
+          {
+            id: "hdl",
+            name: "HDL cholesterol",
+            value: 42,
+            unit: "mg/dL",
+            low: 40,
+            high: null,
+            about:
+              "HDL is the \"good\" cholesterol that carries fat away from the arteries.",
+            impact:
+              "HDL just above the lower limit gives less protection against heart disease.",
+            action:
+              "Regular brisk walking, nuts and fatty fish help raise HDL. Avoid smoking.",
+          },
+          {
+            id: "tg",
+            name: "Triglycerides",
+            value: 118,
+            unit: "mg/dL",
+            low: null,
+            high: 150,
+            about:
+              "Triglycerides are the fat your body stores from extra calories, sugar and alcohol.",
+            impact:
+              "High triglycerides go with heart disease and, when very high, inflammation of the pancreas.",
+            action:
+              "Your level is in range. Keep sweets and alcohol low to hold it there.",
+          },
+        ],
       },
       {
         id: "r4",
@@ -482,6 +808,19 @@ export function initialState() {
           tests: "X-ray right knee, standing AP and lateral",
           advice: "Quadriceps strengthening exercises. Avoid squatting and cross-legged sitting.",
           followUp: "After 2 weeks with the X-ray",
+          sketch: {
+            title: "Right knee, front view",
+            note: "Tenderness along the inner joint line. Mild swelling above the kneecap.",
+            paths: [
+              "M80 10 C 70 40, 70 60, 78 72 C 70 86, 70 110, 80 130",
+              "M120 10 C 130 40, 130 60, 122 72 C 130 86, 130 110, 120 130",
+              "M88 66 C 96 60, 104 60, 112 66 C 114 76, 112 84, 100 86 C 88 84, 86 76, 88 66",
+            ],
+            marks: [
+              { x: 84, y: 80, label: "Tender" },
+              { x: 100, y: 52, label: "Swelling" },
+            ],
+          },
         },
       },
       {
@@ -492,7 +831,79 @@ export function initialState() {
         date: dateKey(-21),
         time: "06:30 PM",
         author: "Inpatient care team",
+        doctorId: "rohan",
         format: "PDF",
+        discharge: {
+          admitted: dateKey(-24),
+          discharged: dateKey(-21),
+          ward: "Orthopaedics, Jayanagar",
+          diagnosis: "Acute flare of right knee osteoarthritis with joint effusion",
+          procedures: ["Knee joint aspiration", "Intra-articular steroid injection"],
+          course:
+            "Admitted with a painful, swollen right knee after a fall at home. Aspiration removed 30 ml of clear fluid; infection was ruled out. Pain settled with rest, ice and a steroid injection. Walking with support from day 2.",
+          medicines: [
+            ["Aceclofenac 100 mg", "1 tablet", "Twice a day, after food", "5 days"],
+            ["Pantoprazole 40 mg", "1 tablet", "Once a day, before breakfast", "5 days"],
+          ],
+          advice:
+            "Use the knee brace while walking for 2 weeks. Ice pack 15 minutes, three times a day. Avoid stairs and squatting.",
+          followUp: "Orthopaedics OPD with Dr. Rohan Menon after 2 weeks, or sooner if the swelling or fever returns.",
+        },
+      },
+      {
+        id: "r20",
+        memberId: "self",
+        title: "Medical fitness certificate",
+        category: "Certificates",
+        type: "Medical fitness",
+        date: dateKey(-13),
+        time: "11:40 AM",
+        author: "Dr. Meera Iyer",
+        doctorId: "meera",
+        format: "PDF",
+        certificate: {
+          purpose: "Fitness to resume work",
+          remarks:
+            "Examined today and found medically fit to resume regular office duties with no restrictions.",
+        },
+      },
+      {
+        id: "r21",
+        memberId: "self",
+        title: "Medical leave certificate",
+        category: "Certificates",
+        type: "Medical leave",
+        date: dateKey(-35),
+        time: "11:40 AM",
+        author: "Dr. Ananya Shah",
+        doctorId: "ananya",
+        format: "PDF",
+        certificate: {
+          from: dateKey(-35),
+          to: dateKey(-33),
+          purpose: "Leave of absence",
+          remarks:
+            "Under treatment for allergic contact dermatitis and advised rest for 3 days.",
+        },
+      },
+      {
+        id: "r22",
+        memberId: "mother",
+        title: "Medical leave certificate",
+        category: "Certificates",
+        type: "Medical leave",
+        date: dateKey(-21),
+        time: "06:40 PM",
+        author: "Dr. Rohan Menon",
+        doctorId: "rohan",
+        format: "PDF",
+        certificate: {
+          from: dateKey(-24),
+          to: dateKey(-7),
+          purpose: "Leave of absence",
+          remarks:
+            "Admitted for a right knee flare and advised rest with a knee brace for 2 weeks after discharge.",
+        },
       },
     ],
     bills: [

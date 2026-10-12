@@ -25,6 +25,7 @@ import {
   Empty,
   Sheet,
   Notice,
+  Meta,
   ErrorText,
   Row,
   BrandLogo,
@@ -68,9 +69,10 @@ export function More() {
           <h2 className={s.cardTitle}>
             <PatientName member={activeMember} />
           </h2>
-          <span className={s.metaText}>
-            {activeMember.relation} · {activeMember.mrn}
-          </span>
+          <Meta className={s.metaText}>
+            {activeMember.relation}
+            {activeMember.mrn}
+          </Meta>
           <span className={s.inlineLink}>View health profile</span>
         </span>
         <Icon

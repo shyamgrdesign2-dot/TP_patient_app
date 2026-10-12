@@ -340,11 +340,15 @@
   font-size: 16px;
   outline: none;
 }
+/* Overlaps the input's rounded right corners (the app rounds every input),
+   so the field and button read as one white surface. */
 .send {
+  position: relative;
   display: grid;
   place-items: center;
   align-self: stretch;
-  padding: 0 8px;
+  margin-left: -12px;
+  padding: 0 8px 0 20px;
   border: 0;
   border-radius: 0 15px 15px 0;
   background: #fff;

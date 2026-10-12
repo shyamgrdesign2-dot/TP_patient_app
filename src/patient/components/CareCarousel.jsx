@@ -4,7 +4,6 @@ import { useApp } from "../state/AppContext";
 import { selectCareUpdates } from "../services/careUpdates";
 import { Avatar, Button, Icon, AbhaLogo } from "./ui";
 import SpotlightCard from "./effects/SpotlightCard";
-import VisitType from "./VisitType";
 import v from "./VisitExperience.module.css";
 import shared from "../App.module.css";
 import s from "../Home.module.css";
@@ -200,7 +199,9 @@ function CareBanners({ slides }) {
             >
               {slide.detail && (
                 <div className={s.bannerSchedule}>
-                  <strong title={slide.detail}>{slide.detail}</strong>
+                  <strong title={[].concat(slide.detail).join(", ")}>
+                    {[].concat(slide.detail).join(" · ")}
+                  </strong>
                   {slide.meta && (
                     <span title={slide.meta}>
                       {["upcoming", "completed"].includes(slide.state) && (
@@ -238,7 +239,9 @@ function CareBanners({ slides }) {
                   )
                 }
               >
-                {slide.action.label}
+                <span className={s.bannerActionLabel}>
+                  {slide.action.label}
+                </span>
               </Button>
             </div>
           </SpotlightCard>

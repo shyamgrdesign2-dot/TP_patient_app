@@ -1,0 +1,364 @@
+/* Lab report: intelligent analysis, original document, concerning parameters. */
+
+.page {
+  gap: var(--tesseract-space-4);
+}
+.page > .metaText {
+  margin-top: calc(-1 * var(--tesseract-space-2));
+}
+.tabs [role="tablist"] {
+  width: 100%;
+}
+
+/* Summary ---------------------------------------------------------------- */
+/* One tap to the concerning parameters. The tint reads the verdict: a soft
+   red wash when something needs attention, green when all is well. */
+.summary {
+  --summary-ink: var(--tesseract-error-600);
+  --summary-wash: var(--tesseract-error-100);
+  --summary-soft: var(--tesseract-error-50);
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-3);
+  width: 100%;
+  padding: var(--tesseract-space-4);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-16);
+  text-align: left;
+  color: var(--tesseract-fg-primary);
+  background:
+    radial-gradient(
+      120% 140% at 100% 100%,
+      var(--summary-wash),
+      transparent 55%
+    ),
+    radial-gradient(90% 120% at 0% 0%, var(--summary-soft), transparent 60%),
+    var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+}
+.summary[data-tone="ok"] {
+  --summary-ink: var(--tesseract-success-600);
+  --summary-wash: var(--tesseract-success-100);
+  --summary-soft: var(--tesseract-success-50);
+}
+.summary strong {
+  display: block;
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-bold);
+  color: var(--tesseract-fg-heading);
+}
+.summary small {
+  display: block;
+  margin-top: var(--tesseract-space-1);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.summaryIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tesseract-size-48);
+  height: var(--tesseract-size-48);
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--summary-wash);
+  color: var(--summary-ink);
+}
+.summaryArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tesseract-size-36);
+  height: var(--tesseract-size-36);
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--summary-ink);
+  color: var(--tesseract-slate-0);
+}
+.summary:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: 2px;
+}
+
+/* Parameter cards -------------------------------------------------------- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.param {
+  --param-ink: var(--tesseract-success-700);
+  --param-wash: var(--tesseract-success-50);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-4);
+  border-radius: var(--tesseract-radius-16);
+  background: var(--tesseract-bg-surface);
+  border: 1px solid var(--tesseract-border-soft);
+}
+.param[data-status="borderline"] {
+  --param-ink: var(--tesseract-warning-700);
+  --param-wash: var(--tesseract-warning-50);
+}
+.param[data-status="out"] {
+  --param-ink: var(--tesseract-error-700);
+  --param-wash: var(--tesseract-error-50);
+}
+.paramHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--tesseract-space-3);
+}
+.paramHead h3 {
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+/* "AI →" pill: a dark label and a brand-coloured arrow. */
+.aiButton {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: var(--tesseract-size-32);
+  padding: 0 var(--tesseract-space-1) 0 var(--tesseract-space-2-5);
+  gap: var(--tesseract-space-1-5);
+  border: 0;
+  border-radius: var(--tesseract-radius-full, 999px);
+  background: var(--tesseract-slate-900);
+  color: var(--tesseract-slate-0);
+  font-size: var(--tesseract-text-caption);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: 0.02em;
+}
+.aiButton > [data-tp-icon] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tesseract-size-24);
+  height: var(--tesseract-size-24);
+  border-radius: 50%;
+  background: var(--tesseract-blue-500);
+}
+.aiButton:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: 2px;
+}
+.paramBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--tesseract-space-4);
+  align-items: center;
+}
+.value {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--tesseract-space-0-5);
+  padding: var(--tesseract-space-3) var(--tesseract-space-3-5);
+  border-radius: var(--tesseract-radius-12);
+  background: var(--param-wash);
+  color: var(--param-ink);
+}
+.value strong {
+  font-size: var(--tesseract-text-h4);
+  line-height: var(--tesseract-text-h4-lh);
+  font-weight: var(--tesseract-weight-bold);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.value small {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.value small b {
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-primary);
+}
+
+/* Range bar: red | green | red, marker above where the value falls. */
+.range {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-1);
+}
+.rangeLabel {
+  text-align: center;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.bar {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 4px;
+  margin-top: var(--tesseract-space-3);
+}
+.bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--tesseract-error-200);
+}
+.bar i[data-segment="ideal"] {
+  flex: 2;
+  background: var(--tesseract-success-500);
+}
+.bar i[data-segment="low"],
+.bar i[data-segment="high"] {
+  flex: 1;
+}
+.bar i[data-open] {
+  background: var(--tesseract-success-200);
+}
+.marker {
+  position: absolute;
+  top: -9px;
+  width: 0;
+  height: 0;
+  translate: -50% 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid var(--param-ink);
+}
+.bounds {
+  position: relative;
+  height: var(--tesseract-text-caption-lh);
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.bounds span {
+  position: absolute;
+  top: 0;
+  translate: -50% 0;
+}
+.bounds span:first-child {
+  left: 25%;
+}
+.bounds span:last-child {
+  left: 75%;
+}
+.status {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  font-weight: var(--tesseract-weight-medium);
+  color: var(--param-ink);
+}
+.subhead {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+  margin-bottom: calc(-1 * var(--tesseract-space-2));
+}
+
+/* Original document ------------------------------------------------------ */
+.original {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  margin-inline: calc(-1 * var(--tesseract-space-2));
+  padding: var(--tesseract-space-3);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-slate-100);
+}
+.originalBar {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  font-size: var(--tesseract-text-body-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--tesseract-fg-secondary);
+}
+
+/* Concerning parameters -------------------------------------------------- */
+.aiNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tesseract-space-3);
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.aiMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tesseract-size-40);
+  height: var(--tesseract-size-40);
+  flex-shrink: 0;
+  border-radius: var(--tesseract-radius-10);
+  background: linear-gradient(
+    135deg,
+    var(--tesseract-blue-500),
+    var(--tesseract-violet-500, var(--tesseract-blue-700))
+  );
+  color: var(--tesseract-slate-0);
+  font-size: var(--tesseract-text-body-sm);
+  font-weight: var(--tesseract-weight-bold);
+  letter-spacing: 0.04em;
+}
+.concernList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.concern {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-4);
+  border-radius: var(--tesseract-radius-16);
+  background: var(--tesseract-bg-page-subtle);
+  border: 1px solid var(--tesseract-border-soft);
+}
+.concern h3 {
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.concern h4 {
+  margin-top: var(--tesseract-space-2);
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.concern p {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.concernValue {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2-5);
+}
+.concernValue strong {
+  font-size: var(--tesseract-text-h4);
+  line-height: var(--tesseract-text-h4-lh);
+  font-weight: var(--tesseract-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--tesseract-fg-heading);
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2-5);
+  margin-top: var(--tesseract-space-4);
+}

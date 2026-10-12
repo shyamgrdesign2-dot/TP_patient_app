@@ -6,12 +6,20 @@ import { dateKey } from "../../shared/data";
 import {
   Button,
   Icon,
+  Meta,
   BrandLogo,
   Field,
   ChoiceGroup,
   ErrorText,
   useAction,
 } from "../components/ui";
+import {
+  BirthField,
+  RequiredLabel,
+  birthValue,
+  resolveBirth,
+} from "../components/MemberForm";
+import { GENDERS } from "../../shared/age";
 import s from "../Auth.module.css";
 const Waves = lazy(() =>
   import("../components/effects/GradientWaves").then((module) => ({
@@ -81,10 +89,10 @@ const slides = [
     body: "Switch between family profiles and stay on top of the care that matters to you.",
   },
   {
-    key: "bills",
-    tag: "THE DETAILS, TAKEN CARE OF",
-    lines: ["Clear bills.", "One less worry."],
-    body: "See new hospital bills, review the details and find your receipts in one place.",
+    key: "abha",
+    tag: "ONE HEALTH ID, EVERYTHING LINKED",
+    lines: ["Link your ABHA.", "Carry your history."],
+    body: "Create or link your ABHA to bring records from other hospitals and labs into one place.",
   },
 ];
 function StoryHero({ kind }) {
@@ -105,7 +113,10 @@ function StoryHero({ kind }) {
               </div>
             </div>
             <div className={s.miniFooter}>
-              <span>Tomorrow · 10:30 AM</span>
+              <Meta>
+                Tomorrow
+                10:30 AM
+              </Meta>
               <Icon name="tick-circle" bulk />
             </div>
           </div>
@@ -167,28 +178,31 @@ function StoryHero({ kind }) {
           </span>
         </>
       )}
-      {kind === "bills" && (
+      {kind === "abha" && (
         <>
-          <div className={`${s.miniCard} ${s.billPreview}`}>
+          <div className={`${s.miniCard} ${s.abhaPreview}`}>
             <span className={s.miniEyebrow}>
-              <Icon name="bill" bulk /> YOUR HOSPITAL BILLS
+              <img src="/brand/abha.svg" alt="" width="22" height="22" />
+              AYUSHMAN BHARAT HEALTH ACCOUNT
             </span>
-            <strong>Everything adds up.</strong>
-            <div className={s.receiptRow}>
-              <span>Consultation</span>
-              <span>₹700</span>
-            </div>
-            <div className={s.receiptRow}>
-              <span>Payment status</span>
-              <b>Paid</b>
+            <strong>yourname@abdm</strong>
+            <small>91-XXXX-XXXX-1234</small>
+            <div className={s.abhaSources}>
+              {["Hospital", "Lab", "Clinic"].map((source) => (
+                <span key={source}>{source}</span>
+              ))}
             </div>
             <div className={s.miniFooter}>
-              <span>Your receipt is ready</span>
-              <Icon name="document-text" bulk />
+              <span>Records from everywhere you&apos;ve been</span>
+              <Icon name="shield-tick" bulk />
             </div>
           </div>
           <span className={s.floatingPill}>
-            <Icon name="tick-circle" bulk size={18} /> All in one place
+            <Icon name="tick-circle" bulk size={18} /> ABHA linked
+          </span>
+          <span className={s.floatingPillAlt}>
+            <Icon name="rotate-right" family="arrow" size={16} /> 3 records
+            synced
           </span>
         </>
       )}
@@ -307,7 +321,7 @@ export function Login() {
     [verified, setVerified] = useState(false),
     [setup, setSetup] = useState(false),
     [name, setName] = useState(""),
-    [dob, setDob] = useState(""),
+    [birth, setBirth] = useState(() => birthValue()),
     [gender, setGender] = useState(""),
     [alternatives, setAlternatives] = useState(false);
   const { busy, error, run } = useAction();
@@ -333,11 +347,13 @@ export function Login() {
     event.preventDefault();
     run(async () => {
       if (setup) {
-        if (!name.trim() || !dob || dob > dateKey())
-          throw new Error("Enter your name and a valid date of birth.");
-        if (!["Male", "Female", "Other"].includes(gender))
-          throw new Error("Please select gender");
-        signIn(phone, { name, dob, gender });
+        const born = resolveBirth(birth);
+        if (!name.trim() || !born.dob || born.dob > dateKey())
+          throw new Error(
+            "Enter your name and a valid date of birth or age.",
+          );
+        if (!GENDERS.includes(gender)) throw new Error("Please select gender");
+        signIn(phone, { name, gender, ...born });
         navigate("/", { replace: true });
         return;
       }
@@ -403,18 +419,11 @@ export function Login() {
                 onChange={(e) => setName(e.target.value)}
                 required
               />
-              <Field
-                label="Date of birth"
-                type="date"
-                autoComplete="bday"
-                max={dateKey()}
-                value={dob}
-                onChange={(e) => setDob(e.target.value)}
-                required
-              />
+              <BirthField value={birth} onChange={setBirth} />
               <ChoiceGroup
-                label="Gender"
-                options={["Male", "Female", "Other"]}
+                label={<RequiredLabel>Gender</RequiredLabel>}
+                ariaLabel="Gender"
+                options={GENDERS}
                 value={gender}
                 onChange={setGender}
               />
@@ -437,7 +446,6 @@ export function Login() {
             </div>
           ) : (
             <>
-              <span className={s.kicker}>YOUR CARE, CONNECTED</span>
               <h1>
                 {sent ? (
                   "Enter the code"

@@ -1,7 +1,9 @@
 import { createContext, useContext, useRef, useState, useEffect } from "react";
+import { normalizeRecord } from "../services/records.js";
 import { clearFiles } from "../services/files";
 import { initialState } from "../../shared/data";
 import { updateState } from "./model";
+import { profileProblem } from "../../shared/age";
 import {
   defaultBrand,
   validBrand,
@@ -69,7 +71,7 @@ export function AppProvider({ children }) {
     // Runs once per save (seedVersion), so items the patient later removes
     // don't come back.
     const seed = initialState();
-    for (const key of (saved.seedVersion || 0) < 3
+    for (const key of (saved.seedVersion || 0) < 5
       ? ["appointments", "records", "bills"]
       : []) {
       const have = new Map((saved[key] || []).map((x) => [x.id, x]));
@@ -79,7 +81,18 @@ export function AppProvider({ children }) {
           const s = seed[key].find((y) => y.id === x.id);
           if (!s) return x;
           const { note: _note, ...rest } = x;
-          return { ...(s.note ? x : rest), ...pick(s, ["rx", "appointmentId", "doctorId"]) };
+          return { ...(s.note ? x : rest), ...pick(s, [
+            "rx",
+            "appointmentId",
+            "doctorId",
+            "params",
+            "category",
+            "type",
+            "summary",
+            "discharge",
+            "certificate",
+            "note",
+          ]) };
         }),
         ...fresh,
       ];
@@ -91,7 +104,14 @@ export function AppProvider({ children }) {
       ...(saved.packageRequests || []),
       ...seed.packageRequests.filter((r) => !have.has(r.id)),
     ];
-    saved.seedVersion = 3;
+    // Medical history is kept by the hospital against each member.
+    saved.members = (saved.members || []).map((m) => {
+      const s = seed.members.find((x) => x.id === m.id);
+      return s?.history && !m.history ? { ...m, history: s.history } : m;
+    });
+    // Records saved under the older document categories move to their tab.
+    saved.records = (saved.records || []).map(normalizeRecord);
+    saved.seedVersion = 5;
     return saved;
   });
   const stateRef = useRef(state);
@@ -205,8 +225,11 @@ export function AppProvider({ children }) {
         accounts[ownerPhone(stateRef.current)] = stateRef.current;
       let next = findAccount(phone);
       if (!next && profile) {
-        if (!["Male", "Female", "Other"].includes(profile.gender))
-          throw new Error("Please select gender");
+        const problem = profileProblem(
+          { ...profile, phone },
+          { relation: false },
+        );
+        if (problem) throw new Error(problem);
         next = initialState();
         for (const key of [
           "appointments",
@@ -225,13 +248,13 @@ export function AppProvider({ children }) {
             id: "self",
             name: profile.name.trim(),
             dob: profile.dob,
+            ...(profile.dobFromAge ? { dobFromAge: true } : {}),
             relation: "Self",
             gender: profile.gender,
             blood: "",
             phone,
             email: "",
             mrn: "",
-            allergies: "",
             access: "Full access",
           },
         ];

@@ -281,23 +281,44 @@
   height: 100%;
   object-fit: cover;
 }
-.billPreview {
+.abhaPreview {
   transform: rotate(3deg);
+  background: linear-gradient(
+    150deg,
+    white,
+    var(--tesseract-success-50) 55%,
+    var(--tesseract-success-100)
+  );
+  border-color: color-mix(in srgb, var(--tesseract-success-200) 70%, white);
 }
-.billPreview > strong {
-  margin: 18px 0 14px;
-}
-.receiptRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-  font-size: 11px;
-  color: var(--tesseract-slate-600);
-}
-.receiptRow b {
+.abhaPreview .miniEyebrow {
   color: var(--tesseract-success-800);
+  letter-spacing: 0.06em;
+}
+.abhaPreview > strong {
+  margin-top: 18px;
+  font-size: 17px;
+}
+.abhaPreview > small {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.abhaPreview .miniFooter {
+  border-top-color: var(--tesseract-success-200);
+}
+.abhaSources {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+}
+.abhaSources span {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 78%, transparent);
+  border: 1px solid var(--tesseract-success-200);
+  font-size: 10px;
   font-weight: 600;
+  color: var(--tesseract-success-800);
 }
 .storyCopy {
   padding: 15px 0 26px;

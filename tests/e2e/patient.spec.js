@@ -2,6 +2,28 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { fileURLToPath } from "node:url";
 
+// Health packages & vaccines are off until the hospital switches them on.
+const enablePackages = (page) =>
+  page.addInitScript(() =>
+    localStorage.setItem(
+      "tatva-admin-config",
+      JSON.stringify({ configVersion: 2, features: { packages: true } }),
+    ),
+  );
+// Booking opens on a chooser the first time: assistant or manual.
+const bookManually = (page) =>
+  page.getByRole("button", { name: /Book manually/ }).click();
+// Fill the family form's required fields (date of birth mode).
+async function fillMember(scope, page, { name, relation, dob, gender, phone }) {
+  await scope.getByLabel("Full name", { exact: true }).fill(name);
+  await scope.getByRole("button", { name: "Relationship" }).click();
+  await page.getByRole("option", { name: relation, exact: true }).click();
+  await scope.getByLabel("Date of birth", { exact: true }).fill(dob);
+  await scope.getByRole("button", { name: gender, exact: true }).click();
+  await scope.getByLabel("Mobile number", { exact: true }).fill(phone);
+  await scope.getByRole("checkbox").check();
+}
+
 test("home uses a care overview and switches family context", async ({
   page,
 }) => {
@@ -50,6 +72,7 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
     .getByRole("button", { name: /Book a visit/ })
     .first()
     .click();
+  await bookManually(page);
   await page.getByRole("button", { name: "09:00 AM", exact: true }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("radio", { name: /^Rajesh .*\(Father\)/ }).click();
@@ -61,9 +84,11 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
     .getByRole("button", { name: "Confirm appointment", exact: true })
     .click();
   await expect(
-    page.getByText("Your appointment is confirmed.", { exact: true }),
+    page.getByRole("heading", { name: "Your appointment is confirmed" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "View my appointments" }).click();
+  await expect(page).toHaveURL(/\/appointments\/confirmed\/TP-/);
+  await page.getByRole("button", { name: "Go back" }).click();
+  await expect(page).toHaveURL(/\/appointments$/);
   await expect(
     page.getByRole("button", { name: /For Rajesh Sharma/ }),
   ).toBeVisible();
@@ -293,18 +318,135 @@ test("OTP rejects invalid code; saved PIN signs back in", async ({ page }) => {
 
 test("create a family profile with explicit permission", async ({ page }) => {
   await page.goto("/family?add=1");
-  await page.getByLabel("Full name", { exact: true }).fill("Neha Sharma");
-  await page.getByRole("button", { name: "Sibling", exact: true }).click();
-  await page.getByLabel("Date of birth", { exact: true }).fill("1998-02-12");
-  await page.getByLabel("Mobile number", { exact: true }).fill("9000000004");
-  await page.getByRole("checkbox").check();
-  await page
+  const dialog = page.getByRole("dialog");
+  await fillMember(dialog, page, {
+    name: "Neha Sharma",
+    relation: "Sister",
+    dob: "1998-02-12",
+    gender: "Female",
+    phone: "9000000004",
+  });
+  await dialog
     .getByRole("button", { name: "Add family member", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "Neha Sharma" }),
   ).toBeVisible();
+});
+
+test("family form takes an age or a custom relationship, requires the essentials and has no allergies", async ({
+  page,
+}) => {
+  await page.goto("/family?add=1");
+  const dialog = page.getByRole("dialog");
+  const save = dialog.getByRole("button", {
+    name: "Add family member",
+    exact: true,
+  });
+  const error = dialog.getByRole("alert");
+  // Gone: allergies, the demo-consent notice and "Prefer not to say".
+  await expect(dialog.getByLabel(/allerg/i)).toHaveCount(0);
+  await expect(dialog).not.toContainText(/allerg|demo consent/i);
+  await expect(
+    dialog.getByRole("group", { name: "Gender" }).getByRole("button"),
+  ).toHaveText(["Male", "Female", "Other"]);
+  // Every required field is checked, in order.
+  await save.click();
+  await expect(error).toContainText("Enter the full name");
+  await dialog.getByLabel("Full name", { exact: true }).fill("Kabir Sharma");
+  await save.click();
+  await expect(error).toContainText("Select the relationship");
+  await dialog.getByRole("button", { name: "Relationship" }).click();
+  await expect(page.getByRole("option")).toHaveText([
+    "Father",
+    "Mother",
+    "Spouse",
+    "Son",
+    "Daughter",
+    "Brother",
+    "Sister",
+    "Grandfather",
+    "Grandmother",
+    "Other",
+  ]);
+  await page.getByRole("option", { name: "Other", exact: true }).click();
+  await save.click();
+  await expect(error).toContainText("Enter the relationship");
+  await dialog.getByLabel("Relationship (other)").fill("Nephew");
+  await save.click();
+  await expect(error).toContainText("date of birth or an age");
+  // Age instead of a date of birth, with months for an infant.
+  await dialog.getByRole("radio", { name: "Age", exact: true }).click();
+  await expect(dialog.getByLabel("Date of birth", { exact: true })).toHaveCount(
+    0,
+  );
+  await dialog.getByLabel("Age in years").fill("0");
+  await dialog.getByLabel("Age in months").fill("7");
+  await save.click();
+  await expect(error).toContainText("Select a gender");
+  await dialog.getByRole("button", { name: "Male", exact: true }).click();
+  await save.click();
+  await expect(error).toContainText("valid 10-digit mobile number");
+  await dialog.getByLabel("Mobile number", { exact: true }).fill("9000000009");
+  await save.click();
+  await expect(error).toContainText("permission");
+  await dialog.getByRole("checkbox").check();
+  await save.click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const card = page.locator("article", { hasText: "Kabir Sharma" });
+  await expect(card).toContainText("Nephew");
+  await expect(card).toContainText("7 months");
+  await expect(card).not.toContainText("0 yrs");
+  // The age and the custom relationship come back when the profile is edited.
+  await page
+    .getByRole("button", { name: "Edit Kabir Sharma’s profile" })
+    .click();
+  await expect(dialog.getByLabel("Age in months")).toHaveValue("7");
+  await expect(dialog.getByLabel("Relationship (other)")).toHaveValue("Nephew");
+  // A parent can't be saved as a baby (the old "Father, 0 yrs").
+  await dialog.getByRole("button", { name: "Relationship" }).click();
+  await page.getByRole("option", { name: "Father", exact: true }).click();
+  await dialog.getByRole("button", { name: "Save changes" }).click();
+  await expect(error).toContainText("too young for a father");
+});
+
+test("patient switcher adds a family member and selects them, with a link to manage family", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await page.goto("/appointments");
+  await page.getByRole("button", { name: /Switch patient/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(
+    dialog.getByRole("button", { name: "Manage family" }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Add a family member" }).click();
+  await fillMember(dialog, page, {
+    name: "Isha Sharma",
+    relation: "Daughter",
+    dob: "2019-03-04",
+    gender: "Female",
+    phone: "9000000010",
+  });
+  await dialog
+    .getByRole("button", { name: "Add family member", exact: true })
+    .click();
+  // Back on the list, with the new profile selected.
+  await expect(dialog).toContainText("Who are we caring for?");
+  await expect(
+    dialog.getByRole("button", { name: /Isha Sharma/ }),
+  ).toHaveAttribute("data-selected", "true");
+  const fits = await dialog.evaluate(
+    (el) => el.scrollWidth <= el.clientWidth + 1,
+  );
+  expect(fits).toBe(true);
+  await dialog.getByRole("button", { name: "Manage family" }).click();
+  await expect(page).toHaveURL(/\/family$/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.locator("article", { hasText: "Isha Sharma" }),
+  ).toContainText("Active");
 });
 
 test("all screens render without crashes or horizontal overflow", async ({
@@ -844,6 +986,7 @@ test("symptom collector reviews and edits a summary then hands it to booking", a
   await page.getByRole("button", { name: "Choose a doctor" }).click();
   await page.getByRole("button", { name: /Dr. Meera Iyer/ }).click();
   expect(page.url()).not.toContain("Headache");
+  await bookManually(page);
   await page.getByRole("button", { name: "09:00 AM", exact: true }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByLabel("Reason for your visit (optional)")).toHaveCount(
@@ -905,6 +1048,8 @@ test("three Home promotions include empty reports and ABHA linking", async ({
     state.appointments = [];
     state.records = [];
     state.bills = [];
+    // Mark the save as current so the app does not re-seed hospital data.
+    state.seedVersion = 5;
     localStorage.setItem("tatva-patient-demo-v1", JSON.stringify(state));
   });
   await page.reload();
@@ -1292,27 +1437,40 @@ test("booking adds and selects a family member without losing the chosen slot", 
 }) => {
   await page.goto("/book/meera");
   await expect(page.getByText("Book with voice")).toHaveCount(0);
+  await bookManually(page);
   await page.getByRole("button", { name: "09:00 AM", exact: true }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Add a new family member" }).click();
   const dialog = page.getByRole("dialog");
-  await dialog.getByLabel("Full name", { exact: true }).fill("Nisha Sharma");
-  await dialog.getByLabel("Date of birth", { exact: true }).fill("1990-06-15");
-  await dialog.getByLabel("Mobile number", { exact: true }).fill("9876543210");
-  await dialog.getByRole("checkbox").check();
+  await fillMember(dialog, page, {
+    name: "Nisha Sharma",
+    relation: "Sister",
+    dob: "1990-06-15",
+    gender: "Female",
+    phone: "9876543210",
+  });
   await dialog
     .getByRole("button", { name: "Add family member", exact: true })
     .click();
   await expect(dialog).toHaveCount(0);
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByText("Nisha Sharma", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Nisha Sharma", { exact: true }).first(),
+  ).toBeVisible();
   await expect(page.getByText("09:00 AM IST", { exact: true })).toBeVisible();
+  // The review card is the whole visit: patient, when, type, clinic, fee.
+  const review = page.getByRole("region", { name: "Appointment summary" });
+  await expect(review.getByTestId("summary-patient")).toContainText(
+    /Nisha Sharma.*Sister.*36 yrs.*Female/,
+  );
+  await expect(review).toContainText(/Date and time.*09:00 AM/);
+  await expect(review).toContainText(/Visit type\s*In clinic/);
+  await expect(review).toContainText(/Hospital\s*Indiranagar/);
+  await expect(review).toContainText(/Consultation fee.*Pay at hospital.*₹700/);
   await page
     .getByRole("button", { name: "Confirm appointment", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Share symptoms before your visit" })
-    .click();
+  await page.getByRole("button", { name: "Add symptoms" }).click();
   await expect(
     page.getByRole("heading", { name: "Tell us how you’re feeling." }),
   ).toBeVisible();
@@ -1371,9 +1529,66 @@ test("today's visit banner keeps appointment context and symptoms without redund
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
+test("health packages and vaccines stay hidden until the hospital switches them on", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator('[class*="quickIcon"]')).toHaveCount(3);
+  await expect(
+    page.getByRole("button", { name: "Packages", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel("Health packages")).toHaveCount(0);
+  await page.goto("/more");
+  await expect(
+    page.getByRole("button", { name: "Manage family" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Health packages & vaccines" }),
+  ).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "My bookings" })).toHaveCount(
+    0,
+  );
+  for (const route of ["/packages", "/packages/essential", "/packages?tab=bookings"]) {
+    await page.goto(route);
+    await expect(page.locator("main")).toContainText(
+      "hasn’t opened health packages and vaccines",
+    );
+  }
+  // A config saved while packages were on by default is switched off once,
+  // and stays on after the hospital turns it back on in the console.
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "tatva-admin-config",
+      JSON.stringify({ features: { packages: true } }),
+    ),
+  );
+  await page.goto("/");
+  await expect(page.locator('[class*="quickIcon"]')).toHaveCount(3);
+  await page.goto("/admin/packages");
+  await page
+    .getByRole("button", { name: "Continue with Tatva Practice" })
+    .click();
+  await expect(page.locator("main")).toContainText(
+    "currently off in the patient app",
+  );
+  await page.getByRole("link", { name: "Turn on in Features" }).click();
+  await expect(page).toHaveURL(/\/admin\/app#features$/);
+  await page
+    .getByRole("switch", { name: /Health packages|Packages/ })
+    .click();
+  await page.getByRole("button", { name: /^Save/ }).click();
+  await page.goto("/");
+  await expect(page.locator('[class*="quickIcon"]')).toHaveCount(4);
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Packages", exact: true }),
+  ).toBeVisible();
+});
+
 test("book a health package, see it under My bookings and cancel it", async ({
   page,
 }) => {
+  await enablePackages(page);
   await page.goto("/packages");
   await expect(
     page.getByRole("heading", { name: "Health packages & vaccines" }),
@@ -1416,6 +1631,7 @@ test("book a health package, see it under My bookings and cancel it", async ({
 test("home shows four quick actions and the past visit card from My visits", async ({
   page,
 }) => {
+  await enablePackages(page);
   await page.goto("/");
   await expect(page.locator('[class*="quickIcon"]')).toHaveCount(4);
   await expect(page.getByRole("button", { name: "Packages", exact: true })).toBeVisible();
@@ -1535,4 +1751,298 @@ test("admin uploads a PNG logo, crops a mark and a horizontal logo, and the pati
   await expect(
     admin.locator('[class*="pvBar"] [data-brand-logo="mark"]').first(),
   ).toContainText("Tatva Care Hospital");
+});
+
+test("My visits offers Book in the header and a floating action clear of the nav", async ({
+  page,
+}) => {
+  await page.goto("/appointments");
+  const header = page.getByRole("button", { name: "Book a new appointment" });
+  const floating = page.getByRole("button", {
+    name: "Book appointment",
+    exact: true,
+  });
+  await expect(header).toBeVisible();
+  await expect(header).toHaveText("Book");
+  await expect(floating).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Main navigation" });
+  // Measured at rest, after the one-time entry animation.
+  await floating.evaluate((el) =>
+    Promise.all(el.parentElement.getAnimations().map((a) => a.finished)),
+  );
+  const box = await floating.boundingBox();
+  expect(box.y + box.height).toBeLessThanOrEqual(
+    (await nav.boundingBox()).y - 12,
+  );
+  expect((await header.boundingBox()).y).toBeLessThan(64);
+  await header.click();
+  await expect(page).toHaveURL(/\/doctors$/);
+  // No upcoming visits: the empty state is the only call to action.
+  await page.goto("/appointments");
+  await page.getByRole("button", { name: /Switch patient/ }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /Sunita Sharma/ })
+    .click();
+  await expect(header).toHaveCount(0);
+  await expect(floating).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Find a doctor" }),
+  ).toBeVisible();
+});
+
+test("booking assistant books a visit end to end from free text and quick replies", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/doctors");
+  await page
+    .getByRole("button", { name: /Book a visit/ })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "How would you like to book?" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Book with assistant/ }).click();
+  await expect(page).toHaveURL(/\/book\/meera\?mode=assistant$/);
+  const feed = page.locator('[aria-live="polite"]');
+  // Greets, confirms the doctor and asks who the visit is for.
+  await expect(feed).toContainText("book a visit with Dr. Meera Iyer");
+  await expect(feed).toContainText("Who is this visit for?");
+  const replies = page.getByRole("group", { name: "Quick replies" });
+  await expect(replies.getByRole("button")).toHaveText([
+    "Myself (Aarav)",
+    "Rajesh (Father)",
+    "Sunita (Mother)",
+    "Add family member",
+  ]);
+  const say = async (text) => {
+    await page.getByLabel("Type your message").fill(text);
+    await page.getByRole("button", { name: "Send" }).click();
+  };
+  // Unknown input is asked again, politely.
+  await say("purple elephants");
+  await expect(feed).toContainText("Sorry, I didn’t catch who this is for.");
+  await say("for my father");
+  await expect(feed).toContainText("in clinic or on a video consultation?");
+  await replies.getByRole("button", { name: "Video consultation" }).click();
+  await expect(feed).toContainText("Which day works for you?");
+  await expect(replies.getByRole("button").first()).toHaveText("Tomorrow");
+  await say("tomorrow evening");
+  await expect(feed).toContainText("open evening times tomorrow");
+  await expect(replies.getByRole("button")).toHaveText([
+    "05:30 PM",
+    "06:00 PM",
+    "06:30 PM",
+  ]);
+  await replies.getByRole("button", { name: "06:00 PM" }).click();
+  const summary = page.getByRole("region", { name: "Appointment summary" });
+  await expect(summary).toContainText("Dr. Meera Iyer");
+  await expect(summary.getByTestId("summary-patient")).toContainText(
+    /Rajesh Sharma.*Father.*yrs.*Male/,
+  );
+  await expect(summary).toContainText("06:00 PM");
+  await expect(summary).toContainText("Video consultation");
+  await expect(summary).toContainText("₹600");
+  // Change one thing from the summary, then confirm.
+  await page.getByRole("button", { name: "Change something" }).click();
+  await replies.getByRole("button", { name: "Visit type" }).click();
+  await say("actually in person");
+  await expect(summary).toContainText("In clinic");
+  await expect(summary).toContainText("₹700");
+  await page.getByRole("button", { name: "Confirm appointment" }).click();
+  // Same booking, same confirmation screen as the manual flow.
+  await expect(page).toHaveURL(/\/appointments\/confirmed\/TP-/);
+  await expect(
+    page.getByRole("heading", { name: "Your appointment is confirmed" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Appointment summary" }),
+  ).toContainText(/Rajesh Sharma.*06:00 PM.*In clinic.*Indiranagar/s);
+  const visits = await page.evaluate(
+    () => JSON.parse(localStorage.getItem("tatva-patient-demo-v1")).appointments,
+  );
+  expect(visits[0]).toMatchObject({
+    doctorId: "meera",
+    memberId: "father",
+    time: "06:00 PM",
+    type: "In-person",
+    status: "Confirmed",
+    source: "Patient",
+  });
+  // The choice is remembered for the session, and manual is one tap away
+  // with the answers given so far.
+  await page.goto("/book/arjun");
+  await expect(page).toHaveURL(/\/book\/arjun\?mode=assistant$/);
+  await page
+    .getByRole("group", { name: "Quick replies" })
+    .getByRole("button", { name: "Sunita (Mother)" })
+    .click();
+  await page.getByRole("button", { name: "Switch to manual" }).click();
+  await expect(page).toHaveURL(/\/book\/arjun\?mode=manual$/);
+  await page.getByRole("button", { name: "09:00 AM", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("radio", { name: /^Sunita/ })).toBeChecked();
+});
+
+test("booking assistant voice mode plays a sample patient and still waits for confirmation", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/book/meera?mode=assistant");
+  await expect(page.locator('[aria-live="polite"]')).toContainText(
+    "Who is this visit for?",
+  );
+  await page.getByRole("button", { name: "Speak instead" }).click();
+  const summary = page.getByRole("region", { name: "Appointment summary" });
+  await expect(summary).toContainText("Aarav Sharma");
+  await expect(summary).toContainText("In clinic");
+  await expect(page).toHaveURL(/mode=assistant$/);
+  await expect(
+    page.getByRole("button", { name: "Confirm appointment" }),
+  ).toBeVisible();
+});
+
+test("confirmation screen has no ID, a full card, two actions and survives symptoms, back and refresh", async ({
+  page,
+}) => {
+  await page.goto("/book/meera");
+  await bookManually(page);
+  await page.getByRole("button", { name: "04:00 PM", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  // Browser Back walks the steps instead of leaving the booking.
+  await expect(page).toHaveURL(/mode=manual&step=1$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/book\/meera\?mode=manual$/);
+  await expect(
+    page.getByRole("button", { name: "04:00 PM", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("radio", { name: /^Rajesh/ }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Confirm appointment", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/appointments\/confirmed\/TP-/);
+  const main = page.locator("main");
+  await expect(
+    page.getByRole("heading", { name: "Your appointment is confirmed" }),
+  ).toBeVisible();
+  await expect(main).not.toContainText(/TP-[0-9A-F]{8}/);
+  await expect(main).not.toContainText("A little closer");
+  const card = page.getByRole("region", { name: "Appointment summary" });
+  await expect(card).toContainText("Dr. Meera Iyer");
+  await expect(card.getByTestId("summary-patient")).toContainText(
+    /Rajesh Sharma.*Father.*yrs.*Male/,
+  );
+  await expect(card).toContainText("04:00 PM");
+  await expect(card).toContainText("In clinic");
+  await expect(card).toContainText("100 Feet Road, Indiranagar, Bengaluru");
+  await expect(card).toContainText(/Pay at hospital.*₹700/);
+  await expect(
+    card.getByRole("link", { name: /Call Indiranagar clinic/ }),
+  ).toHaveAttribute("href", "tel:+918047182000");
+  await expect(
+    card.getByRole("link", { name: "Directions to Indiranagar clinic" }),
+  ).toHaveAttribute("href", /maps\.google\.com/);
+  await expect(main).toContainText("Please arrive 15 minutes before");
+  // Exactly two actions.
+  await expect(
+    page.getByRole("button", { name: "View my appointments" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Add to calendar" }),
+  ).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Go home" })).toBeVisible();
+  const confirmed = page.url();
+  // Add symptoms, then Back: the confirmation again, not the booking steps.
+  await page.getByRole("button", { name: "Add symptoms" }).click();
+  await expect(page).toHaveURL(/\/assistant\?appointment=TP-/);
+  await page.getByRole("button", { name: "Go back" }).click();
+  await expect(page).toHaveURL(confirmed);
+  await expect(
+    page.getByRole("heading", { name: "Your appointment is confirmed" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Confirm appointment" }),
+  ).toHaveCount(0);
+  // It survives a refresh, and browser Back never returns to the steps.
+  await page.reload();
+  await expect(card).toContainText("Rajesh Sharma");
+  await page.goBack();
+  await expect(page).not.toHaveURL(/\/book\//);
+  await page.goto(confirmed);
+  await page.getByRole("button", { name: "Go home" }).click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test("lab reports open an intelligent analysis with filters, explanations and a concerning parameters page", async ({
+  page,
+}) => {
+  await page.goto("/records");
+  const card = page.getByRole("button", { name: /Diabetes screening/ });
+  await expect(card).toContainText("AI analysis");
+  await card.click();
+  await expect(page).toHaveURL(/\/records\/r12$/);
+  await expect(
+    page.getByRole("heading", { name: "Diabetes screening", exact: true }),
+  ).toBeVisible();
+  const summary = page.getByRole("button", {
+    name: /3 parameters are concerning/,
+  });
+  await expect(summary).toBeVisible();
+  const list = page.getByRole("list", { name: "Parameters" });
+  await expect(list.getByRole("listitem")).toHaveCount(4);
+  await expect(list.getByRole("listitem").first()).toContainText(
+    "Out of ideal range",
+  );
+  // Filters narrow the list; search narrows it further.
+  await page.getByRole("button", { name: "Out of range (1)" }).click();
+  await expect(list.getByRole("listitem")).toHaveCount(1);
+  await expect(list).toContainText("Glucose, fasting");
+  await page.getByRole("button", { name: "Borderline (2)" }).click();
+  await expect(list.getByRole("listitem")).toHaveCount(2);
+  await page.getByLabel("Search by parameter").fill("hba");
+  await expect(list.getByRole("listitem")).toHaveCount(1);
+  await expect(list).toContainText("HbA1c");
+  await page.getByLabel("Search by parameter").fill("zzz");
+  await expect(page.getByText("No matching parameters")).toBeVisible();
+  await page.getByRole("button", { name: "Clear search" }).click();
+  await page.getByRole("button", { name: "All parameters" }).click();
+  await expect(list.getByRole("listitem")).toHaveCount(4);
+  // Each card explains itself in a sheet.
+  await page.getByRole("button", { name: "Explain HbA1c" }).click();
+  const sheet = page.getByRole("dialog", { name: "HbA1c" });
+  await expect(sheet).toContainText("Potential impact");
+  await expect(sheet).toContainText("Recommended actions");
+  await expect(sheet).toContainText("Borderline");
+  await sheet.getByRole("button", { name: "Close" }).click();
+  await expect(sheet).toHaveCount(0);
+  // The original document is one tab away.
+  await page.getByRole("tab", { name: "Original report" }).click();
+  await expect(
+    page.getByRole("img", { name: "Diabetes screening, page 1" }),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Intelligent analysis" }).click();
+  // The summary leads to the concerning parameters.
+  await summary.click();
+  await expect(page).toHaveURL(/\/records\/r12\/concerning$/);
+  await expect(
+    page.getByRole("heading", { name: "Concerning parameters", exact: true }),
+  ).toBeVisible();
+  const concerns = page.getByRole("list", { name: "Concerning parameters" });
+  await expect(concerns.getByRole("listitem")).toHaveCount(3);
+  await expect(concerns.getByRole("listitem").first()).toContainText("High");
+  await expect(concerns.getByRole("listitem").first()).toContainText(
+    "112 mg/dL",
+  );
+  await expect(concerns.getByRole("listitem").nth(1)).toContainText(
+    "Borderline",
+  );
+  await expect(page.getByText(/not a diagnosis/)).toBeVisible();
+  await page.getByRole("button", { name: "Consult a doctor" }).click();
+  await expect(page).toHaveURL(/\/doctors$/);
+  // Another patient's report is not shown.
+  await page.goto("/records/r13");
+  await expect(page.getByText("This report isn’t available")).toBeVisible();
 });

@@ -1,4 +1,11 @@
-import { Children, isValidElement, useEffect, useRef, useState } from "react";
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Button as TesseractButton,
   Avatar,
@@ -16,6 +23,7 @@ import { useApp } from "../state/AppContext";
 import s from "../App.module.css";
 import { describeNotice, noticeTime } from "../services/notices";
 import { Badge, Icon, Status } from "../../shared/ui";
+import { MemberForm } from "./MemberForm";
 export { Badge, Avatar, Icon, Status };
 // Account and Family call sites keep their API; the mark is a flat Tesseract Avatar.
 export function PatternAvatar({ name, size = 52 }) {
@@ -26,6 +34,34 @@ export function PatternAvatar({ name, size = 52 }) {
       color="primary"
       aria-hidden="true"
     />
+  );
+}
+// Thin vertical divider between pieces of meta ("13 Oct | 04:00 PM"). Screen
+// readers hear a comma instead of the rule.
+export function Sep() {
+  return (
+    <>
+      <span className={s.srOnly}>, </span>
+      <span className={s.metaSep} aria-hidden="true" />
+    </>
+  );
+}
+// One line of meta: children (or `items`) joined by the divider. Empty and
+// false entries are dropped, so callers can pass optional parts inline.
+export function Meta({ items, children, className = "", ...props }) {
+  const parts = (items || Children.toArray(children)).filter(
+    (part) => part !== false && part != null && part !== "",
+  );
+  if (!parts.length) return null;
+  return (
+    <span className={`${s.meta} ${className}`} {...props}>
+      {parts.map((part, i) => (
+        <Fragment key={i}>
+          {i > 0 && <span className={s.srOnly}>, </span>}
+          <span className={s.metaPart}>{part}</span>
+        </Fragment>
+      ))}
+    </span>
   );
 }
 // Metadata label (record type, count, category, language): soft neutral badge.
@@ -410,43 +446,85 @@ export function Sheet({
 export function FamilySheet({ open, onClose }) {
   const { state, activeMember, dispatch } = useApp();
   const navigate = useNavigate();
+  const [adding, setAdding] = useState(false);
+  const close = () => {
+    setAdding(false);
+    onClose();
+  };
   return (
     <Sheet
       open={open}
-      onClose={onClose}
-      title="Who are we caring for?"
-      description="Choose a profile to see their care."
+      onClose={close}
+      title={adding ? "Add a family member" : "Who are we caring for?"}
+      description={adding ? undefined : "Choose a profile to see their care."}
+      footer={
+        !adding && (
+          <div className={s.switcherFooter}>
+            <Button
+              variant="outline"
+              fullWidth
+              leftIcon={<Icon name="add" size={18} />}
+              onClick={() => setAdding(true)}
+            >
+              Add a family member
+            </Button>
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => {
+                close();
+                navigate("/family");
+              }}
+            >
+              Manage family
+            </Button>
+          </div>
+        )
+      }
     >
-      {state.members.map((member) => (
-        <button
-          key={member.id}
-          className={s.selectionCard}
-          data-selected={member.id === activeMember.id}
-          onClick={() => {
-            dispatch({ type: "SELECT_MEMBER", id: member.id });
-            onClose();
-          }}
-        >
-          <Avatar
-            name={member.name}
-            size={48}
-            color={member.id === activeMember.id ? "primary" : "slate"}
-          />
-          <span className={s.grow}>
-            <strong>
-              <PatientName member={member} />
-            </strong>
-            <small>
-              {member.relation} · {member.mrn}
-            </small>
-          </span>
-          <span
-            className={s.radioMark}
-            data-checked={member.id === activeMember.id || undefined}
-            aria-hidden="true"
-          />
-        </button>
-      ))}
+      {adding ? (
+        // Back to the list with the new profile selected.
+        <MemberForm
+          onClose={() => setAdding(false)}
+          onSave={(profile) =>
+            dispatch({ type: "SELECT_MEMBER", id: profile.id })
+          }
+        />
+      ) : (
+        state.members.map((member) => (
+          <button
+            key={member.id}
+            className={s.selectionCard}
+            data-selected={member.id === activeMember.id}
+            onClick={() => {
+              dispatch({ type: "SELECT_MEMBER", id: member.id });
+              close();
+            }}
+          >
+            <Avatar
+              name={member.name}
+              size={48}
+              color={member.id === activeMember.id ? "primary" : "slate"}
+            />
+            <span className={s.grow}>
+              <strong>
+                <PatientName member={member} />
+              </strong>
+              <small>
+                <Meta>
+                  {member.relation}
+                  {member.mrn}
+                </Meta>
+              </small>
+            </span>
+            <span
+              className={s.radioMark}
+              data-checked={member.id === activeMember.id || undefined}
+              aria-hidden="true"
+            />
+          </button>
+        ))
+      )}
     </Sheet>
   );
 }
@@ -458,14 +536,21 @@ export function Field({ label, ...props }) {
 // Filters and single-choice fields share one control: Tesseract Chips.
 // `hideLabel` keeps the label as the group's accessible name only, so page
 // filter rows read as a quiet scrolling strip instead of a form field.
-export function ChoiceGroup({ label, options, value, onChange, hideLabel }) {
+export function ChoiceGroup({
+  label,
+  ariaLabel,
+  options,
+  value,
+  onChange,
+  hideLabel,
+}) {
   return (
     <div className={s.fieldGroup}>
       {label && !hideLabel && <span className={s.fieldLabel}>{label}</span>}
       <div
         className={s.chips}
         role="group"
-        aria-label={label}
+        aria-label={ariaLabel || label}
         data-layout={hideLabel ? "scroll" : "wrap"}
       >
         {options.map((option) => {
@@ -615,7 +700,15 @@ export function NotificationItem({ notice, onOpen }) {
         </span>
         <span className={s.notificationBody}>
           {parts.map((part, i) =>
-            part.strong ? <b key={i}>{part.text}</b> : part.text,
+            part.items ? (
+              <b key={i}>
+                <Meta items={part.items} />
+              </b>
+            ) : part.strong ? (
+              <b key={i}>{part.text}</b>
+            ) : (
+              part.text
+            ),
           )}
         </span>
         <small>{noticeTime(notice)}</small>

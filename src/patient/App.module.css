@@ -1245,6 +1245,7 @@
   transform-origin: top center;
   animation: summaryIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+/* Heading row of a collapsed step: neutral label with a bulk icon. */
 .bookingKind {
   display: inline-flex;
   align-items: center;
@@ -1252,13 +1253,10 @@
   font-size: var(--tesseract-text-caption);
   line-height: var(--tesseract-text-caption-lh);
   font-weight: var(--tesseract-weight-semibold);
-  color: var(--tesseract-fg-link);
+  color: var(--tesseract-fg-secondary);
 }
 .bookingKind [data-tp-icon] {
-  color: var(--tesseract-fg-link);
-}
-.bookingKind > span {
-  color: inherit;
+  color: var(--tesseract-fg-tertiary);
 }
 .patientPicker {
   display: flex;
@@ -1408,12 +1406,6 @@
   font-weight: var(--tesseract-weight-semibold);
   color: var(--tesseract-fg-heading);
   font-variant-numeric: tabular-nums;
-}
-.bookingSummaryValue > span + span::before {
-  content: "·";
-  margin: 0 var(--tesseract-space-1-5);
-  color: var(--tesseract-fg-tertiary);
-  font-weight: var(--tesseract-weight-regular);
 }
 .dateStrip {
   display: flex;
@@ -3256,7 +3248,8 @@
 }
 .careDock {
   position: absolute;
-  bottom: calc(94px + env(safe-area-inset-bottom));
+  /* Nav: 20px inset + 66px bar. 16px of air keeps the action off the glass. */
+  bottom: calc(102px + env(safe-area-inset-bottom));
   left: var(--tesseract-space-5);
   right: var(--tesseract-space-5);
   z-index: 25;
@@ -3290,11 +3283,60 @@
 .appViewport[data-has-nav="false"] .floatingActionSlot {
   bottom: calc(20px + env(safe-area-inset-bottom));
 }
+/* The floating primary action: lifted clear of the glass nav with a layered
+   brand-tinted shadow, a one-time entry, and hover/press feedback. */
+.floatingAction {
+  animation: actionIn 0.5s 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 .floatingAction > button {
   min-height: var(--tesseract-size-48, 48px);
   padding-inline: var(--tesseract-space-4-5);
-  box-shadow: var(--tesseract-shadow-lg);
   border-radius: var(--tesseract-btn-radius, var(--tesseract-radius-12));
+  transition:
+    transform var(--tesseract-duration-150) ease,
+    box-shadow var(--tesseract-duration-150) ease;
+}
+.floatingAction > button:not([data-variant="ghost"]) {
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--tesseract-slate-900) 18%, transparent),
+    0 6px 14px -4px color-mix(in srgb, var(--tesseract-blue-600) 45%, transparent),
+    0 16px 32px -10px color-mix(in srgb, var(--tesseract-blue-600) 40%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--tesseract-bg-surface) 70%, transparent);
+}
+.floatingAction > button:hover {
+  transform: translateY(-2px);
+}
+.floatingAction > button:not([data-variant="ghost"]):hover {
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--tesseract-slate-900) 18%, transparent),
+    0 10px 18px -4px color-mix(in srgb, var(--tesseract-blue-600) 50%, transparent),
+    0 22px 38px -10px color-mix(in srgb, var(--tesseract-blue-600) 45%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--tesseract-bg-surface) 70%, transparent);
+}
+.floatingAction > button:active {
+  transform: translateY(0) scale(0.97);
+}
+@keyframes actionIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.03);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .floatingAction {
+    animation: none;
+  }
+  .floatingAction > button {
+    transition: none;
+  }
+  .floatingAction > button:hover,
+  .floatingAction > button:active {
+    transform: none;
+  }
 }
 :global(body[data-sheet-open="true"]) .floatingActionSlot {
   visibility: hidden;
@@ -3543,4 +3585,143 @@
     animation: none;
     transition: none;
   }
+}
+
+/* Bottom nav: liquid glass. The bar is a frosted, see-through capsule and the
+   selected tab is a brighter glass pill tinted with the brand colour. */
+.navbar {
+  border: 1px solid color-mix(in srgb, white 70%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, white 62%, transparent),
+    color-mix(in srgb, white 38%, transparent)
+  );
+  backdrop-filter: blur(22px) saturate(1.8);
+  -webkit-backdrop-filter: blur(22px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 90%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, white 30%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, white 22%, transparent),
+    0 10px 30px -10px color-mix(in srgb, var(--tesseract-slate-900) 26%, transparent),
+    0 2px 6px -2px color-mix(in srgb, var(--tesseract-slate-900) 12%, transparent);
+}
+.navItem[data-active="true"] {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, white 78%, var(--tesseract-blue-100)),
+    color-mix(in srgb, var(--tesseract-blue-100) 62%, transparent)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 95%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--tesseract-blue-300) 34%, transparent),
+    0 4px 12px -6px color-mix(in srgb, var(--tesseract-blue-600) 45%, transparent);
+}
+.navItem:not([data-active="true"]):hover {
+  background: color-mix(in srgb, white 45%, transparent) !important;
+}
+/* Without backdrop blur the bar must stay readable over content. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .navbar {
+    background: color-mix(in srgb, var(--tesseract-bg-surface) 94%, transparent);
+  }
+}
+
+/* Meta line: pieces joined by a thin vertical rule ("13 Oct | 04:00 PM").
+   Every piece carries the rule on its left and is pulled left by the same
+   amount, so the rule of the first piece on each line falls outside the
+   clipped box: a wrapped line never starts or ends with a stray divider. */
+.meta {
+  --meta-gap: var(--tesseract-space-2);
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  max-width: calc(100% + 2 * var(--meta-gap) + 1px);
+  margin-right: calc(-2 * var(--meta-gap) - 1px);
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.metaPart {
+  position: relative;
+  min-width: 0;
+  /* The pull to the left is outside the box this is measured against. */
+  max-width: calc(100% + var(--meta-gap) + 1px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: calc(-1 * var(--meta-gap) - 1px);
+  padding: 0 calc(2 * var(--meta-gap) + 1px) 0 calc(var(--meta-gap) + 1px);
+}
+.metaPart::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1px;
+  height: 0.9em;
+  transform: translateY(-50%);
+  background: currentColor;
+  opacity: 0.32;
+}
+.familyMember .meta {
+  display: flex;
+}
+/* The same rule as a standalone element between two flex items. */
+.metaSep {
+  flex-shrink: 0;
+  display: inline-block;
+  width: 1px;
+  height: 0.9em;
+  background: currentColor;
+  opacity: 0.32;
+}
+.bookingSummaryValue .meta {
+  row-gap: 0;
+}
+/* Confirmation hero without the ID badge: tick and one heading. */
+.successCompact {
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-4) var(--tesseract-space-2)
+    var(--tesseract-space-1);
+}
+/* Family form: required marks, the date-of-birth / age switch, selects. */
+.formLabel {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-medium);
+  color: var(--tesseract-fg-secondary);
+}
+.requiredMark {
+  margin-left: var(--tesseract-space-0-5);
+  color: var(--tesseract-error-500);
+}
+.birthHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-3);
+}
+.agePair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tesseract-space-3);
+}
+.agePair > * {
+  min-width: 0;
+}
+.fieldHint {
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}
+.select {
+  width: 100%;
+}
+/* Patient switcher footer: add a profile, or manage the family. */
+.switcherFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  width: 100%;
 }

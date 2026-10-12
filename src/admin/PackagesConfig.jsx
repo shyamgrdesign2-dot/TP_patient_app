@@ -9,7 +9,13 @@ import { formatDate, money } from "../shared/data";
 import { catalog } from "../shared/catalog";
 import { Icon, Badge, Status } from "../shared/ui";
 import { Button } from "../patient/components/ui";
-import { Drawer, Field, allClinics, readFileAsDataUrl } from "./AdminParts";
+import {
+  Drawer,
+  Field,
+  PackagesOffNote,
+  allClinics,
+  readFileAsDataUrl,
+} from "./AdminParts";
 import s from "./Admin.module.css";
 
 // Health check-up packages and vaccines. Tatva Practice has no sellable
@@ -108,6 +114,7 @@ export default function PackagesConfig({ config, setConfig, flash }) {
           {kind === "vaccine" ? "Add vaccine" : "Add package"}
         </Button>
       </header>
+      <PackagesOffNote config={config} />
 
       <section className={s.panel} data-flush>
         <div className={s.tabBar}>

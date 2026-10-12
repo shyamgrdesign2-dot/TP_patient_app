@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { recordPath } from "../services/records.js";
 import CareCarousel from "../components/CareCarousel";
 import PatientHeader from "../components/PatientHeader";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +16,7 @@ import {
   Badge,
   Avatar,
   Icon,
+  Meta,
   SectionTitle,
   BrandLogo,
   Row,
@@ -32,6 +34,8 @@ export default function Home() {
     const scroller = panel.current.closest("main");
     // Covered cards must not remain keyboard targets behind the foreground sheet.
     const update = () => {
+      // A late scroll event can arrive after leaving Home.
+      if (!panel.current || !banner.current) return;
       const covered =
         panel.current.getBoundingClientRect().top <
         banner.current.getBoundingClientRect().bottom - 8;
@@ -223,7 +227,10 @@ export default function Home() {
               title={record.title}
               subtitle={
                 <span className={s.recordMeta}>
-                  {`${formatDate(record.date)} · ${record.category}`}
+                  <Meta>
+                    {formatDate(record.date)}
+                    {record.category}
+                  </Meta>
                   {record.new && (
                     <Badge variant="soft" color="primary" size="sm">
                       New
@@ -231,7 +238,7 @@ export default function Home() {
                   )}
                 </span>
               }
-              onClick={() => navigate(`/records?record=${record.id}`)}
+              onClick={() => navigate(recordPath(record))}
             />
           ))}
         </div>

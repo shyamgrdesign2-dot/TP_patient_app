@@ -82,7 +82,7 @@ test("today's visit and unseen report states select authorized patient events wi
   assert.equal(cards[0].status, "Confirmed");
   assert.equal(cards[0].action.label, "Add symptoms");
   assert.equal(cards[0].action.path, "/assistant?appointment=today");
-  assert.equal(cards[0].detail, "Today · 10:30 AM");
+  assert.deepEqual(cards[0].detail, ["Today", "10:30 AM"]);
   assert.ok(!("wait" in cards[0]));
   assert.equal(cards[1].entityId, "new");
   assert.equal(JSON.stringify(data), before);
@@ -175,4 +175,55 @@ test("all 8 event combinations retain three unique patient-scoped categories", (
       ["welcome", "empty", "unlinked"],
     );
   }
+});
+
+test("preventive care is the fourth card only when enabled, with patient-scoped booking states", () => {
+  const directory = {
+    config: {
+      features: { packages: true },
+      healthPackages: [
+        { id: "lab", name: "Laboratory package", price: 1499 },
+        { id: "hidden", name: "Unlisted", price: 1, listed: false },
+      ],
+      vaccines: [],
+    },
+  };
+  const cards = selectCareUpdates(empty, "self", today, directory);
+  assert.deepEqual(
+    cards.map((c) => c.id),
+    [...ids, "packages"],
+  );
+  assert.equal(cards[3].detail, "Health checks from ₹1,499");
+  assert.equal(cards[3].action.path, "/packages");
+  const data = {
+    ...empty,
+    packageRequests: [
+      {
+        memberId: "father",
+        status: "Requested",
+        date: today,
+        itemName: "Other patient",
+      },
+      {
+        memberId: "self",
+        status: "Cancelled",
+        date: today,
+        itemName: "Cancelled",
+      },
+      {
+        memberId: "self",
+        status: "Requested",
+        date: today,
+        itemName: "Laboratory package",
+      },
+    ],
+  };
+  const booked = selectCareUpdates(data, "self", today, directory)[3];
+  assert.equal(booked.title, "Laboratory package");
+  assert.equal(booked.action.path, "/packages?tab=bookings");
+  directory.config.features.packages = false;
+  assert.deepEqual(
+    selectCareUpdates(data, "self", today, directory).map((c) => c.id),
+    ids,
+  );
 });

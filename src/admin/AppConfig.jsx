@@ -54,7 +54,9 @@ export default function AppConfig({ config, setConfig, flash }) {
   const { brand, saveBrand, state } = useApp();
   // The patient preview's "Customise" link lands on the theme section.
   const [editing, setEditing] = useState(() =>
-    window.location.hash === "#theme" ? "theme" : null,
+    ["#theme", "#features"].includes(window.location.hash)
+      ? window.location.hash.slice(1)
+      : null,
   );
   const frame = useRef(null);
   const waiting = (state.callbackRequests || []).filter((r) => r.status === "Requested").length;

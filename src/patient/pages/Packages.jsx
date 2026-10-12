@@ -20,6 +20,7 @@ import {
   Sheet,
   Field,
   Notice,
+  Meta,
   Empty,
   ErrorText,
   Status,
@@ -423,7 +424,12 @@ export function PackageDetail() {
       <div className={s.detailCta}>
         <span className={s.ctaPrice}>
           <strong>{money(item.price)}</strong>
-          <small>{vaccine ? "Per dose · " : ""}Pay at the hospital</small>
+          <small>
+            <Meta>
+              {vaccine && "Per dose"}
+              Pay at the hospital
+            </Meta>
+          </small>
         </span>
         <Button onClick={() => setBooking(Date.now())}>Book now</Button>
       </div>

@@ -7,6 +7,7 @@ export function sampleIdentity(member, method) {
 }
 import { dateKey, slots, doctors } from "../../shared/data.js";
 import { locations } from "../../shared/brand.js";
+import { profileProblem } from "../../shared/age.js";
 export function memberExists(state, id) {
   if (!state.members.some((m) => m.id === id))
     throw new Error("Select an authorised family member.");
@@ -217,8 +218,10 @@ export function updateState(state, action) {
         action.member.dob > dateKey()
       )
         throw new Error("Enter a name and valid date of birth.");
-      if (!action.member.phone || !/^[6-9]\d{9}$/.test(action.member.phone))
-        throw new Error("Enter a valid 10-digit mobile number.");
+      const problem = profileProblem(action.member, {
+        relation: action.member.relation !== "Self",
+      });
+      if (problem) throw new Error(problem);
       if (!action.member.id) throw new Error("A profile ID is required.");
       return {
         ...state,

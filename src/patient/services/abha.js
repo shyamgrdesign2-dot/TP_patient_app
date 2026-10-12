@@ -27,8 +27,8 @@ export const ABHA_FACILITIES = [
 
 export const ABHA_RECORD_TYPES = [
   "Prescriptions",
-  "Lab reports",
-  "Scans & imaging",
+  "Lab results",
+  "Medical records",
   "Discharge summaries",
 ];
 
@@ -38,7 +38,7 @@ export function abhaRecords(memberId, { types, facilities }) {
     {
       key: "lipid",
       title: "Lipid profile",
-      category: "Lab reports",
+      category: "Lab results",
       facility: "city-diagnostics",
       date: dateKey(-40),
       time: "08:20 AM",
@@ -46,7 +46,7 @@ export function abhaRecords(memberId, { types, facilities }) {
     {
       key: "hba1c",
       title: "HbA1c test",
-      category: "Lab reports",
+      category: "Lab results",
       facility: "city-diagnostics",
       date: dateKey(-95),
       time: "09:10 AM",
@@ -62,7 +62,8 @@ export function abhaRecords(memberId, { types, facilities }) {
     {
       key: "usg",
       title: "Abdomen ultrasound",
-      category: "Scans & imaging",
+      category: "Medical records",
+      type: "Radiology",
       facility: "metro-imaging",
       date: dateKey(-130),
       time: "11:30 AM",
@@ -77,6 +78,7 @@ export function abhaRecords(memberId, { types, facilities }) {
       memberId,
       title: r.title,
       category: r.category,
+      type: r.type,
       date: r.date,
       time: r.time,
       author: ABHA_FACILITIES.find((f) => f.id === r.facility).name,

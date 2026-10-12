@@ -7,8 +7,10 @@ import { AppProvider, useApp } from "./state/AppContext";
 import Shell from "./components/Shell";
 import Home from "./pages/Home";
 import { Doctors, Booking, Appointments } from "./pages/Appointments";
+import BookingSuccess from "./pages/BookingSuccess";
 import LinkRecords from "./pages/LinkRecords";
 import Records from "./pages/Records";
+import LabReport, { ConcerningParameters } from "./pages/LabReport";
 import Family, { Profile } from "./pages/Family";
 import {
   Billing,
@@ -45,7 +47,16 @@ function ThemedApp() {
               <Route path="doctors" element={<Doctors />} />
               <Route path="book/:doctorId" element={<Booking />} />
               <Route path="appointments" element={<Appointments />} />
+              <Route
+                path="appointments/confirmed/:id"
+                element={<BookingSuccess />}
+              />
               <Route path="records" element={<Records />} />
+              <Route path="records/:id" element={<LabReport />} />
+              <Route
+                path="records/:id/concerning"
+                element={<ConcerningParameters />}
+              />
               <Route path="family" element={<Family />} />
               <Route path="profile" element={<Profile />} />
               <Route path="billing" element={<Billing />} />
