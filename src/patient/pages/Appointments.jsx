@@ -1,3 +1,5 @@
+import VisitDocumentSheet from "../components/VisitDocumentSheet";
+import { AiSpark } from "../components/AiNote";
 import { useEffect, useState } from "react";
 import {
   Navigate,
@@ -122,7 +124,7 @@ export function Doctors() {
                 color="primary"
               />
               <span className={`${s.grow} ${s.doctorInfo}`}>
-                <h3 className={s.cardTitle}>{d.name}</h3>
+                <h2 className={s.cardTitle}>{d.name}</h2>
                 <span className={s.education}>
                   {d.qualification.split(" · ")[0]}, {d.specialty}
                 </span>
@@ -147,8 +149,8 @@ export function Doctors() {
                 </div>
               )}
               <Button
-                variant="tonal"
                 size="sm"
+                leftIcon={<Icon name="add-plain" size={18} />}
                 onClick={() => navigate(`/book/${d.id}`)}
               >
                 Book a visit
@@ -176,6 +178,7 @@ export function Doctors() {
         footer={
           <Button
             fullWidth
+            leftIcon={<Icon name="add-plain" size={18} />}
             onClick={() => {
               setSelected(null);
               navigate(`/book/${selected?.id}`);
@@ -260,15 +263,6 @@ function SlotPicker({ options, value, onChange, isBooked = () => false }) {
     </div>
   ));
 }
-const MODE_KEY = "tatva-booking-mode";
-function rememberedMode() {
-  try {
-    const mode = sessionStorage.getItem(MODE_KEY);
-    return ["assistant", "manual"].includes(mode) ? mode : null;
-  } catch {
-    return null;
-  }
-}
 // Compact doctor card at the top of every booking screen.
 function BookingDoctor({ doctor }) {
   return (
@@ -282,9 +276,9 @@ function BookingDoctor({ doctor }) {
         radius={10}
       />
       <div className={s.grow}>
-        <h3>
+        <h2>
           <DoctorName doctor={doctor} />
-        </h3>
+        </h2>
         <p>{doctor.specialty}</p>
       </div>
       {feeFor(doctor) != null && (
@@ -296,8 +290,7 @@ function BookingDoctor({ doctor }) {
   );
 }
 // Booking for one doctor. The way of booking lives in the URL (?mode=), is
-// chosen once and remembered for the session; each flow can switch to the
-// other without losing what was already answered.
+// offered for every new booking; switching preserves any existing answers.
 export function Booking() {
   const navigate = useNavigate();
   const { doctorId } = useParams();
@@ -311,7 +304,10 @@ export function Booking() {
         <Empty
           title="Doctor not found"
           description="Choose a doctor from the hospital directory."
-          action="Find a doctor"
+          action={[
+            <Icon key="add" name="add-plain" size={18} />,
+            "Book appointment",
+          ]}
           onAction={() => navigate("/doctors")}
         />
       </div>
@@ -320,11 +316,6 @@ export function Booking() {
   const path = (next) => `/book/${doctor.id}?mode=${next}`;
   // Replaces the current entry, so Back always leaves booking in one step.
   function choose(next, extra) {
-    try {
-      sessionStorage.setItem(MODE_KEY, next);
-    } catch {
-      /* the choice then lasts for this screen only */
-    }
     navigate(path(next), {
       replace: true,
       state: { ...routeState, prefill: undefined, ...extra },
@@ -346,54 +337,51 @@ export function Booking() {
       <ManualBooking
         key={doctor.id}
         doctor={doctor}
-        onAssistant={() => choose("assistant")}
+        onAssistant={(prefill) => choose("assistant", { prefill })}
       />
     );
-  if (rememberedMode())
-    return <Navigate to={path(rememberedMode())} replace state={routeState} />;
   return (
     <div className={s.page}>
       <PageHeader title="Book an appointment" />
       <BookingDoctor doctor={doctor} />
-      <section className={b.chooser} aria-labelledby="booking-way">
-        <h2 id="booking-way">How would you like to book?</h2>
-        <button
-          type="button"
-          className={b.option}
-          data-ai
-          onClick={() => choose("assistant")}
-        >
-          <span className={b.optionIcon} aria-hidden="true">
-            <Icon
-              name="message-text"
-              family="emails-messages"
-              corner="rounded"
-              size={24}
-              bulk
-            />
-          </span>
-          <span className={s.grow}>
-            <strong>Book with assistant</strong>
-            <small>Chat or speak. Mira books it for you.</small>
-          </span>
-          <Icon name="chevron-right" size={16} />
-        </button>
-        <button
-          type="button"
-          className={b.option}
-          onClick={() => choose("manual")}
-        >
-          <span className={b.optionIcon} aria-hidden="true">
-            <Icon name="calendar-2" size={24} bulk />
-          </span>
-          <span className={s.grow}>
-            <strong>Book manually</strong>
-            <small>Pick the day, time and patient yourself.</small>
-          </span>
-          <Icon name="chevron-right" size={16} />
-        </button>
-        <p className={b.chooserNote}>You can switch at any time.</p>
-      </section>
+      <Sheet
+        open
+        onClose={() => navigate("/doctors")}
+        title="How would you like to book?"
+      >
+        <section className={b.chooser}>
+          <button
+            type="button"
+            className={b.option}
+            data-ai
+            onClick={() => choose("assistant")}
+          >
+            <span className={b.optionIcon} aria-hidden="true">
+              <AiSpark size={24} />
+            </span>
+            <span className={s.grow}>
+              <strong>Book with AI assistant</strong>
+              <small>Chat or speak. Mira books it for you.</small>
+            </span>
+            <Icon name="chevron-right" size={16} />
+          </button>
+          <button
+            type="button"
+            className={b.option}
+            onClick={() => choose("manual")}
+          >
+            <span className={b.optionIcon} aria-hidden="true">
+              <Icon name="calendar-2" size={24} bulk />
+            </span>
+            <span className={s.grow}>
+              <strong>Book manually</strong>
+              <small>Pick the day, time and patient yourself.</small>
+            </span>
+            <Icon name="chevron-right" size={16} />
+          </button>
+          <p className={b.chooserNote}>You can switch at any time.</p>
+        </section>
+      </Sheet>
     </div>
   );
 }
@@ -453,15 +441,8 @@ function ManualBooking({ doctor, onAssistant }) {
           <Button
             size="sm"
             className={v.aiAction}
-            leftIcon={
-              <Icon
-                name="message-text"
-                family="emails-messages"
-                corner="rounded"
-                size={16}
-              />
-            }
-            onClick={onAssistant}
+            leftIcon={<AiSpark size={18} />}
+            onClick={() => onAssistant({ memberId, type, date, time })}
           >
             Book with assistant
           </Button>
@@ -624,7 +605,7 @@ function ManualBooking({ doctor, onAssistant }) {
       <div className={s.stickyActions}>
         <Button
           fullWidth
-          disabled={step === 0 && !time}
+          disabled={leaving || (step === 0 && !time)}
           loading={busy}
           onClick={() => {
             setError("");
@@ -709,12 +690,36 @@ function PatientPicker({ members, value, onChange }) {
       aria-label="Who is this visit for?"
     >
       <h2 className={s.fieldLabel}>Who is this visit for?</h2>
-      {members.map((m) => (
+      {members.map((m, index) => (
         <button
           key={m.id}
           type="button"
           role="radio"
           aria-checked={value === m.id}
+          tabIndex={value === m.id ? 0 : -1}
+          onKeyDown={(event) => {
+            const direction = {
+              ArrowRight: 1,
+              ArrowDown: 1,
+              ArrowLeft: -1,
+              ArrowUp: -1,
+            }[event.key];
+            if (!direction && event.key !== "Home" && event.key !== "End")
+              return;
+            event.preventDefault();
+            const next =
+              event.key === "Home"
+                ? 0
+                : event.key === "End"
+                  ? members.length - 1
+                  : (index + direction + members.length) % members.length;
+            onChange(members[next].id);
+            const radioButtons =
+              event.currentTarget.parentElement.querySelectorAll(
+                '[role="radio"]',
+              );
+            radioButtons[next]?.focus();
+          }}
           className={s.patientOption}
           onClick={() => onChange(m.id)}
         >
@@ -754,7 +759,7 @@ function CardAction({ visit, upcoming, onDetails, onJoin }) {
       <Button
         size="sm"
         className={v.aiAction}
-        leftIcon={<Icon name="add-plain" size={16} />}
+        leftIcon={<Icon name="add-plain" size={18} />}
         onClick={() => openAgent({ kind: "symptoms", appointmentId: visit.id })}
       >
         Add symptoms
@@ -870,9 +875,9 @@ export function AppointmentCard({
           color="primary"
         />
         <span className={s.grow}>
-          <h3 className={s.cardTitle}>
+          <h2 className={s.cardTitle}>
             <DoctorName doctor={d} />
-          </h3>
+          </h2>
           <span className={s.cardSubtitle}>{d.specialty}</span>
         </span>
         <Icon name="chevron-right" size={16} />
@@ -907,28 +912,44 @@ export function Appointments() {
   const [tab, setTab] = useState(
     requested?.status === "Completed" || visitParams.get("tab") === "past"
       ? "Past"
-      : "Upcoming",
+      : requested?.status === "Cancelled" ||
+          visitParams.get("tab") === "cancelled"
+        ? "Cancelled"
+        : "Upcoming",
   );
   const [selected, setSelected] = useState(requested || null);
+  const [previousMemberId, setPreviousMemberId] = useState(activeMember.id);
   const [cancel, setCancel] = useState(null);
   const [joining, setJoining] = useState(null);
+  const [document, setDocument] = useState(null);
   const [reschedule, setReschedule] = useState(false);
   const [date, setDate] = useState(dateKey(1));
   const [time, setTime] = useState("");
-  const { error, run } = useAction();
-  const items = state.appointments.filter(
-    (a) =>
-      a.memberId === activeMember.id &&
-      (tab === "Upcoming"
-        ? a.status === "Confirmed"
-        : tab === "Past"
-          ? a.status === "Completed"
-          : a.status === "Cancelled"),
+  const { error, run, setError } = useAction();
+  const statuses = {
+    Upcoming: "Confirmed",
+    Past: "Completed",
+    Cancelled: "Cancelled",
+  };
+  const memberVisits = state.appointments.filter(
+    (a) => a.memberId === activeMember.id,
   );
-  // With nothing booked, the empty state's "Find a doctor" is the only CTA.
-  const hasUpcoming = state.appointments.some(
-    (a) => a.memberId === activeMember.id && a.status === "Confirmed",
+  const counts = Object.fromEntries(
+    Object.entries(statuses).map(([label, status]) => [
+      label,
+      memberVisits.filter((a) => a.status === status).length,
+    ]),
   );
+  const items = memberVisits.filter((a) => a.status === statuses[tab]);
+  useEffect(() => {
+    if (previousMemberId === activeMember.id) return;
+    setPreviousMemberId(activeMember.id);
+    setSelected(null);
+    setDocument(null);
+    setCancel(null);
+    setJoining(null);
+    setReschedule(false);
+  }, [activeMember.id]);
   const selectedDoctor = doctors.find((d) => d.id === selected?.doctorId);
   const refreshSelected =
     selected && state.appointments.find((a) => a.id === selected.id);
@@ -939,9 +960,11 @@ export function Appointments() {
       ? state.records.find(
           (r) =>
             r.category === "Prescriptions" &&
+            r.released !== false &&
             r.memberId === refreshSelected.memberId &&
             (r.appointmentId === refreshSelected.id ||
-              (r.doctorId === refreshSelected.doctorId &&
+              (!r.appointmentId &&
+                r.doctorId === refreshSelected.doctorId &&
                 r.date === refreshSelected.date)),
         )
       : null;
@@ -949,46 +972,46 @@ export function Appointments() {
     refreshSelected?.status === "Completed"
       ? state.bills.find((b) => b.appointmentId === refreshSelected.id)
       : null;
+  const rescheduleSlots = slots.filter(
+    (slot) =>
+      !state.appointments.some(
+        (a) =>
+          a.id !== selected?.id &&
+          a.doctorId === selected?.doctorId &&
+          a.date === date &&
+          a.time === slot &&
+          a.status === "Confirmed",
+      ),
+  );
   return (
     <div className={s.page}>
       <PageHeader
         title="My visits"
-        trailing={
-          hasUpcoming && (
-            <Button
-              size="sm"
-              variant="tonal"
-              aria-label="Book a new appointment"
-              leftIcon={<Icon name="add" size={16} />}
-              onClick={() => navigate("/doctors")}
-            >
-              Book
-            </Button>
-          )
-        }
+        patientSelector
         action={
-          hasUpcoming && (
+          items.length > 0 && (
             <Button size="sm" onClick={() => navigate("/doctors")}>
               <Icon name="add" size={18} />
-              Book appointment
+              Book new appointment
             </Button>
           )
         }
       />
-      <MemberContext />
-      <SegmentedControl
-        aria-label="Appointment status"
-        className={s.visitSegment}
-        variant="block"
-        radius={10}
-        fullWidth
-        options={["Upcoming", "Past", "Cancelled"].map((v) => ({
-          value: v,
-          label: v,
-        }))}
-        value={tab}
-        onValueChange={setTab}
-      />
+      <div className={s.visitControls}>
+        <SegmentedControl
+          aria-label="Appointment status"
+          className={s.visitSegment}
+          variant="block"
+          radius={10}
+          fullWidth
+          options={["Upcoming", "Past", "Cancelled"].map((v) => ({
+            value: v,
+            label: `${v}${counts[v] ? ` (${counts[v]})` : ""}`,
+          }))}
+          value={tab}
+          onValueChange={setTab}
+        />
+      </div>
       <div className={s.stack}>
         {items.map((a) => (
           <AppointmentCard
@@ -1005,7 +1028,10 @@ export function Appointments() {
           icon="calendar-2"
           title={`No ${tab.toLowerCase()} appointments`}
           description={`Your ${tab.toLowerCase()} visits for ${activeMember.name.split(" ")[0]} will appear here.`}
-          action="Find a doctor"
+          action={[
+            <Icon key="add" name="add-plain" size={18} />,
+            "Book new appointment",
+          ]}
           onAction={() => navigate("/doctors")}
         />
       )}
@@ -1031,11 +1057,13 @@ export function Appointments() {
                   <DoctorName doctor={selectedDoctor} />
                 </h3>
                 <p>{selectedDoctor.specialty}</p>
+                <span style={{ display: "inline-flex", marginTop: 6 }}>
+                  <Status status={refreshSelected.status} />
+                </span>
               </div>
             </div>
             {!reschedule ? (
               <>
-                <Status status={refreshSelected.status} />
                 <dl className={s.details}>
                   <dt>Appointment ID</dt>
                   <dd>{selected.id}</dd>
@@ -1105,7 +1133,18 @@ export function Appointments() {
                           : "Share symptoms before your visit"}
                       </Button>
                     )}
-                    <Button onClick={() => setReschedule(true)}>
+                    <Button
+                      onClick={() => {
+                        setDate(
+                          refreshSelected.date >= dateKey(1)
+                            ? refreshSelected.date
+                            : dateKey(1),
+                        );
+                        setTime("");
+                        setError("");
+                        setReschedule(true);
+                      }}
+                    >
                       Reschedule visit
                     </Button>
                     <Button
@@ -1147,9 +1186,7 @@ export function Appointments() {
                       <Button
                         variant="outline"
                         disabled={!prescription}
-                        onClick={() =>
-                          navigate(`/records?record=${prescription.id}`)
-                        }
+                        onClick={() => setDocument(prescription)}
                       >
                         <Icon name="document-text" size={18} />
                         View Rx
@@ -1157,7 +1194,15 @@ export function Appointments() {
                       <Button
                         variant="outline"
                         disabled={!bill}
-                        onClick={() => navigate(`/billing?bill=${bill.id}`)}
+                        onClick={() =>
+                          setDocument({
+                            id: bill.id,
+                            title: bill.title,
+                            date: bill.date,
+                            author: "Hospital billing",
+                            bill,
+                          })
+                        }
                       >
                         <Icon name="bill" size={18} />
                         View bill
@@ -1177,6 +1222,14 @@ export function Appointments() {
               </>
             ) : (
               <>
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => setReschedule(false)}
+                  leftIcon={<Icon name="chevron-left" size={16} />}
+                >
+                  Back to appointment details
+                </Button>
                 <Field
                   type="date"
                   label="New appointment date"
@@ -1189,24 +1242,19 @@ export function Appointments() {
                 />
                 <div className={s.fieldGroup}>
                   <span className={s.fieldLabel}>Choose a new time</span>
+                  {!rescheduleSlots.length && (
+                    <p role="status" className={s.metaText}>
+                      No times are available on this day. Choose another date.
+                    </p>
+                  )}
                   <SlotPicker
-                    options={slots.filter(
-                      (t) =>
-                        !state.appointments.some(
-                          (a) =>
-                            a.id !== selected.id &&
-                            a.doctorId === selected.doctorId &&
-                            a.date === date &&
-                            a.time === t &&
-                            a.status === "Confirmed",
-                        ),
-                    )}
+                    options={rescheduleSlots}
                     value={time}
                     onChange={setTime}
                   />
                 </div>
                 <Button
-                  disabled={!time}
+                  disabled={!time || !date || date < dateKey(1)}
                   onClick={() =>
                     run(() => {
                       dispatch({
@@ -1229,6 +1277,10 @@ export function Appointments() {
           </>
         )}
       </Sheet>
+      <VisitDocumentSheet
+        document={document}
+        onClose={() => setDocument(null)}
+      />
       <JoinVideoSheet visit={joining} onClose={() => setJoining(null)} />
       <ConfirmDialog
         open={!!cancel}

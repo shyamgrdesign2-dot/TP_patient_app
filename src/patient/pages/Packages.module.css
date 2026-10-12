@@ -583,3 +583,25 @@
 .packagesTop .packageSegment {
   margin-bottom: 0;
 }
+
+/* Retain complete section names when text is enlarged; the segment strip can
+   scroll rather than compressing its labels. */
+.packageSegment {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.packageSegment > button {
+  flex: 1 0 max-content;
+  min-width: max-content;
+}
+.detailCta {
+  flex-wrap: wrap;
+}
+.ctaPrice {
+  flex: 1 0 auto;
+}
+.detailCta > button {
+  margin-left: auto;
+  max-width: 100%;
+}

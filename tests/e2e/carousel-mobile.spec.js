@@ -72,7 +72,7 @@ for (const scenario of ["current", "first visit", "long content"]) {
     await page.evaluate((scenario) => {
       const key = "tatva-patient-demo-v1";
       const state = JSON.parse(localStorage.getItem(key));
-      state.seedVersion = 5;
+      state.seedVersion = 7;
       if (scenario === "first visit") {
         state.appointments = [];
         state.records = [];

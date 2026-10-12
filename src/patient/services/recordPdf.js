@@ -35,6 +35,13 @@ export async function makeSamplePdf(record, member, brand) {
       y -= size * 1.6;
     }
   }
+  page.drawRectangle({
+    x: 32,
+    y: 758,
+    width: 531,
+    height: 62,
+    color: rgb(0.94, 0.96, 1),
+  });
   text(brand.hospitalName, 18, bold, accent);
   y -= 20;
   text(record.title, 22, bold);
@@ -46,12 +53,7 @@ export async function makeSamplePdf(record, member, brand) {
   y -= 20;
   const rows =
     record.values ||
-    record.params?.map((p) => [
-      p.name,
-      formatValue(p),
-      p.unit,
-      rangeLabel(p),
-    ]);
+    record.params?.map((p) => [p.name, formatValue(p), p.unit, rangeLabel(p)]);
   if (rows) {
     text("Test / Result / Unit / Reference range", 12, bold);
     for (const values of rows) text(values.join("    |    "));
@@ -122,7 +124,12 @@ export async function makeSamplePdf(record, member, brand) {
   }
   if (record.certificate) {
     const c = record.certificate;
-    text(record.type ? `${record.type} certificate` : "Certificate", 14, bold, accent);
+    text(
+      record.type ? `${record.type} certificate` : "Certificate",
+      14,
+      bold,
+      accent,
+    );
     text(
       `This is to certify that ${member.name} (Hospital ID ${member.mrn}) was examined by ${record.author} on ${record.date}.`,
     );
@@ -141,6 +148,65 @@ export async function makeSamplePdf(record, member, brand) {
     text(record.author, 12, bold);
     text(brand.hospitalName, 11, normal, muted);
   }
+  if (record.bill) {
+    const bill = record.bill;
+    text(`Invoice: ${bill.id}`, 14, bold);
+    text(`Status: ${bill.status}`);
+    y -= 12;
+    for (const [name, amount] of bill.items || [])
+      text(`${name}    INR ${Number(amount).toFixed(2)}`);
+    y -= 12;
+    text(`Total: INR ${Number(bill.amount).toFixed(2)}`, 14, bold);
+    if (bill.method) text(`Payment method: ${bill.method}`);
+    if (bill.transaction) text(`Receipt reference: ${bill.transaction}`);
+  }
+  if (record.rx?.sketch) {
+    const sketch = record.rx.sketch;
+    if (y < 250) {
+      page = pdf.addPage([595, 842]);
+      y = 785;
+    }
+    text(sketch.title, 12, bold);
+    for (const path of sketch.paths || [])
+      page.drawSvgPath(path, {
+        x: 70,
+        y,
+        borderColor: accent,
+        borderWidth: 1.5,
+      });
+    for (const mark of sketch.marks || []) {
+      page.drawCircle({
+        x: 70 + mark.x,
+        y: y - mark.y,
+        size: 4,
+        color: accent,
+      });
+      page.drawText(mark.label, {
+        x: 82 + mark.x,
+        y: y - mark.y - 3,
+        size: 9,
+        font: normal,
+        color: ink,
+      });
+    }
+    y -= 155;
+    if (sketch.note) text(sketch.note, 10, normal, muted);
+  }
   if (record.note) text(record.note);
+  pdf.getPages().forEach((p, i) => {
+    p.drawLine({
+      start: { x: 48, y: 40 },
+      end: { x: 547, y: 40 },
+      thickness: 0.5,
+      color: rgb(0.8, 0.85, 0.94),
+    });
+    p.drawText(`Page ${i + 1} of ${pdf.getPageCount()}`, {
+      x: 48,
+      y: 25,
+      size: 8,
+      font: normal,
+      color: muted,
+    });
+  });
   return new Blob([await pdf.save()], { type: "application/pdf" });
 }

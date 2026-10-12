@@ -4,8 +4,8 @@
 // Tabs on the Health records page, in order.
 export const RECORD_TABS = [
   { id: "visits", label: "Your visits" },
-  { id: "labs", label: "Lab results" },
   { id: "records", label: "Medical records" },
+  { id: "labs", label: "Lab results" },
   { id: "discharge", label: "Discharge summaries" },
   { id: "certificates", label: "Certificates" },
   { id: "history", label: "Medical history" },
@@ -25,6 +25,8 @@ export const MEDICAL_RECORD_TYPES = [
   "Pathology",
   "Radiology",
   "Prescription",
+  "Rehabilitation",
+  "Procedure notes",
   "Other",
 ];
 
@@ -143,16 +145,17 @@ export function summarizeRecord(record) {
 
 // Sections of a patient's medical history, in display order.
 export const HISTORY_SECTIONS = [
-  { key: "conditions", label: "Conditions", icon: "health" },
-  { key: "allergies", label: "Allergies", icon: "danger" },
-  { key: "medications", label: "Current medications", icon: "note-2" },
-  { key: "surgeries", label: "Surgeries & procedures", icon: "hospital" },
-  { key: "vaccinations", label: "Vaccinations", icon: "shield-tick" },
-  { key: "family", label: "Family history", icon: "profile-2user" },
+  { key: "lifestyle", label: "Lifestyle", icon: "health-care" },
+  { key: "conditions", label: "Medical Condition", icon: "clipboard-activity" },
+  { key: "family", label: "Family History", icon: "profile-2user" },
+  { key: "allergies", label: "Allergies", icon: "mask" },
+  { key: "surgeries", label: "Surgical History", icon: "surgical-scissors-02" },
+  { key: "additional", label: "Additional History", icon: "note-2" },
 ];
 
 // One line per history entry: "Name · detail".
 export function historyLine(section, item) {
+  if (typeof item === "string") return [item];
   switch (section) {
     case "conditions":
       return [item.name, item.since && `Since ${item.since}`, item.status];
@@ -166,6 +169,10 @@ export function historyLine(section, item) {
       return [item.name, item.date];
     case "family":
       return [item.relation, item.condition];
+    case "injuries":
+    case "implants":
+    case "rehabilitation":
+      return [item.name, item.site, item.date, item.status, item.details];
     default:
       return [item.name];
   }

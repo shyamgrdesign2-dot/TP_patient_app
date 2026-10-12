@@ -1,3 +1,5 @@
+import MedicalRecordTile from "../components/MedicalRecordTile";
+import { PrescriptionReader } from "../components/RecordDocuments";
 import {
   lazy,
   Suspense,
@@ -10,76 +12,92 @@ import { Tabs, TabsList, TabsTrigger } from "@dhspl-tatvacare/tesseract-ui";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "../state/AppContext";
 import { formatDate, dateKey, doctors } from "../../shared/data";
+import { analyzeReport, concerningSummary } from "../../shared/labAnalysis";
+import {
+  RECORD_TABS,
+  CATEGORY,
+  MEDICAL_RECORD_TYPES,
+  HISTORY_SECTIONS,
+  historyLine,
+  tabFor,
+  sortRecords,
+} from "../services/records";
 import { getFile, saveFile, download } from "../services/files";
 import {
   Button,
-  IconButton,
   AbhaLogo,
   Badge,
   Icon,
   PageHeader,
-  MemberContext,
   Field,
   ChoiceGroup,
   Empty,
   Sheet,
   Notice,
   Meta,
-  ErrorText,
-  Tag,
   useAction,
+  ErrorText,
 } from "../components/ui";
 import { AbhaCardSheet, AbhaSyncSheet } from "../components/abha/Abha";
 import { makeSamplePdf } from "../services/recordPdf";
 const PdfViewer = lazy(() => import("../components/PdfViewer"));
 import s from "../App.module.css";
-const categories = [
-  "All records",
-  "Prescriptions",
-  "Lab reports",
-  "Scans & imaging",
-  "Discharge summaries",
-  "Other documents",
-];
-// Category icons, shown in the tabs and (bulk) on each record.
-const CATEGORY_ICONS = {
-  "All records": { name: "folder-2", family: "files" },
-  Prescriptions: { name: "note-2", family: "content-edit" },
-  "Lab reports": { name: "microscope", family: "medical" },
-  "Scans & imaging": { name: "scan", family: "essential" },
-  "Discharge summaries": { name: "hospital", family: "building" },
-  "Other documents": { name: "document", family: "content-edit" },
-  other: { name: "document", family: "content-edit" },
+import r from "./Records.module.css";
+
+const TAB_ICONS = {
+  visits: { name: "calendar-2", family: "time" },
+  labs: { name: "microscope", family: "medical" },
+  records: { name: "folder-2", family: "files" },
+  discharge: { name: "hospital", family: "building" },
+  certificates: { name: "shield-tick", family: "security" },
+  history: { name: "health" },
 };
-const UPLOAD_LABEL = {
-  "All records": "Upload a record",
-  Prescriptions: "Upload a prescription",
-  "Lab reports": "Upload a lab report",
-  "Scans & imaging": "Upload a scan",
-  "Discharge summaries": "Upload a discharge summary",
-  "Other documents": "Upload a document",
+const TYPE_ICONS = {
+  Pathology: { name: "microscope", family: "medical" },
+  Radiology: { name: "scan", family: "essential" },
+  Prescription: { name: "note-2", family: "content-edit" },
+  Other: { name: "document", family: "content-edit" },
 };
+const AI_DISCLAIMER =
+  "This summary is generated automatically and is not a diagnosis. Please discuss your records with your doctor.";
+
 // Who it came from, then when: "Dr. Meera Iyer | 5 Oct, 10:30 AM".
 export function recordSource(r) {
   const doctor = doctors.find((d) => d.id === r.doctorId);
   const who = r.uploaded
     ? "Uploaded by you"
-    : r.category === "Prescriptions" && doctor
+    : r.category === CATEGORY.prescription && doctor
       ? doctor.name
       : r.author || doctor?.name || "Hospital";
   const when = [formatDate(r.date), r.time].filter(Boolean).join(", ");
   return r.source === "abha" ? [who, "via ABHA", when] : [who, when];
 }
+const matches = (text, search) =>
+  text.toLowerCase().includes(search.trim().toLowerCase());
+
 export default function Records() {
   const { state, activeMember, dispatch, notify, brand } = useApp();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const tab = RECORD_TABS.some((t) => t.id === params.get("tab"))
+    ? params.get("tab")
+    : "visits";
+  const setTab = (next) => {
+    setSearch("");
+    setAbhaOnly(false);
+    setTypeFilter("All");
+    const p = new URLSearchParams(params);
+    if (next === "visits") p.delete("tab");
+    else p.set("tab", next);
+    p.delete("record");
+    setParams(p, { replace: true });
+  };
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All records");
+  const [typeFilter, setTypeFilter] = useState("All");
   const [upload, setUpload] = useState(() => params.get("upload") === "1");
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
-  const [fileCategory, setFileCategory] = useState("Lab reports");
+  const [fileType, setFileType] = useState("Pathology");
   const [fileDate, setFileDate] = useState(dateKey());
   const [fileUrl, setFileUrl] = useState(null);
   const [recordBlob, setRecordBlob] = useState(null);
@@ -93,7 +111,7 @@ export default function Records() {
     setPageCount(doc?.numPages || 0);
   }, []);
   const [fileError, setFileError] = useState("");
-  const [about, setAbout] = useState(false);
+  const [discharge, setDischarge] = useState(null);
   const [abhaSheet, setAbhaSheet] = useState(() =>
     params.get("abha") === "card" ? "card" : null,
   );
@@ -115,15 +133,67 @@ export default function Records() {
     window.addEventListener("resize", updateTabFade);
     return () => window.removeEventListener("resize", updateTabFade);
   }, [updateTabFade]);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const strip = tabStrip.current;
+      const selectedTab = strip?.querySelector(
+        '[role="tab"][aria-selected="true"]',
+      );
+      if (!strip || !selectedTab) return;
+      const bounds = strip.getBoundingClientRect();
+      const item = selectedTab.getBoundingClientRect();
+      if (item.left < bounds.left + 16 || item.right > bounds.right - 16) {
+        strip.scrollLeft +=
+          item.left - bounds.left - (bounds.width - item.width) / 2;
+      }
+      updateTabFade();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [tab, activeMember.id, updateTabFade]);
   const { busy, error, run } = useAction();
-  const records = state.records.filter((r) => r.memberId === activeMember.id);
-  const selected = records.find((r) => r.id === params.get("record"));
-  const filtered = records.filter(
+  const records = state.records.filter(
     (r) =>
-      (!abhaOnly || r.source === "abha") &&
-      (category === "All records" || r.category === category) &&
-      `${r.title} ${r.author}`.toLowerCase().includes(search.toLowerCase()),
+      r.memberId === activeMember.id &&
+      r.released !== false &&
+      (!abhaOnly || r.source === "abha"),
   );
+  const selected = state.records.find(
+    (r) =>
+      r.id === params.get("record") &&
+      r.memberId === activeMember.id &&
+      r.released !== false,
+  );
+  const inTab = (category) =>
+    sortRecords(records.filter((r) => r.category === category)).filter(
+      (r) =>
+        !search ||
+        matches(
+          `${r.title} ${r.author || ""} ${r.rx?.diagnosis || ""}`,
+          search,
+        ),
+    );
+  const prescriptions = inTab(CATEGORY.prescription);
+  const labs = inTab(CATEGORY.lab);
+  const medical = inTab(CATEGORY.medical);
+  const typeCounts = Object.fromEntries(
+    MEDICAL_RECORD_TYPES.map((t) => [
+      t,
+      medical.filter((r) => (r.type || "Other") === t).length,
+    ]),
+  );
+  const medicalShown =
+    typeFilter === "All"
+      ? medical
+      : medical.filter((r) => (r.type || "Other") === typeFilter);
+  const discharges = inTab(CATEGORY.discharge);
+  const certificates = inTab(CATEGORY.certificate);
+  const count = {
+    visits: prescriptions.length,
+    labs: labs.length,
+    records: medicalShown.length,
+    discharge: discharges.length,
+    certificates: certificates.length,
+  }[tab];
   useEffect(() => {
     let url;
     let cancelled = false;
@@ -158,6 +228,23 @@ export default function Records() {
       if (url) URL.revokeObjectURL(url);
     };
   }, [selected?.id]);
+  function openRecord(record) {
+    if (
+      (record.category === CATEGORY.lab && record.params?.length) ||
+      (["Radiology", "Pathology"].includes(record.type) && record.summary)
+    )
+      navigate(`/records/${record.id}`);
+    else {
+      const p = new URLSearchParams(params);
+      p.set("record", record.id);
+      setParams(p);
+    }
+  }
+  function closeRecord() {
+    const p = new URLSearchParams(params);
+    p.delete("record");
+    setParams(p);
+  }
   function uploadRecord(e) {
     e.preventDefault();
     run(async () => {
@@ -177,7 +264,8 @@ export default function Records() {
           id,
           memberId: activeMember.id,
           title: title.trim(),
-          category: fileCategory,
+          category: CATEGORY.medical,
+          type: fileType,
           date: fileDate,
           author: "Uploaded by you",
           format: file.type === "application/pdf" ? "PDF" : "Image",
@@ -189,12 +277,14 @@ export default function Records() {
       setUpload(false);
       setFile(null);
       setTitle("");
+      setTab("records");
+      setTypeFilter("All");
       notify("Record saved.");
     });
   }
   const recordFileName = selected?.uploaded
     ? selected.fileName
-    : `${selected?.title.replace(/\W+/g, "-")}-sample.pdf`;
+    : `${selected?.title.replace(/\W+/g, "-")}.pdf`;
   function downloadRecord() {
     if (recordBlob) {
       download(recordFileName, recordBlob);
@@ -241,31 +331,63 @@ export default function Records() {
       notify(error.message, true);
     }
   }
+  const emptyCopy = {
+    visits: {
+      title: "No prescriptions yet",
+      description:
+        "Prescriptions from each completed visit appear here, with the doctor’s notes.",
+      action: "Book appointment",
+      onAction: () => navigate("/doctors"),
+    },
+    labs: {
+      title: "No lab results yet",
+      description:
+        "Results from the hospital laboratory, or entered by your doctor, appear here with an intelligent analysis.",
+    },
+    records: {
+      title:
+        typeFilter === "All"
+          ? "No medical records yet"
+          : `No ${typeFilter.toLowerCase()} records`,
+      description:
+        "Reports and scans shared by your hospital appear here. You can add your own too.",
+      action: [<Icon key="add" name="add" size={18} />, "Upload a record"],
+      onAction: () => setUpload(true),
+    },
+    discharge: {
+      title: "No discharge summaries",
+      description:
+        "A summary of each hospital stay appears here once you are discharged.",
+    },
+    certificates: {
+      title: "No certificates yet",
+      description:
+        "Fitness, leave and travel certificates issued by your doctor appear here.",
+    },
+  }[tab];
   return (
-    <div className={s.page}>
+    <div
+      className={`${s.page} ${tab === "visits" ? r.prescriptionPage : ""}`}
+      data-prescription-page={tab === "visits" || undefined}
+    >
       <PageHeader
         title="Health records"
-        trailing={
-          <IconButton
-            name="info-circle"
-            variant="ghost"
-            theme="neutral"
-            iconColor="var(--tesseract-fg-secondary)"
-            label="About health records"
-            onClick={() => setAbout(true)}
-          />
-        }
+        patientSelector
         action={
-          filtered.length > 0 && (
-            <Button size="md" onClick={() => setUpload(true)}>
-              <Icon name="document-upload" size={18} />
-              Upload document
+          tab === "records" && (
+            <Button
+              className={r.uploadFloat}
+              aria-label="Upload medical records"
+              title="Upload medical records"
+              onClick={() => setUpload(true)}
+            >
+              <Icon name="document-upload" size={20} />
+              Upload medical records
             </Button>
           )
         }
       />
-      <div className={s.recordsTop}>
-        <MemberContext plain />
+      <div className={`${s.recordsTop} ${r.recordsBand}`}>
         <div
           className={s.recordTabs}
           ref={tabStrip}
@@ -273,160 +395,224 @@ export default function Records() {
           data-fade-left={tabFade.left || undefined}
           data-fade-right={tabFade.right || undefined}
         >
-          <Tabs value={category} onValueChange={setCategory} size="sm">
+          <Tabs value={tab} onValueChange={setTab} size="sm" variant="segment">
             <TabsList aria-label="Record type">
-              {categories.map((c) => (
+              {RECORD_TABS.map((t) => (
                 <TabsTrigger
-                  key={c}
-                  value={c}
+                  key={t.id}
+                  id={`records-tab-${t.id}`}
+                  aria-controls="records-panel"
+                  value={t.id}
                   leftIcon={
                     <Icon
-                      name={CATEGORY_ICONS[c].name}
-                      family={CATEGORY_ICONS[c].family}
+                      name={TAB_ICONS[t.id].name}
+                      family={TAB_ICONS[t.id].family}
                       corner="rounded"
-                      bulk={category === c}
+                      bulk={tab === t.id}
                       size={16}
                     />
                   }
                 >
-                  {c}
+                  {t.label}
+                  {t.id !== "history"
+                    ? ` (${records.filter((record) => tabFor(record) === t.id).length})`
+                    : ""}
                 </TabsTrigger>
               ))}
             </TabsList>
           </Tabs>
         </div>
       </div>
-      <Field
-        aria-label="Search health records"
-        placeholder="Search reports, prescriptions..."
-        leftIcon={<Icon name="search-normal" />}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-      {abhaLink ? (
-        <div className={s.abhaRow}>
-          <button
-            className={s.abhaRowMain}
-            onClick={() => setAbhaSheet("card")}
-            aria-label={`ABHA ${abhaLink.address || ""}. View ABHA card`}
-          >
-            <AbhaLogo linked />
-            <span className={s.grow}>
-              <strong>{abhaLink.address || "ABHA linked"}</strong>
-              <small>
-                {abhaLink.autoSync
-                  ? "Auto-sync on"
-                  : abhaLink.lastSyncAt
-                    ? `Last synced ${formatDate(abhaLink.lastSyncAt.slice(0, 10))}`
-                    : "Not synced yet"}
-              </small>
+      <div
+        role="tabpanel"
+        id="records-panel"
+        aria-labelledby={`records-tab-${tab}`}
+        className={r.recordsPanel}
+      >
+        {tab !== "history" && tab !== "visits" && (
+          <Field
+            aria-label={`Search ${RECORD_TABS.find((t) => t.id === tab).label.toLowerCase()}`}
+            placeholder={
+              tab === "visits"
+                ? "Search by doctor or diagnosis"
+                : "Search by title or source"
+            }
+            leftIcon={<Icon name="search-normal" />}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        )}
+        {tab === "records" && (
+          <ChoiceGroup
+            label="Record type"
+            hideLabel
+            options={[
+              { value: "All", label: `All (${medical.length})` },
+              ...MEDICAL_RECORD_TYPES.map((t) => ({
+                value: t,
+                label: `${t} (${typeCounts[t]})`,
+              })),
+            ]}
+            value={typeFilter}
+            onChange={setTypeFilter}
+          />
+        )}
+        {tab !== "history" && tab !== "visits" && (
+          <div className={s.listMeta}>
+            <span aria-live="polite">
+              {count}{" "}
+              {tab === "visits"
+                ? count === 1
+                  ? "prescription"
+                  : "prescriptions"
+                : count === 1
+                  ? "record"
+                  : "records"}
             </span>
-          </button>
-          <button
-            className={s.abhaRowSync}
-            onClick={() => setAbhaSheet("sync")}
-          >
-            <Icon name="rotate-right" family="arrow" size={16} />
-            Sync
-          </button>
-        </div>
-      ) : (
-        <button
-          className={s.linkRecordsBanner}
-          onClick={() => navigate("/link-records")}
-        >
-          <span className={s.rowIcon}>
-            <AbhaLogo />
-          </span>
-          <span className={s.grow}>
-            <strong>Link your health records</strong>
-            <small>Connect with your UHID or ABHA</small>
-          </span>
-          <Icon name="chevron-right" size={18} />
-        </button>
-      )}
-      <div className={s.listMeta}>
-        <span>
-          {filtered.length} {filtered.length === 1 ? "record" : "records"}
-        </span>
-        {abhaOnly && (
-          <button className={s.filterPill} onClick={() => setAbhaOnly(false)}>
-            From ABHA
-            <Icon name="close" size={14} />
-          </button>
+            {abhaOnly && (
+              <button
+                className={s.filterPill}
+                onClick={() => setAbhaOnly(false)}
+              >
+                From ABHA
+                <Icon name="close" size={14} />
+              </button>
+            )}
+          </div>
+        )}
+        {tab === "visits" && (
+          <PrescriptionReader
+            key={activeMember.id}
+            records={prescriptions}
+            onOpen={openRecord}
+          />
+        )}
+        {tab === "labs" && (
+          <div className={r.documentGrid}>
+            {labs.map((record) => (
+              <MedicalRecordTile
+                key={record.id}
+                record={record}
+                onOpen={openRecord}
+                line={<LabLine record={record} />}
+              />
+            ))}
+          </div>
+        )}
+        {tab === "records" && (
+          <>
+            <div className={r.documentGrid}>
+              {medicalShown.map((record) => (
+                <MedicalRecordTile
+                  key={record.id}
+                  record={record}
+                  onOpen={openRecord}
+                />
+              ))}
+            </div>
+          </>
+        )}
+        {tab === "records" &&
+          (abhaLink ? (
+            <div className={s.abhaRow}>
+              <button
+                className={s.abhaRowMain}
+                onClick={() => setAbhaSheet("card")}
+                aria-label={`ABHA ${abhaLink.address || ""}. View ABHA card`}
+              >
+                <AbhaLogo linked />
+                <span className={s.grow}>
+                  <strong>{abhaLink.address || "ABHA linked"}</strong>
+                  <small>
+                    {abhaLink.autoSync
+                      ? "Auto-sync on"
+                      : abhaLink.lastSyncAt
+                        ? `Last synced ${formatDate(abhaLink.lastSyncAt.slice(0, 10))}`
+                        : "Not synced yet"}
+                  </small>
+                </span>
+              </button>
+              <button
+                className={s.abhaRowSync}
+                onClick={() => setAbhaSheet("sync")}
+              >
+                <Icon name="rotate-right" family="arrow" size={16} />
+                Sync
+              </button>
+            </div>
+          ) : (
+            <button
+              className={s.linkRecordsBanner}
+              onClick={() => navigate("/link-records")}
+            >
+              <span className={s.rowIcon}>
+                <AbhaLogo />
+              </span>
+              <span className={s.grow}>
+                <strong>Link your health records</strong>
+                <small>Connect with your UHID or ABHA</small>
+              </span>
+              <Icon name="chevron-right" size={18} />
+            </button>
+          ))}
+        {tab === "discharge" && (
+          <div className={r.documentGrid}>
+            {discharges.map((record) => (
+              <MedicalRecordTile
+                key={record.id}
+                record={record}
+                line={
+                  record.discharge && (
+                    <span className={r.line}>
+                      {record.discharge.ward} ·{" "}
+                      {formatDate(record.discharge.admitted)} to{" "}
+                      {formatDate(record.discharge.discharged)}
+                    </span>
+                  )
+                }
+                onOpen={() =>
+                  record.discharge ? setDischarge(record) : openRecord(record)
+                }
+              />
+            ))}
+          </div>
+        )}
+        {tab === "certificates" && (
+          <div className={r.documentGrid}>
+            {certificates.map((record) => (
+              <MedicalRecordTile
+                key={record.id}
+                record={record}
+                line={
+                  record.certificate?.from && (
+                    <span className={r.line}>
+                      Valid {formatDate(record.certificate.from)} to{" "}
+                      {formatDate(record.certificate.to)}
+                    </span>
+                  )
+                }
+                onOpen={() => openRecord(record)}
+              />
+            ))}
+          </div>
+        )}
+        {tab === "history" && <MedicalHistory member={activeMember} />}
+        {tab !== "history" && !count && (
+          <Empty
+            icon={
+              TAB_ICONS[tab].name === "microscope"
+                ? "document-text"
+                : TAB_ICONS[tab].name
+            }
+            title={search ? "Nothing matches your search" : emptyCopy.title}
+            description={
+              search ? "Try a different search or tab." : emptyCopy.description
+            }
+            action={search ? "Clear search" : emptyCopy.action}
+            onAction={search ? () => setSearch("") : emptyCopy.onAction}
+          />
         )}
       </div>
-      <div className={s.stack}>
-        {filtered.map((r) => (
-          <button
-            key={r.id}
-            className={s.recordCard}
-            onClick={() =>
-              r.params?.length
-                ? navigate(`/records/${r.id}`)
-                : setParams({ record: r.id })
-            }
-          >
-            <span className={s.documentIcon} data-category={r.category}>
-              <Icon
-                name={(CATEGORY_ICONS[r.category] || CATEGORY_ICONS.other).name}
-                family={
-                  (CATEGORY_ICONS[r.category] || CATEGORY_ICONS.other).family
-                }
-                corner="rounded"
-                bulk
-                size={22}
-              />
-            </span>
-            {category === categories[0] && (
-              <span className={s.cornerTag}>{r.category}</span>
-            )}
-            <span className={s.grow}>
-              <span className={s.recordTitle}>
-                <span className={s.rowTitle}>{r.title}</span>
-                {r.new && (
-                  <Badge variant="soft" color="primary" size="sm">
-                    New
-                  </Badge>
-                )}
-                {r.params?.length > 0 && (
-                  <Badge variant="soft" color="violet" size="sm">
-                    AI analysis
-                  </Badge>
-                )}
-              </span>
-              <Meta className={s.metaText} items={recordSource(r)} />
-            </span>
-            <Icon name="chevron-right" size={16} />
-          </button>
-        ))}
-      </div>
-      {!filtered.length && (
-        <Empty
-          icon={(CATEGORY_ICONS[category] || CATEGORY_ICONS.other).name}
-          title={
-            search
-              ? "No matching records"
-              : category === "All records"
-                ? "No records here yet"
-                : `No ${category.toLowerCase()} yet`
-          }
-          description={
-            search
-              ? "Try a different search or category."
-              : "Records shared by your hospital will appear here. You can add your own too."
-          }
-          action={
-            search
-              ? "Clear search"
-              : [
-                  <Icon key="add" name="add" size={18} />,
-                  UPLOAD_LABEL[category],
-                ]
-          }
-          onAction={() => (search ? setSearch("") : setUpload(true))}
-        />
-      )}
       {abhaLink && (
         <>
           <AbhaCardSheet
@@ -437,7 +623,6 @@ export default function Records() {
             onSync={() => setAbhaSheet("sync")}
             onView={() => {
               setAbhaOnly(true);
-              setCategory("All records");
               setAbhaSheet(null);
             }}
           />
@@ -445,30 +630,21 @@ export default function Records() {
             open={abhaSheet === "sync"}
             onClose={() => setAbhaSheet(null)}
             member={activeMember}
-            onDone={() => {
-              setAbhaOnly(true);
-              setCategory("All records");
-            }}
+            onDone={() => setAbhaOnly(true)}
           />
         </>
       )}
-      <Sheet
-        open={about}
-        onClose={() => setAbout(false)}
-        title="About health records"
-      >
-        <Notice icon="lock">
-          Your records are organised by family member. Switching profiles
-          changes the records you see.
-        </Notice>
-        <p className={s.metaText}>
-          Reports, prescriptions and scans shared by your hospital appear here
-          automatically. You can also upload your own documents.
-        </p>
-      </Sheet>
+      <DischargeSheet
+        record={discharge}
+        onClose={() => setDischarge(null)}
+        onOpenPdf={(record) => {
+          setDischarge(null);
+          openRecord(record);
+        }}
+      />
       <Sheet
         open={!!selected}
-        onClose={() => setParams({})}
+        onClose={closeRecord}
         title={selected?.title || "Health record"}
         documentView
         headerIcon="document-text"
@@ -490,9 +666,7 @@ export default function Records() {
             </button>
             <button
               type="button"
-              aria-label={
-                selected?.uploaded ? "Download file" : "Download sample record"
-              }
+              aria-label="Download file"
               title="Download"
               onClick={downloadRecord}
               disabled={!recordBlob}
@@ -541,7 +715,7 @@ export default function Records() {
         documentView
         headerIcon="document-upload"
         onClose={() => setUpload(false)}
-        title="Add a health record"
+        title="Add a medical record"
         description={`Save a record to ${activeMember.name}’s profile.`}
       >
         <form className={s.stack} onSubmit={uploadRecord}>
@@ -567,10 +741,10 @@ export default function Records() {
             onChange={(e) => setTitle(e.target.value)}
           />
           <ChoiceGroup
-            label="Record category"
-            options={categories.slice(1)}
-            value={fileCategory}
-            onChange={setFileCategory}
+            label="Record type"
+            options={MEDICAL_RECORD_TYPES}
+            value={fileType}
+            onChange={setFileType}
           />
           <Field
             label="Record date"
@@ -586,6 +760,158 @@ export default function Records() {
           </Button>
         </form>
       </Sheet>
+    </div>
+  );
+}
+
+// Lab result status under the title: what needs attention, if anything.
+function LabLine({ record }) {
+  if (!record.params?.length) return null;
+  const { concerning } = analyzeReport(record);
+  return (
+    <span className={r.line} data-tone={concerning.length ? "alert" : "ok"}>
+      {concerningSummary(concerning.length)}
+    </span>
+  );
+}
+
+function DischargeSheet({ record, onClose, onOpenPdf }) {
+  const d = record?.discharge;
+  return (
+    <Sheet
+      open={!!record}
+      onClose={onClose}
+      title="Discharge summary"
+      description={d && d.ward}
+    >
+      {d && (
+        <>
+          <div className={r.stayRow}>
+            <div className={r.stay}>
+              <small>Admitted</small>
+              <strong>{formatDate(d.admitted, { year: "numeric" })}</strong>
+            </div>
+            <div className={r.stay}>
+              <small>Discharged</small>
+              <strong>{formatDate(d.discharged, { year: "numeric" })}</strong>
+            </div>
+          </div>
+          <div className={r.rxGrid}>
+            <div className={r.rxBlock} data-tone="brand">
+              <small>Diagnosis</small>
+              <p>{d.diagnosis}</p>
+            </div>
+            {d.procedures?.length > 0 && (
+              <div className={r.rxBlock}>
+                <small>Procedures</small>
+                <p>{d.procedures.join(" · ")}</p>
+              </div>
+            )}
+            {d.course && (
+              <div className={r.rxBlock}>
+                <small>Hospital course</small>
+                <p>{d.course}</p>
+              </div>
+            )}
+            {d.medicines?.length > 0 && (
+              <>
+                <h3 className={r.subhead}>Medicines on discharge</h3>
+                <ol className={r.medicines}>
+                  {d.medicines.map(([name, dose, when, days], i) => (
+                    <li key={name}>
+                      <span aria-hidden="true">{i + 1}</span>
+                      <span className={r.grow}>
+                        <strong>{name}</strong>
+                        <small>
+                          {[dose, when, days].filter(Boolean).join(" · ")}
+                        </small>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
+            {d.advice && (
+              <div className={r.rxBlock}>
+                <small>Advice</small>
+                <p>{d.advice}</p>
+              </div>
+            )}
+            {d.followUp && (
+              <div className={r.rxBlock}>
+                <small>Follow-up</small>
+                <p>{d.followUp}</p>
+              </div>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            theme="neutral"
+            fullWidth
+            onClick={() => onOpenPdf(record)}
+          >
+            <Icon name="document-text" size={18} />
+            Open full document
+          </Button>
+        </>
+      )}
+    </Sheet>
+  );
+}
+
+// What the hospital knows about the patient: conditions, allergies,
+// medications, surgeries, vaccinations and family history.
+function MedicalHistory({ member }) {
+  const history = member.history || {};
+  const total = HISTORY_SECTIONS.reduce(
+    (n, sec) => n + (history[sec.key]?.length || 0),
+    0,
+  );
+  if (!total && !history.lifestyle)
+    return (
+      <Empty
+        icon="health"
+        title="No medical history yet"
+        description="Your doctor records medical conditions, allergies and health history during your visits."
+      />
+    );
+  return (
+    <div className={r.history}>
+      {HISTORY_SECTIONS.map((sec) => {
+        const value = history[sec.key];
+        const items = Array.isArray(value) ? value : value ? [value] : [];
+        return (
+          <section
+            key={sec.key}
+            className={r.historySection}
+            aria-label={sec.label}
+          >
+            <div className={r.historyHead}>
+              <Icon name={sec.icon} size={20} bulk />
+              <h2>{sec.label}</h2>
+            </div>
+            {items.length ? (
+              <ul className={r.historyList}>
+                {items.map((item, i) => (
+                  <li key={i}>
+                    {historyLine(sec.key, item).filter(Boolean).join(" · ")}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className={r.historyEmpty}>
+                {sec.key === "allergies"
+                  ? "No allergy information recorded."
+                  : "Nothing recorded."}
+              </p>
+            )}
+          </section>
+        );
+      })}
+      <Notice icon="info-circle">
+        Recorded by your doctors during visits. Tell your doctor if anything
+        here has changed.
+      </Notice>
     </div>
   );
 }

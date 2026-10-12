@@ -49,6 +49,27 @@ export default function BookingSuccess() {
   return (
     <div className={s.page}>
       <PageHeader
+        action={
+          <div className={b.successActions} data-confirmation-actions>
+            <Button variant="outline" fullWidth onClick={() => navigate("/")}>
+              Go home
+            </Button>
+            <Button
+              variant="solid"
+              className={v.aiAction}
+              fullWidth
+              leftIcon={<Icon name="add-plain" size={18} />}
+              onClick={() => {
+                // Symptoms belong to the visit's patient, whoever is active now.
+                if (activeMember.id !== visit.memberId)
+                  dispatch({ type: "SELECT_MEMBER", id: visit.memberId });
+                openAgent({ kind: "symptoms", appointmentId: visit.id });
+              }}
+            >
+              {needsSymptoms(visit) ? "Add symptoms" : "Review symptoms"}
+            </Button>
+          </div>
+        }
         onBack={() => {
           navigate("/appointments", { replace: true });
           return true;
@@ -74,25 +95,6 @@ export default function BookingSuccess() {
           ? "Join from My visits 15 minutes before your slot and keep any previous reports nearby."
           : "Please arrive 15 minutes before your appointment and bring any previous reports."}
       </Notice>
-      <div className={b.successActions}>
-        <Button
-          variant="solid"
-          className={v.aiAction}
-          fullWidth
-          leftIcon={<Icon name="add-plain" />}
-          onClick={() => {
-            // Symptoms belong to the visit's patient, whoever is active now.
-            if (activeMember.id !== visit.memberId)
-              dispatch({ type: "SELECT_MEMBER", id: visit.memberId });
-            openAgent({ kind: "symptoms", appointmentId: visit.id });
-          }}
-        >
-          {needsSymptoms(visit) ? "Add symptoms" : "Review symptoms"}
-        </Button>
-        <Button variant="outline" fullWidth onClick={() => navigate("/")}>
-          Go home
-        </Button>
-      </div>
     </div>
   );
 }

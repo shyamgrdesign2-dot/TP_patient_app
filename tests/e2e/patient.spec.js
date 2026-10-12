@@ -50,14 +50,14 @@ test("home uses a care overview and switches family context", async ({
     page.getByRole("heading", { name: "Health records", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("Cardiology consultation", { exact: true }),
+    page.getByRole("img", { name: "Cardiology consultation, page 1" }),
   ).toBeVisible();
   await expect(
-    page.getByText("Complete blood count", { exact: true }),
+    page.getByText("Vitamin D insufficiency", { exact: true }),
   ).toHaveCount(0);
   await page.reload();
   await expect(
-    page.getByText("Cardiology consultation", { exact: true }),
+    page.getByRole("img", { name: "Cardiology consultation, page 1" }),
   ).toBeVisible();
 });
 
@@ -66,7 +66,7 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
   await expect(
     page
       .getByRole("navigation")
-      .getByRole("button", { name: "Calendar", exact: true }),
+      .getByRole("button", { name: "Visits", exact: true }),
   ).toHaveAttribute("aria-current", "page");
   await page
     .getByRole("button", { name: /Book a visit/ })
@@ -94,7 +94,7 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
   ).toBeVisible();
   await page
     .getByRole("navigation")
-    .getByRole("button", { name: "Calendar", exact: true })
+    .getByRole("button", { name: "Visits", exact: true })
     .click();
   await page
     .getByRole("button", { name: /View appointment with/ })
@@ -116,16 +116,16 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
     .getByRole("alertdialog")
     .getByRole("button", { name: "Cancel appointment", exact: true })
     .click();
-  await page.getByRole("radio", { name: "Cancelled", exact: true }).click();
+  await page.getByRole("radio", { name: /^Cancelled(?: \(\d+\))?$/ }).click();
   await expect(page.getByText("Dr. Meera Iyer", { exact: true })).toBeVisible();
 });
 
 test("record uploads persist and are attached to the current patient", async ({
   page,
 }) => {
-  await page.goto("/records");
+  await page.goto("/records?tab=records");
   await page
-    .getByRole("button", { name: "Upload document", exact: true })
+    .getByRole("button", { name: "Upload medical records", exact: true })
     .click();
   await page.getByLabel("Record file").setInputFiles({
     name: "sample.png",
@@ -136,14 +136,11 @@ test("record uploads persist and are attached to the current patient", async ({
     ),
   });
   await page.getByLabel("Record title", { exact: true }).fill("My sample scan");
-  await page
-    .getByRole("button", { name: "Scans & imaging", exact: true })
-    .last()
-    .click();
+  await page.getByRole("button", { name: "Radiology", exact: true }).click();
   await page.getByRole("button", { name: "Save record", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.reload();
-  await page.getByRole("button", { name: /My sample scan/ }).click();
+  await page.getByRole("button", { name: /^View My sample scan/ }).click();
   await expect(
     page.getByRole("dialog").getByRole("img", { name: "My sample scan" }),
   ).toBeVisible();
@@ -195,7 +192,9 @@ test("branding lives in the admin console, not the patient app", async ({
   await admin.getByLabel("Primary colour picker").fill("#205c44");
   await admin.getByLabel("Heading font").selectOption("Poppins");
   await admin.getByRole("button", { name: "Save changes" }).click();
-  await expect(admin.getByRole("button", { name: "Save changes" })).toHaveCount(0);
+  await expect(admin.getByRole("button", { name: "Save changes" })).toHaveCount(
+    0,
+  );
   await page.goto("/");
   expect(
     await page
@@ -226,7 +225,9 @@ test("admin fees come from the console; doctors without one stay bookable", asyn
   await admin
     .getByRole("button", { name: "Continue with Tatva Practice" })
     .click();
-  await expect(admin.getByRole("button", { name: "Add clinic" })).toHaveCount(0);
+  await expect(admin.getByRole("button", { name: "Add clinic" })).toHaveCount(
+    0,
+  );
   await expect(admin.getByText("Synced from Tatva Practice")).toBeVisible();
   await expect(
     admin.getByRole("columnheader", { name: "Fees", exact: true }),
@@ -240,7 +241,9 @@ test("admin fees come from the console; doctors without one stay bookable", asyn
   await page.goto("/doctors");
   const card = page.locator("article", { hasText: "Dr. Ananya Shah" });
   await expect(card).toContainText("Fee payable at the clinic");
-  await expect(card.getByRole("button", { name: "Book a visit" })).toBeEnabled();
+  await expect(
+    card.getByRole("button", { name: "Book a visit" }),
+  ).toBeEnabled();
   // Setting a fee in the console shows it to patients.
   await ananya.getByRole("button", { name: /Add fees/ }).click();
   await admin.getByLabel("In-clinic fee (₹)").fill("900");
@@ -271,10 +274,9 @@ test("hospital contacts offer call, WhatsApp and a callback the console sees", a
   await expect(
     sheet.getByRole("link", { name: "Call appointments & front desk" }),
   ).toHaveAttribute("href", "tel:08047182000");
-  await expect(sheet.getByRole("link", { name: "Chat whatsapp" })).toHaveAttribute(
-    "href",
-    "https://wa.me/919845012345",
-  );
+  await expect(
+    sheet.getByRole("link", { name: "Chat whatsapp" }),
+  ).toHaveAttribute("href", "https://wa.me/919845012345");
   await sheet.getByRole("button", { name: "Request", exact: true }).click();
   await expect(sheet).toContainText("We'll call you back shortly");
   await expect(
@@ -614,7 +616,7 @@ test("bottom navigation labels only the active tab beside its icon", async ({
 test("patients link UHID and ABHA with verification and consent, persist and unlink", async ({
   page,
 }) => {
-  await page.goto("/records");
+  await page.goto("/records?tab=records");
   await page.getByRole("button", { name: /Link your health records/ }).click();
   // UHID links through the in-page verification and consent sheet.
   await page.getByRole("button", { name: "Link UHID", exact: true }).click();
@@ -1012,14 +1014,14 @@ test("four-tab navigation keeps family in More and inputs use the new shared geo
   await expect(
     nav.getByRole("button", { name: "More", exact: true }),
   ).toHaveAttribute("aria-current", "page");
-  await page.goto("/records");
+  await page.goto("/records?tab=records");
   await expect(
     page
       .getByRole("button", { name: /Link your health records/ })
       .getByRole("img", { name: "ABHA", exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Upload document", exact: true })
+    .getByRole("button", { name: "Upload medical records", exact: true })
     .click();
   const dialog = page.getByRole("dialog");
   await expect(
@@ -1049,7 +1051,7 @@ test("three Home promotions include empty reports and ABHA linking", async ({
     state.records = [];
     state.bills = [];
     // Mark the save as current so the app does not re-seed hospital data.
-    state.seedVersion = 5;
+    state.seedVersion = 7;
     localStorage.setItem("tatva-patient-demo-v1", JSON.stringify(state));
   });
   await page.reload();
@@ -1062,7 +1064,7 @@ test("three Home promotions include empty reports and ABHA linking", async ({
   await page.getByRole("button", { name: /Show banner 2:/ }).click();
   await page.getByRole("button", { name: "Add a record", exact: true }).click();
   await expect(
-    page.getByRole("dialog", { name: "Add a health record" }),
+    page.getByRole("dialog", { name: "Add a medical record" }),
   ).toBeVisible();
   await page.goto("/");
   await page.getByRole("button", { name: /Show banner 3:/ }).click();
@@ -1128,7 +1130,7 @@ test("PDF records render in a tall sheet with share, download, print and no grip
   expect(canvas.height).toBeGreaterThan(300);
   await expect(sheet.getByRole("button", { name: "Zoom PDF" })).toHaveCount(0);
   const download = page.waitForEvent("download");
-  await sheet.getByRole("button", { name: "Download sample record" }).click();
+  await sheet.getByRole("button", { name: "Download file" }).click();
   expect((await download).suggestedFilename()).toMatch(/\.pdf$/);
   await page.evaluate(() => {
     const open = window.open.bind(window);
@@ -1163,10 +1165,10 @@ test("PDF records render in a tall sheet with share, download, print and no grip
 test("floating action and compact glass patient selector stay clear of navigation", async ({
   page,
 }) => {
-  await page.goto("/records");
+  await page.goto("/records?tab=records");
   const tag = page.getByRole("button", { name: /For Aarav Sharma/ });
   const action = page.getByRole("button", {
-    name: "Upload document",
+    name: "Upload medical records",
     exact: true,
   });
   const nav = page.getByRole("navigation");
@@ -1393,7 +1395,7 @@ test("booked visits collect symptoms, retain the reviewed note and reject anothe
   await expect(page.getByText("Headache", { exact: true })).toHaveCount(0);
 });
 
-test("queue and check-in are gone: Book visit opens visits or doctors and symptoms return to the visit", async ({
+test("queue and check-in are gone: Book visit opens doctors and symptoms return to the visit", async ({
   page,
 }) => {
   await page.goto("/");
@@ -1404,10 +1406,10 @@ test("queue and check-in are gone: Book visit opens visits or doctors and sympto
     page.getByRole("button", { name: "Appointments", exact: true }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Book visit", exact: true }).click();
-  await expect(page).toHaveURL(/\/appointments$/);
+  await expect(page).toHaveURL(/\/doctors$/);
   await expect(page.getByRole("button", { name: "View queue" })).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Book appointment" }),
+    page.getByRole("button", { name: "Book a visit" }).first(),
   ).toBeVisible();
   await page.goto("/queue");
   await expect(
@@ -1519,7 +1521,7 @@ test("today's visit banner keeps appointment context and symptoms without redund
   expect(labelFits).toBe(true);
   await page
     .getByRole("navigation")
-    .getByRole("button", { name: "Calendar", exact: true })
+    .getByRole("button", { name: "Visits", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: "Add symptoms", exact: true }),
@@ -1548,7 +1550,11 @@ test("health packages and vaccines stay hidden until the hospital switches them 
   await expect(page.getByRole("button", { name: "My bookings" })).toHaveCount(
     0,
   );
-  for (const route of ["/packages", "/packages/essential", "/packages?tab=bookings"]) {
+  for (const route of [
+    "/packages",
+    "/packages/essential",
+    "/packages?tab=bookings",
+  ]) {
     await page.goto(route);
     await expect(page.locator("main")).toContainText(
       "hasn’t opened health packages and vaccines",
@@ -1573,9 +1579,7 @@ test("health packages and vaccines stay hidden until the hospital switches them 
   );
   await page.getByRole("link", { name: "Turn on in Features" }).click();
   await expect(page).toHaveURL(/\/admin\/app#features$/);
-  await page
-    .getByRole("switch", { name: /Health packages|Packages/ })
-    .click();
+  await page.getByRole("switch", { name: /Health packages|Packages/ }).click();
   await page.getByRole("button", { name: /^Save/ }).click();
   await page.goto("/");
   await expect(page.locator('[class*="quickIcon"]')).toHaveCount(4);
@@ -1595,15 +1599,21 @@ test("book a health package, see it under My bookings and cancel it", async ({
   ).toBeVisible();
   await expect(page.getByRole("radio", { name: /Bookings/ })).toBeVisible();
   await expect(page.getByRole("tab", { name: /My requests/ })).toHaveCount(0);
-  await expect(page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(0);
+  await expect(
+    page.getByRole("navigation", { name: "Main navigation" }),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: /^Essential health check/ }).click();
   await expect(page).toHaveURL(/\/packages\/essential$/);
   await expect(page.getByText("Lipid profile")).toBeVisible();
-  await expect(page.getByText("Pay at the hospital. Online payment coming soon.")).toBeVisible();
+  await expect(
+    page.getByText("Pay at the hospital. Online payment coming soon."),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Book now" }).click();
   const sheet = page.getByRole("dialog");
   await sheet.getByRole("radio", { name: /Whitefield/ }).click();
-  await sheet.getByLabel("Note for the hospital (optional)").fill("Morning please");
+  await sheet
+    .getByLabel("Note for the hospital (optional)")
+    .fill("Morning please");
   await sheet.getByRole("button", { name: "Send booking request" }).click();
   await expect(
     page.getByText("Booking request sent. The hospital will call to confirm."),
@@ -1617,7 +1627,9 @@ test("book a health package, see it under My bookings and cancel it", async ({
   await page.reload();
   await card.getByRole("button", { name: "Cancel booking" }).click();
   await expect(card.getByText("Cancelled", { exact: true })).toBeVisible();
-  await expect(card.getByRole("button", { name: "Cancel booking" })).toHaveCount(0);
+  await expect(
+    card.getByRole("button", { name: "Cancel booking" }),
+  ).toHaveCount(0);
   // Older notification links still land on My bookings.
   await page.goto("/packages?tab=requests");
   await expect(page).toHaveURL(/\/packages\?tab=bookings$/);
@@ -1634,7 +1646,9 @@ test("home shows four quick actions and the past visit card from My visits", asy
   await enablePackages(page);
   await page.goto("/");
   await expect(page.locator('[class*="quickIcon"]')).toHaveCount(4);
-  await expect(page.getByRole("button", { name: "Packages", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Packages", exact: true }),
+  ).toBeVisible();
   const past = page.getByLabel("Past consultations");
   const card = past.locator("article").first();
   await expect(card.getByText("Completed", { exact: true })).toBeVisible();
@@ -1717,9 +1731,9 @@ test("admin uploads a PNG logo, crops a mark and a horizontal logo, and the pati
     admin.locator('[class*="pvBar"] img[data-brand-logo="horizontal"]').first(),
   ).toHaveAttribute("src", wide);
   await admin.getByRole("button", { name: "Save changes" }).click();
-  await expect(
-    admin.getByRole("button", { name: "Save changes" }),
-  ).toHaveCount(0);
+  await expect(admin.getByRole("button", { name: "Save changes" })).toHaveCount(
+    0,
+  );
 
   // The patient tab picks up the new logo without a reload…
   await expect(
@@ -1747,23 +1761,24 @@ test("admin uploads a PNG logo, crops a mark and a horizontal logo, and the pati
     );
   await dialog.getByRole("button", { name: "Next: horizontal logo" }).click();
   await dialog.getByRole("button", { name: "Skip, use mark + name" }).click();
-  await expect(admin.getByRole("img", { name: "Horizontal logo" })).toHaveCount(0);
+  await expect(admin.getByRole("img", { name: "Horizontal logo" })).toHaveCount(
+    0,
+  );
   await expect(
     admin.locator('[class*="pvBar"] [data-brand-logo="mark"]').first(),
   ).toContainText("Tatva Care Hospital");
 });
 
-test("My visits offers Book in the header and a floating action clear of the nav", async ({
+test("My visits has one bottom booking action and no header booking CTA", async ({
   page,
 }) => {
   await page.goto("/appointments");
   const header = page.getByRole("button", { name: "Book a new appointment" });
   const floating = page.getByRole("button", {
-    name: "Book appointment",
+    name: "Book new appointment",
     exact: true,
   });
-  await expect(header).toBeVisible();
-  await expect(header).toHaveText("Book");
+  await expect(header).toHaveCount(0);
   await expect(floating).toBeVisible();
   const nav = page.getByRole("navigation", { name: "Main navigation" });
   // Measured at rest, after the one-time entry animation.
@@ -1774,8 +1789,7 @@ test("My visits offers Book in the header and a floating action clear of the nav
   expect(box.y + box.height).toBeLessThanOrEqual(
     (await nav.boundingBox()).y - 12,
   );
-  expect((await header.boundingBox()).y).toBeLessThan(64);
-  await header.click();
+  await floating.click();
   await expect(page).toHaveURL(/\/doctors$/);
   // No upcoming visits: the empty state is the only call to action.
   await page.goto("/appointments");
@@ -1785,9 +1799,9 @@ test("My visits offers Book in the header and a floating action clear of the nav
     .getByRole("button", { name: /Sunita Sharma/ })
     .click();
   await expect(header).toHaveCount(0);
-  await expect(floating).toHaveCount(0);
+  await expect(page.locator("#page-action button")).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Find a doctor" }),
+    page.getByRole("button", { name: "Book new appointment", exact: true }),
   ).toBeVisible();
 });
 
@@ -1803,7 +1817,7 @@ test("booking assistant books a visit end to end from free text and quick replie
   await expect(
     page.getByRole("heading", { name: "How would you like to book?" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: /Book with assistant/ }).click();
+  await page.getByRole("button", { name: /Book with (AI )?assistant/ }).click();
   await expect(page).toHaveURL(/\/book\/meera\?mode=assistant$/);
   const feed = page.locator('[aria-live="polite"]');
   // Greets, confirms the doctor and asks who the visit is for.
@@ -1860,7 +1874,8 @@ test("booking assistant books a visit end to end from free text and quick replie
     page.getByRole("region", { name: "Appointment summary" }),
   ).toContainText(/Rajesh Sharma.*06:00 PM.*In clinic.*Indiranagar/s);
   const visits = await page.evaluate(
-    () => JSON.parse(localStorage.getItem("tatva-patient-demo-v1")).appointments,
+    () =>
+      JSON.parse(localStorage.getItem("tatva-patient-demo-v1")).appointments,
   );
   expect(visits[0]).toMatchObject({
     doctorId: "meera",
@@ -1873,6 +1888,7 @@ test("booking assistant books a visit end to end from free text and quick replie
   // The choice is remembered for the session, and manual is one tap away
   // with the answers given so far.
   await page.goto("/book/arjun");
+  await page.getByRole("button", { name: /Book with AI assistant/ }).click();
   await expect(page).toHaveURL(/\/book\/arjun\?mode=assistant$/);
   await page
     .getByRole("group", { name: "Quick replies" })
@@ -1979,8 +1995,8 @@ test("confirmation screen has no ID, a full card, two actions and survives sympt
 test("lab reports open an intelligent analysis with filters, explanations and a concerning parameters page", async ({
   page,
 }) => {
-  await page.goto("/records");
-  const card = page.getByRole("button", { name: /Diabetes screening/ });
+  await page.goto("/records?tab=labs");
+  const card = page.getByRole("button", { name: /^View Diabetes screening/ });
   await expect(card).toContainText("AI analysis");
   await card.click();
   await expect(page).toHaveURL(/\/records\/r12$/);
@@ -2045,4 +2061,80 @@ test("lab reports open an intelligent analysis with filters, explanations and a 
   // Another patient's report is not shown.
   await page.goto("/records/r13");
   await expect(page.getByText("This report isn’t available")).toBeVisible();
+});
+
+test("health records are grouped into visits, lab results, medical records, discharge summaries, certificates and history", async ({
+  page,
+}) => {
+  await page.goto("/records");
+  // The latest prescription is open by default, with a selector for older visits.
+  await expect(
+    page.getByRole("img", { name: "Consultation prescription, page 1" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /Visit with Dr/ })).toHaveCount(
+    0,
+  );
+  await expect(
+    page.getByRole("button", { name: "Upload medical records" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByLabel("Prescription date").locator("option"),
+  ).toHaveCount(4);
+  await page.goto("/records?tab=labs");
+  await expect(page.getByText("3 records")).toBeVisible();
+  await expect(
+    page.getByRole("article", { name: "Complete blood count" }),
+  ).toContainText("1 parameter is concerning");
+  // Medical records: report summaries are limited to supported lab reports.
+  await page.goto("/records?tab=records");
+  await expect(page.getByText("4 records")).toBeVisible();
+  await page.getByRole("button", { name: "Radiology (1)" }).click();
+  await expect(
+    page.getByRole("button", { name: /^View Chest X-ray/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^View Urine routine/ }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "All (4)" }).click();
+  await page
+    .getByRole("button", {
+      name: "View Urine routine & microscopy",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByRole("tab", { name: "Intelligent analysis" }),
+  ).toBeVisible();
+  await expect(page.getByRole("tabpanel")).toContainText("A normal urine test");
+  await expect(page.getByRole("tabpanel")).toContainText("Next steps");
+  await page.getByRole("tab", { name: "Original report" }).click();
+  await expect(page.locator("canvas")).toBeVisible();
+  // Certificates and medical history for the current patient.
+  await page.goto("/records?tab=certificates");
+  await expect(page.getByText("2 records")).toBeVisible();
+  await expect(
+    page.getByRole("article", {
+      name: "Medical leave certificate",
+      exact: true,
+    }),
+  ).toContainText("Valid");
+  await page.goto("/records?tab=history");
+  await expect(page.getByRole("region", { name: "Allergies" })).toContainText(
+    "Dust mites",
+  );
+  await expect(
+    page.getByRole("region", { name: "Additional History" }),
+  ).toBeVisible();
+  // Discharge summaries belong to the patient who was admitted.
+  await page.getByRole("button", { name: /For Aarav Sharma/ }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /Sunita Sharma/ })
+    .click();
+  await page.goto("/records?tab=discharge");
+  await page.getByRole("button", { name: /Discharge summary/ }).click();
+  const stay = page.getByRole("dialog", { name: "Discharge summary" });
+  await expect(stay).toContainText("Orthopaedics, Jayanagar");
+  await expect(stay).toContainText("Knee joint aspiration");
+  await expect(stay).toContainText("Medicines on discharge");
 });

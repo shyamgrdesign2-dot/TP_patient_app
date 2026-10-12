@@ -10,8 +10,10 @@ export default function PdfViewer({
   blob,
   title,
   onDocument,
+  onPageCount,
   pageNumber = 1,
   onPageChange,
+  zoom = 1,
 }) {
   const [pdf, setPdf] = useState(null),
     [error, setError] = useState(""),
@@ -54,6 +56,7 @@ export default function PdfViewer({
         if (!doc || cancelled) return;
         setPdf(doc);
         onDocument?.(doc);
+        onPageCount?.(doc.numPages);
       })
       .catch(() => {
         if (!cancelled) {
@@ -66,9 +69,10 @@ export default function PdfViewer({
     return () => {
       cancelled = true;
       onDocument?.(null);
+      onPageCount?.(0);
       task?.destroy();
     };
-  }, [blob, onDocument]);
+  }, [blob, onDocument, onPageCount]);
   useEffect(() => {
     if (!pdf) return;
     let render,
@@ -79,7 +83,9 @@ export default function PdfViewer({
       .then(async (page) => {
         if (cancelled) return;
         const viewport = page.getViewport({
-          scale: Math.max(200, width) / page.getViewport({ scale: 1 }).width,
+          scale:
+            (Math.max(100, width) * zoom) /
+            page.getViewport({ scale: 1 }).width,
         });
         const pixelRatio = Math.min(devicePixelRatio || 1, 2);
         const node = canvas.current;
@@ -112,7 +118,7 @@ export default function PdfViewer({
       cancelled = true;
       render?.cancel();
     };
-  }, [pdf, pageNumber, width]);
+  }, [pdf, pageNumber, width, zoom]);
   return (
     <div className={s.pdfViewer}>
       <ErrorText>{error}</ErrorText>

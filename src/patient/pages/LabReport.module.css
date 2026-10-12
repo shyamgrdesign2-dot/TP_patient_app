@@ -116,7 +116,7 @@
   justify-content: space-between;
   gap: var(--tesseract-space-3);
 }
-.paramHead h3 {
+.paramHead h2 {
   font-size: var(--tesseract-text-body-base);
   line-height: var(--tesseract-text-body-base-lh);
   font-weight: var(--tesseract-weight-semibold);
@@ -361,4 +361,72 @@
   flex-direction: column;
   gap: var(--tesseract-space-2-5);
   margin-top: var(--tesseract-space-4);
+}
+
+.tabs {
+  position: sticky;
+  top: var(--tesseract-patient-header-height, 64px);
+  z-index: 16;
+  margin-inline: calc(-1 * var(--tesseract-page-inset));
+  padding-inline: var(--tesseract-page-inset);
+  background: var(--tesseract-bg-surface);
+  border-bottom: 1px solid var(--tesseract-border-soft);
+}
+.reportPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-4);
+}
+
+/* Radiology and pathology explanations share the report tabs without numeric charts. */
+.preparedSummary {
+  padding: var(--tesseract-space-5);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-16);
+  background: var(--tesseract-bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-5);
+}
+.preparedSummaryHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tesseract-space-3);
+}
+.preparedSummaryHeading > :first-child {
+  flex-shrink: 0;
+}
+.preparedSummaryHeading h2 {
+  font-size: var(--tesseract-text-body-base);
+  line-height: var(--tesseract-text-body-base-lh);
+  font-weight: var(--tesseract-weight-semibold);
+  color: var(--tesseract-fg-heading);
+}
+.preparedSummaryPoints {
+  margin: 0;
+  padding-left: var(--tesseract-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-3);
+  color: var(--tesseract-fg-secondary);
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+}
+.preparedSummaryPoints li::marker {
+  color: var(--tesseract-blue-500);
+}
+.preparedSummaryNext {
+  border-top: 1px solid var(--tesseract-border-soft);
+  padding-top: var(--tesseract-space-4);
+}
+.preparedSummaryNext h3 {
+  color: var(--tesseract-fg-heading);
+  font-size: var(--tesseract-text-body-sm);
+  font-weight: var(--tesseract-weight-semibold);
+  margin-bottom: var(--tesseract-space-2);
+}
+.preparedSummaryNext p {
+  color: var(--tesseract-fg-secondary);
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
 }

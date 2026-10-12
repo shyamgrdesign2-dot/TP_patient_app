@@ -234,6 +234,7 @@
 .careBanner[data-tone="neutral"] {
   --tesseract-care-from: var(--tesseract-blue-700);
   --tesseract-care-to: var(--tesseract-blue-900);
+  --tesseract-care-accent: var(--tesseract-blue-800);
 }
 .careBanner[data-tone="neutral"] .bannerBottom > button {
   color: var(--tesseract-blue-800) !important;
@@ -377,7 +378,7 @@
   margin-left: auto;
   max-width: 100%;
   min-width: 0;
-  min-height: var(--tesseract-size-36);
+  min-height: var(--tesseract-patient-touch, 44px);
   height: auto;
   flex-shrink: 0;
   padding-inline: var(--tesseract-space-2-5) !important;
@@ -386,11 +387,26 @@
   font-weight: var(--tesseract-weight-semibold);
   box-shadow: none;
 }
-.careBanner .bannerBottom > button[data-variant="solid"] {
-  background: var(--tesseract-bg-surface);
-  border-color: var(--tesseract-bg-surface);
-  color: var(--tesseract-fg-link);
+.careBanner .bannerBottom > button[data-variant="solid"]:not([data-ai="true"]) {
+  background: var(--tesseract-bg-surface) !important;
+  border-color: var(--tesseract-bg-surface) !important;
+  color: var(--tesseract-care-accent, var(--tesseract-fg-link)) !important;
   box-shadow: none;
+}
+/* Banner CTAs retain one appearance under a pointer. Keyboard focus stays
+   distinct, including on the gradient symptom action. */
+.careBanner .bannerBottom > button:not(:disabled) {
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+.careBanner .bannerBottom > button:not(:focus-visible) {
+  box-shadow: none !important;
+}
+.careBanner .bannerBottom > button:focus-visible {
+  outline: 2px solid var(--tesseract-on-dark);
+  outline-offset: 3px;
 }
 .careBanner .bannerBottom > button[data-ai="true"] {
   padding-inline: var(--tesseract-space-2) !important;
@@ -503,7 +519,8 @@
   font-weight: var(--tesseract-weight-medium);
 }
 .quickActions > button > span:last-child {
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .quickIcon {
   flex-shrink: 0;
@@ -699,11 +716,17 @@
   line-height: var(--tesseract-text-caption-lh);
   font-weight: var(--tesseract-weight-semibold);
   color: var(--tesseract-fg-heading);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 .familyMini small {
   font-size: var(--tesseract-text-caption-sm);
   line-height: var(--tesseract-text-caption-lh);
   color: var(--tesseract-fg-tertiary);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .homeFooter {
@@ -919,4 +942,92 @@
   bottom: calc(var(--tesseract-space-6) * -1);
   color: color-mix(in srgb, var(--tesseract-on-dark) 18%, transparent);
   transform: rotate(-10deg);
+}
+
+/* Brand-tinted section card; its outline fades only through the centre. */
+.quickActions {
+  position: relative;
+  gap: 0;
+  padding: var(--tesseract-space-2);
+  border: 0;
+  border-radius: 16px;
+  background: var(--tesseract-bg-brand-soft);
+}
+.quickActions::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--tesseract-blue-200);
+  border-radius: inherit;
+  pointer-events: none;
+  mask-image: linear-gradient(
+    90deg,
+    black 8%,
+    transparent 42%,
+    transparent 58%,
+    black 92%
+  );
+}
+.quickActions > button {
+  position: relative;
+  min-height: 68px;
+  gap: var(--tesseract-space-1);
+  padding: var(--tesseract-space-1) 0;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.quickActions > button + button::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 1px;
+  background: linear-gradient(
+    transparent,
+    var(--tesseract-blue-200) 50%,
+    transparent
+  );
+}
+.quickActions > button:hover {
+  background: color-mix(in srgb, var(--tesseract-bg-surface) 44%, transparent);
+}
+.quickActions > button:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: 1px;
+}
+.quickIcon {
+  width: 40px;
+  height: 40px;
+  background: transparent;
+}
+.quickActions + .sectionHeading {
+  margin-top: var(--tesseract-space-4);
+}
+.familyMini > .addFamily {
+  background: transparent;
+  color: var(--tesseract-blue-700);
+  border: 2px dotted var(--tesseract-blue-600);
+}
+.addFamilyIcon {
+  width: var(--tesseract-patient-touch);
+  height: var(--tesseract-patient-touch);
+  display: grid;
+  place-items: center;
+  color: var(--tesseract-blue-600);
+}
+.familyMini > .addFamily small {
+  color: var(--tesseract-blue-600);
+}
+
+/* Inset focus rings remain visible within horizontally scrolling rails. */
+.familyMini > button:focus-visible,
+.homeSheetTop:focus-visible,
+.packagePromo:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: -3px;
+}
+
+.familyMini > button.addFamily strong {
+  color: var(--tesseract-blue-700);
 }

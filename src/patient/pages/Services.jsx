@@ -38,8 +38,8 @@ export function Billing() {
   const { state, activeMember, brand } = useApp();
   const [tab, setTab] = useState("All");
   const [params, setParams] = useSearchParams();
-  const [bill, setBillState] = useState(() =>
-    state.bills.find((b) => b.id === params.get("bill")) || null,
+  const [bill, setBillState] = useState(
+    () => state.bills.find((b) => b.id === params.get("bill")) || null,
   );
   const setBill = (b) => {
     setBillState(b);
@@ -91,7 +91,7 @@ export function Billing() {
                 <Status status={b.status} />
               </span>
               <span className={s.billRow}>
-                <h3 className={s.cardTitle}>{b.title}</h3>
+                <h2 className={s.cardTitle}>{b.title}</h2>
                 <strong>{money(b.amount)}</strong>
               </span>
               {b.status === "Paid" && b.method && (
@@ -190,7 +190,7 @@ export function Hospital() {
       <PageHeader title="Your hospital" />
       <div className={s.hospitalHero}>
         <Icon name="hospital" size={52} bulk />
-        <h1>{brand.hospitalName}</h1>
+        <h2>{brand.hospitalName}</h2>
         <p>
           {hospital.name}, {hospital.city}
         </p>
@@ -199,12 +199,16 @@ export function Hospital() {
       {extras.photos?.length > 0 && (
         <div className={s.clinicPhotos}>
           {extras.photos.map((src, i) => (
-            <img key={i} src={src} alt={`${hospital.name} clinic, photo ${i + 1}`} />
+            <img
+              key={i}
+              src={src}
+              alt={`${hospital.name} clinic, photo ${i + 1}`}
+            />
           ))}
         </div>
       )}
       <div className={s.detailCard}>
-        <h3>Getting here</h3>
+        <h2>Getting here</h2>
         <p>
           {hospital.address}
           {hospital.pincode ? ` – ${hospital.pincode}` : ""}
@@ -224,7 +228,7 @@ export function Hospital() {
         </Button>
       </div>
       <div className={s.detailCard}>
-        <h3>OPD timings</h3>
+        <h2>OPD timings</h2>
         {shifts.length ? (
           <dl className={s.shiftList}>
             {shifts.map(([days, times]) => (
@@ -245,7 +249,13 @@ export function Hospital() {
       <SectionTitle>Hospital contacts</SectionTitle>
       <HospitalContacts
         showEmpty
-        desks={["bookingPhone", "whatsappPhone", "billingPhone", "supportPhone", "ambulancePhone"]}
+        desks={[
+          "bookingPhone",
+          "whatsappPhone",
+          "billingPhone",
+          "supportPhone",
+          "ambulancePhone",
+        ]}
       />
       <Button href="tel:112" variant="outline" theme="error" fullWidth>
         <Icon name="call-calling" />

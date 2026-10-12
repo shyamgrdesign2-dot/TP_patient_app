@@ -158,7 +158,10 @@ export function BrandMark({ size = 32, className = "", brand: draft }) {
   return (
     <span
       className={`${s.brandMark} ${className}`}
-      style={{ "--brand-mark-size": `${size}px`, "--brand-mark-bg": brand.primary }}
+      style={{
+        "--brand-mark-size": `${size}px`,
+        "--brand-mark-bg": brand.primary,
+      }}
       data-monogram={!mark || undefined}
       role="img"
       aria-label={brand.hospitalName}
@@ -247,7 +250,32 @@ export function SectionTitle({ children, action, onAction, className = "" }) {
     </div>
   );
 }
-export function PageHeader({ title, action, trailing, onBack }) {
+export function PageHeader({
+  title,
+  patientSelector,
+  action,
+  trailing,
+  onBack,
+}) {
+  const header = useRef(null);
+  useEffect(() => {
+    const node = header.current;
+    const main = node?.closest("main");
+    if (!node || !main) return;
+    const update = () => {
+      const height = `${node.getBoundingClientRect().height}px`;
+      main.style.setProperty("--tesseract-patient-header-height", height);
+      main.style.setProperty("--patient-header-height", height);
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    update();
+    return () => {
+      observer.disconnect();
+      main.style.removeProperty("--tesseract-patient-header-height");
+      main.style.removeProperty("--patient-header-height");
+    };
+  }, []);
   const [actionHost, setActionHost] = useState(null);
   useEffect(() => {
     setActionHost(document.getElementById("page-action"));
@@ -261,7 +289,10 @@ export function PageHeader({ title, action, trailing, onBack }) {
   }
   return (
     <>
-      <header className={s.pageHeader}>
+      <header
+        className={`${s.pageHeader} ${patientSelector ? s.patientPageHeader : ""}`}
+        ref={header}
+      >
         <Button
           variant="ghost"
           theme="neutral"
@@ -271,8 +302,13 @@ export function PageHeader({ title, action, trailing, onBack }) {
         >
           <Icon name="arrow-left3" size={22} />
         </Button>
-        <div className={s.grow}>{title && <h1>{title}</h1>}</div>
+        <div className={s.grow}>{title && <h1 tabIndex={-1}>{title}</h1>}</div>
         {trailing && <div className={s.pageHeaderTrailing}>{trailing}</div>}
+        {patientSelector && (
+          <div className={s.headerPatientSelector}>
+            <MemberContext plain />
+          </div>
+        )}
       </header>
       {action &&
         actionHost &&
@@ -295,7 +331,7 @@ export function Empty({
       <div className={s.emptyIcon}>
         <Icon name={icon} size={32} bulk />
       </div>
-      <h3>{title}</h3>
+      <h2>{title}</h2>
       <p>{description}</p>
       {action && <Button onClick={onAction}>{action}</Button>}
     </div>
@@ -496,6 +532,7 @@ export function FamilySheet({ open, onClose }) {
             key={member.id}
             className={s.selectionCard}
             data-selected={member.id === activeMember.id}
+            aria-pressed={member.id === activeMember.id}
             onClick={() => {
               dispatch({ type: "SELECT_MEMBER", id: member.id });
               close();

@@ -118,7 +118,7 @@ function CareBanners({ slides }) {
       <div className={s.bannerTrack} ref={track} onScroll={syncPosition}>
         {repeated.map((slide, index) => (
           <SpotlightCard
-            as="article"
+            as="div"
             key={`${slide.id}-${index}`}
             className={s.careBanner}
             pattern={slide.id}
@@ -216,7 +216,7 @@ function CareBanners({ slides }) {
                 data-ai={slide.action.path.startsWith("/assistant?")}
                 leftIcon={
                   slide.action.path.startsWith("/assistant?") ? (
-                    <Icon name="add-plain" size={14} />
+                    <Icon name="add-plain" size={16} />
                   ) : undefined
                 }
                 className={

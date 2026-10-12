@@ -41,7 +41,10 @@ export default function VisitSummary({
   const video = visit.type === VIDEO;
   const fee = feeFor(doctor, visit.type);
   return (
-    <section className={`${s.summary} ${className}`} aria-label="Appointment summary">
+    <section
+      className={`${s.summary} ${className}`}
+      aria-label="Appointment summary"
+    >
       {showDoctor && doctor && (
         <div className={s.person}>
           <Avatar
@@ -62,7 +65,11 @@ export default function VisitSummary({
       )}
       {member && (
         <div className={s.person} data-testid="summary-patient">
-          <Avatar name={member.name} size={showDoctor ? 48 : 40} color="primary" />
+          <Avatar
+            name={member.name}
+            size={showDoctor ? 48 : 40}
+            color="primary"
+          />
           <div className={s.lineBody}>
             <span className={s.lineLabel}>Patient</span>
             <strong>
@@ -101,41 +108,29 @@ export default function VisitSummary({
         clinic && (
           <Line icon="location" label="Hospital">
             <strong>{clinic.name}</strong>
-            <span className={s.sub}>{clinic.address}</span>
+            {contact && clinic.mapsUrl ? (
+              <a
+                className={`${s.sub} ${s.contactLink}`}
+                href={clinic.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Directions to ${clinic.name} clinic`}
+              >
+                {clinic.address}
+              </a>
+            ) : (
+              <span className={s.sub}>{clinic.address}</span>
+            )}
             {contact && (
               <span className={s.contact}>
                 {clinic.phone && (
-                  <Button
-                    variant="tonal"
-                    size="sm"
+                  <a
+                    className={s.contactLink}
                     href={`tel:${clinic.phone.replace(/[^\d+]/g, "")}`}
                     aria-label={`Call ${clinic.name} clinic on ${clinic.phone}`}
-                    leftIcon={
-                      <Icon name="call" family="call" corner="rounded" size={16} />
-                    }
                   >
                     {clinic.phone}
-                  </Button>
-                )}
-                {clinic.mapsUrl && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    href={clinic.mapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Directions to ${clinic.name} clinic`}
-                    leftIcon={
-                      <Icon
-                        name="routing"
-                        family="location"
-                        corner="rounded"
-                        size={16}
-                      />
-                    }
-                  >
-                    Directions
-                  </Button>
+                  </a>
                 )}
               </span>
             )}

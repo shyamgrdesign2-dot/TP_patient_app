@@ -545,7 +545,7 @@ function BookingSheet({ open, item, kind, clinics, onClose, onViewBookings }) {
           <span className={s.sentIcon} aria-hidden="true">
             <Icon name="tick-circle" size={32} bulk />
           </span>
-          <h3 className={s.cardTitle}>We’ve sent your booking request</h3>
+          <h2 className={s.cardTitle}>We’ve sent your booking request</h2>
           <p className={s.bodyText}>
             {item.name} for {activeMember.name} at {clinicName},{" "}
             {formatDate(date, { weekday: "short" })}. The hospital will call to
@@ -606,7 +606,7 @@ function BookingsList() {
                     <span className={s.requestKind}>
                       {r.kind === "vaccine" ? "Vaccine" : "Health package"}
                     </span>
-                    <h3 className={s.cardTitle}>{r.itemName}</h3>
+                    <h2 className={s.cardTitle}>{r.itemName}</h2>
                   </span>
                   <Status status={r.status} />
                 </div>

@@ -1,3 +1,4 @@
+import { recordExamples } from "./recordExamples.js";
 import { withAdminOverrides } from "./hospitalConfig.js";
 import { soonSlot } from "./videoVisit.js";
 export const dateKey = (offset = 0) => {
@@ -79,7 +80,9 @@ export const doctors = withAdminOverrides(baseDoctors);
 // Fee for a visit type, or null when the hospital hasn't set one.
 export const feeFor = (doctor, type) => {
   const fee =
-    type === "Video consultation" ? (doctor?.videoFee ?? doctor?.fee) : doctor?.fee;
+    type === "Video consultation"
+      ? (doctor?.videoFee ?? doctor?.fee)
+      : doctor?.fee;
   return Number.isFinite(fee) ? fee : null;
 };
 export const specialties = [
@@ -201,7 +204,7 @@ const hoursAgo = (h) => new Date(Date.now() - h * 3600000).toISOString();
 export function initialState() {
   return {
     version: 1,
-    seedVersion: 5,
+    seedVersion: 7,
     activeMember: "self",
     location: "indiranagar",
     members: [
@@ -218,12 +221,38 @@ export function initialState() {
         access: "Full access",
         history: {
           conditions: [
-            { name: "Vitamin D insufficiency", since: "2026", status: "Under treatment" },
-            { name: "Allergic contact dermatitis", since: "2026", status: "Resolved" },
+            {
+              name: "Vitamin D insufficiency",
+              since: "2026",
+              status: "Under treatment",
+            },
+            {
+              name: "Allergic contact dermatitis",
+              since: "2026",
+              status: "Resolved",
+            },
           ],
-          allergies: [{ name: "Dust mites", reaction: "Sneezing, watery eyes", severity: "Mild" }],
-          medications: [{ name: "Cholecalciferol 60,000 IU", dose: "Once a week", since: "Sep 2026" }],
-          surgeries: [{ name: "Appendectomy", year: "2012", place: "City Hospital, Pune" }],
+          allergies: [
+            {
+              name: "Dust mites",
+              reaction: "Sneezing, watery eyes",
+              severity: "Mild",
+            },
+          ],
+          medications: [
+            {
+              name: "Cholecalciferol 60,000 IU",
+              dose: "Once a week",
+              since: "Sep 2026",
+            },
+          ],
+          surgeries: [
+            {
+              name: "Appendectomy",
+              year: "2012",
+              place: "City Hospital, Pune",
+            },
+          ],
           vaccinations: [
             { name: "Influenza", date: "Aug 2026" },
             { name: "Tetanus booster", date: "Mar 2023" },
@@ -233,7 +262,8 @@ export function initialState() {
             { relation: "Father", condition: "Hypertension" },
             { relation: "Mother", condition: "Osteoarthritis, hypothyroidism" },
           ],
-          lifestyle: "Non-smoker · Occasional alcohol · Walks 3 days a week · Vegetarian",
+          lifestyle:
+            "Non-smoker · Occasional alcohol · Walks 3 days a week · Vegetarian",
         },
       },
       {
@@ -248,21 +278,51 @@ export function initialState() {
         access: "Full access",
         history: {
           conditions: [
-            { name: "Essential hypertension", since: "2019", status: "Controlled" },
+            {
+              name: "Essential hypertension",
+              since: "2019",
+              status: "Controlled",
+            },
             { name: "Dyslipidaemia", since: "2024", status: "Under treatment" },
           ],
-          allergies: [],
-          medications: [
-            { name: "Telmisartan 40 mg", dose: "Once a day, morning", since: "2019" },
-            { name: "Atorvastatin 10 mg", dose: "Once a day, night", since: "2024" },
+          allergies: [
+            {
+              name: "Seasonal pollen",
+              reaction: "Sneezing and itchy eyes",
+              severity: "Mild",
+            },
           ],
-          surgeries: [{ name: "Cataract surgery, left eye", year: "2022", place: "Tatva Practice, Indiranagar" }],
+          additional: [
+            "Current medicines reviewed at the cardiology visit.",
+            "Uses reading glasses after left eye cataract surgery.",
+            "Independent in daily activities; carries a home blood pressure diary.",
+          ],
+          medications: [
+            {
+              name: "Telmisartan 40 mg",
+              dose: "Once a day, morning",
+              since: "2019",
+            },
+            {
+              name: "Atorvastatin 10 mg",
+              dose: "Once a day, night",
+              since: "2024",
+            },
+          ],
+          surgeries: [
+            {
+              name: "Cataract surgery, left eye",
+              year: "2022",
+              place: "Tatva Practice, Indiranagar",
+            },
+          ],
           vaccinations: [
             { name: "Influenza", date: "Aug 2026" },
             { name: "Pneumococcal", date: "Jan 2024" },
           ],
           family: [{ relation: "Brother", condition: "Type 2 diabetes" }],
-          lifestyle: "Former smoker, quit in 2015 · No alcohol · Morning walk daily",
+          lifestyle:
+            "Former smoker, quit in 2015 · No alcohol · Morning walk daily",
         },
       },
       {
@@ -277,12 +337,44 @@ export function initialState() {
         access: "Full access",
         history: {
           conditions: [
-            { name: "Osteoarthritis, right knee", since: "2026", status: "Under treatment" },
+            {
+              name: "Osteoarthritis, right knee",
+              since: "2026",
+              status: "Under treatment",
+            },
             { name: "Hypothyroidism", since: "2018", status: "Controlled" },
           ],
-          allergies: [{ name: "Penicillin", reaction: "Rash", severity: "Moderate" }],
-          medications: [{ name: "Levothyroxine 50 mcg", dose: "Once a day, empty stomach", since: "2018" }],
-          surgeries: [{ name: "Caesarean section", year: "1994", place: "City Hospital, Pune" }],
+          allergies: [
+            { name: "Penicillin", reaction: "Rash", severity: "Moderate" },
+          ],
+          medications: [
+            {
+              name: "Levothyroxine 50 mcg",
+              dose: "Once a day, empty stomach",
+              since: "2018",
+            },
+          ],
+          surgeries: [
+            {
+              name: "Caesarean section",
+              year: "1994",
+              place: "City Hospital, Pune",
+            },
+          ],
+          injuries: [
+            {
+              name: "Fall with right knee swelling",
+              date: dateKey(-21),
+              details: "Documented in the discharge summary",
+            },
+          ],
+          rehabilitation: [
+            {
+              name: "Quadriceps strengthening",
+              site: "Right knee",
+              details: "Programme recorded at the orthopaedic follow-up",
+            },
+          ],
           vaccinations: [{ name: "Influenza", date: "Aug 2026" }],
           family: [{ relation: "Mother", condition: "Hypothyroidism" }],
           lifestyle: "Non-smoker · No alcohol · Yoga twice a week",
@@ -388,6 +480,7 @@ export function initialState() {
       },
     ],
     records: [
+      ...recordExamples(dateKey),
       {
         id: "r1",
         memberId: "self",
@@ -463,12 +556,10 @@ export function initialState() {
             unit: "fL",
             low: 80,
             high: 100,
-            about:
-              "MCV is the average size of your red blood cells.",
+            about: "MCV is the average size of your red blood cells.",
             impact:
               "Small cells can point to iron deficiency. Large cells can point to a shortage of vitamin B12 or folate.",
-            action:
-              "No action is needed while the size is in range.",
+            action: "No action is needed while the size is in range.",
           },
         ],
       },
@@ -553,15 +644,27 @@ export function initialState() {
         appointmentId: "TP-23916",
         format: "PDF",
         rx: {
-          complaints: "Routine annual review. Occasional tiredness in the evenings.",
+          complaints:
+            "Routine annual review. Occasional tiredness in the evenings.",
           vitals: "BP 124/80 mmHg · Pulse 76/min · Weight 68 kg · SpO2 98%",
           diagnosis: "Vitamin D insufficiency",
           medicines: [
-            ["Cholecalciferol 60,000 IU", "1 sachet", "Once a week, after food", "8 weeks"],
-            ["Multivitamin", "1 tablet", "Once a day, after breakfast", "30 days"],
+            [
+              "Cholecalciferol 60,000 IU",
+              "1 sachet",
+              "Once a week, after food",
+              "8 weeks",
+            ],
+            [
+              "Multivitamin",
+              "1 tablet",
+              "Once a day, after breakfast",
+              "30 days",
+            ],
           ],
           tests: "Vitamin D (25-OH) after 8 weeks",
-          advice: "20 minutes of morning sunlight. Brisk walk 30 minutes a day.",
+          advice:
+            "20 minutes of morning sunlight. Brisk walk 30 minutes a day.",
           followUp: "After 8 weeks with the Vitamin D report",
         },
       },
@@ -683,7 +786,7 @@ export function initialState() {
             low: null,
             high: 100,
             about:
-              "LDL is the \"bad\" cholesterol that deposits in artery walls.",
+              'LDL is the "bad" cholesterol that deposits in artery walls.',
             impact:
               "With blood pressure already being treated, a high LDL adds to the strain on the heart and arteries.",
             action:
@@ -697,7 +800,7 @@ export function initialState() {
             low: 40,
             high: null,
             about:
-              "HDL is the \"good\" cholesterol that carries fat away from the arteries.",
+              'HDL is the "good" cholesterol that carries fat away from the arteries.',
             impact:
               "HDL just above the lower limit gives less protection against heart disease.",
             action:
@@ -731,7 +834,8 @@ export function initialState() {
         appointmentId: "TP-23951",
         format: "PDF",
         rx: {
-          complaints: "Follow-up for blood pressure. No chest pain or breathlessness.",
+          complaints:
+            "Follow-up for blood pressure. No chest pain or breathlessness.",
           vitals: "BP 138/86 mmHg · Pulse 72/min · Weight 78 kg",
           diagnosis: "Essential hypertension, controlled",
           medicines: [
@@ -739,7 +843,8 @@ export function initialState() {
             ["Atorvastatin 10 mg", "1 tablet", "Once a day, night", "90 days"],
           ],
           tests: "Lipid profile and kidney function before the next visit",
-          advice: "Salt under 5 g a day. Walk 30 minutes daily. Check BP twice a week.",
+          advice:
+            "Salt under 5 g a day. Walk 30 minutes daily. Check BP twice a week.",
           followUp: "After 3 months",
         },
       },
@@ -755,14 +860,21 @@ export function initialState() {
         appointmentId: "TP-23874",
         format: "PDF",
         rx: {
-          complaints: "Itchy red rash on both forearms for 10 days, worse after gardening.",
+          complaints:
+            "Itchy red rash on both forearms for 10 days, worse after gardening.",
           vitals: "BP 120/78 mmHg · Pulse 74/min",
           diagnosis: "Allergic contact dermatitis",
           medicines: [
-            ["Mometasone 0.1% cream", "Thin layer", "Once a day, night", "10 days"],
+            [
+              "Mometasone 0.1% cream",
+              "Thin layer",
+              "Once a day, night",
+              "10 days",
+            ],
             ["Levocetirizine 5 mg", "1 tablet", "Once a day, night", "7 days"],
           ],
-          advice: "Wear gloves while gardening. Use a fragrance-free moisturiser twice a day.",
+          advice:
+            "Wear gloves while gardening. Use a fragrance-free moisturiser twice a day.",
           followUp: "If the rash is not better in 2 weeks",
         },
       },
@@ -778,7 +890,8 @@ export function initialState() {
         appointmentId: "TP-23842",
         format: "PDF",
         rx: {
-          complaints: "Occasional palpitations after running, no chest pain or fainting.",
+          complaints:
+            "Occasional palpitations after running, no chest pain or fainting.",
           diagnosis: "Palpitations, likely benign; to evaluate",
           medicines: [],
           tests: "ECG, 2D echo and thyroid profile",
@@ -802,11 +915,17 @@ export function initialState() {
           vitals: "BP 132/84 mmHg · Pulse 80/min · Weight 64 kg",
           diagnosis: "Early osteoarthritis, right knee",
           medicines: [
-            ["Aceclofenac 100 mg", "1 tablet", "Twice a day, after food", "5 days"],
+            [
+              "Aceclofenac 100 mg",
+              "1 tablet",
+              "Twice a day, after food",
+              "5 days",
+            ],
             ["Diclofenac gel", "Apply locally", "Three times a day", "2 weeks"],
           ],
           tests: "X-ray right knee, standing AP and lateral",
-          advice: "Quadriceps strengthening exercises. Avoid squatting and cross-legged sitting.",
+          advice:
+            "Quadriceps strengthening exercises. Avoid squatting and cross-legged sitting.",
           followUp: "After 2 weeks with the X-ray",
           sketch: {
             title: "Right knee, front view",
@@ -837,17 +956,32 @@ export function initialState() {
           admitted: dateKey(-24),
           discharged: dateKey(-21),
           ward: "Orthopaedics, Jayanagar",
-          diagnosis: "Acute flare of right knee osteoarthritis with joint effusion",
-          procedures: ["Knee joint aspiration", "Intra-articular steroid injection"],
+          diagnosis:
+            "Acute flare of right knee osteoarthritis with joint effusion",
+          procedures: [
+            "Knee joint aspiration",
+            "Intra-articular steroid injection",
+          ],
           course:
             "Admitted with a painful, swollen right knee after a fall at home. Aspiration removed 30 ml of clear fluid; infection was ruled out. Pain settled with rest, ice and a steroid injection. Walking with support from day 2.",
           medicines: [
-            ["Aceclofenac 100 mg", "1 tablet", "Twice a day, after food", "5 days"],
-            ["Pantoprazole 40 mg", "1 tablet", "Once a day, before breakfast", "5 days"],
+            [
+              "Aceclofenac 100 mg",
+              "1 tablet",
+              "Twice a day, after food",
+              "5 days",
+            ],
+            [
+              "Pantoprazole 40 mg",
+              "1 tablet",
+              "Once a day, before breakfast",
+              "5 days",
+            ],
           ],
           advice:
             "Use the knee brace while walking for 2 weeks. Ice pack 15 minutes, three times a day. Avoid stairs and squatting.",
-          followUp: "Orthopaedics OPD with Dr. Rohan Menon after 2 weeks, or sooner if the swelling or fever returns.",
+          followUp:
+            "Orthopaedics OPD with Dr. Rohan Menon after 2 weeks, or sooner if the swelling or fever returns.",
         },
       },
       {

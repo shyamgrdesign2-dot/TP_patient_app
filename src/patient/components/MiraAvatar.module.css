@@ -1,0 +1,8 @@
+.avatar {
+  display: inline-block;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 22%;
+  background: linear-gradient(135deg, #ffeaf8, #e5eaff);
+}

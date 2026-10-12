@@ -30,6 +30,7 @@ export default function Home() {
   const banner = useRef(null);
   const panel = useRef(null);
   const drag = useRef(null);
+  const dragged = useRef(false);
   useEffect(() => {
     const scroller = panel.current.closest("main");
     // Covered cards must not remain keyboard targets behind the foreground sheet.
@@ -46,12 +47,14 @@ export default function Home() {
     update();
     return () => scroller.removeEventListener("scroll", update);
   }, []);
-  const records = state.records.filter((r) => r.memberId === activeMember.id);
+  const records = state.records
+    .filter((r) => r.memberId === activeMember.id && r.released !== false)
+    .sort((a, b) =>
+      `${b.date || ""} ${b.time || ""}`.localeCompare(
+        `${a.date || ""} ${a.time || ""}`,
+      ),
+    );
   const abhaLinked = state.healthLinks?.[activeMember.id]?.abha;
-  // Book visit opens My visits when something is booked, else the doctors.
-  const hasUpcoming = state.appointments.some(
-    (a) => a.memberId === activeMember.id && a.status === "Confirmed",
-  );
   const past = state.appointments
     .filter((a) => a.memberId === activeMember.id && a.status === "Completed")
     .sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -64,7 +67,7 @@ export default function Home() {
     ...healthPackages.map((p) => Number(p.price) || Infinity),
   );
   const quick = [
-    ["calendar-2", "Book visit", hasUpcoming ? "/appointments" : "/doctors"],
+    ["calendar-2", "Book visit", "/doctors"],
     ["document-text", "My records", "/records"],
     ["bill", "My bills", "/billing"],
     ...(showPackages ? [["health", "Packages", "/packages"]] : []),
@@ -80,6 +83,10 @@ export default function Home() {
           className={s.homeSheetTop}
           aria-label="Scroll care services"
           onClick={() => {
+            if (dragged.current) {
+              dragged.current = false;
+              return;
+            }
             const main = panel.current.closest("main");
             main.scrollTo({
               top:
@@ -87,10 +94,14 @@ export default function Home() {
                 panel.current.getBoundingClientRect().top -
                 main.getBoundingClientRect().top -
                 72,
-              behavior: "smooth",
+              behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                .matches
+                ? "instant"
+                : "smooth",
             });
           }}
           onPointerDown={(event) => {
+            dragged.current = false;
             drag.current = {
               y: event.clientY,
               scroll: panel.current.closest("main").scrollTop,
@@ -98,9 +109,12 @@ export default function Home() {
             event.currentTarget.setPointerCapture(event.pointerId);
           }}
           onPointerMove={(event) => {
-            if (drag.current)
+            if (drag.current) {
+              if (Math.abs(drag.current.y - event.clientY) > 5)
+                dragged.current = true;
               panel.current.closest("main").scrollTop =
                 drag.current.scroll + drag.current.y - event.clientY;
+            }
           }}
           onPointerUp={() => {
             drag.current = null;
@@ -113,6 +127,8 @@ export default function Home() {
         </button>
         <div
           className={s.quickActions}
+          role="group"
+          aria-label="Care shortcuts"
           style={{ "--quick-count": quick.length }}
         >
           {quick.map(([icon, label, path]) => (
@@ -165,6 +181,7 @@ export default function Home() {
                   href="https://abha.abdm.gov.in/abha/v3/"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Create ABHA (opens in a new tab)"
                   variant="outline"
                 >
                   Create ABHA
@@ -294,7 +311,7 @@ export default function Home() {
         >
           Your family
         </SectionTitle>
-        <div className={s.familyMini}>
+        <div className={s.familyMini} role="group" aria-label="Family profiles">
           {state.members.map((m) => (
             <button
               key={m.id}
@@ -302,6 +319,8 @@ export default function Home() {
                 dispatch({ type: "SELECT_MEMBER", id: m.id });
               }}
               data-active={m.id === activeMember.id}
+              aria-pressed={m.id === activeMember.id}
+              aria-label={`${m.name}, ${m.relation}${m.id === activeMember.id ? ", current profile" : ". Switch profile"}`}
             >
               <Avatar
                 name={m.name}
@@ -314,9 +333,13 @@ export default function Home() {
               <small>{m.relation}</small>
             </button>
           ))}
-          <button onClick={() => navigate("/family?add=1")}>
-            <span className={s.addCircle}>
-              <Icon name="add" />
+          <button
+            className={s.addFamily}
+            aria-label="Add a family member"
+            onClick={() => navigate("/family?add=1")}
+          >
+            <span className={s.addFamilyIcon} aria-hidden="true">
+              <Icon name="add-plain" size={24} />
             </span>
             <strong>Add new</strong>
             <small>Family</small>

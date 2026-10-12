@@ -1,3 +1,4 @@
+import MiraAvatar from "../MiraAvatar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../state/AppContext";
@@ -53,7 +54,9 @@ export default function BookingAssistant({ doctor, intake, onManual }) {
     }),
     [doctor, activeMember.id],
   );
-  const [session, setSession] = useState(() => createSession(ctx));
+  const [session, setSession] = useState(() =>
+    createSession(ctx, intake?.prefill),
+  );
   const sessionRef = useRef(session);
   const [messages, setMessages] = useState([]);
   const [typing, setTyping] = useState(false);
@@ -200,7 +203,7 @@ export default function BookingAssistant({ doctor, intake, onManual }) {
         {messages.map((m) =>
           m.from === "agent" ? (
             <div className={c.agentRow} key={m.id}>
-              <span className={c.agentTile} aria-hidden="true" />
+              <MiraAvatar size={32} />
               <div className={s.agentBody}>
                 <p className={c.agentText}>{m.text}</p>
                 {m.summary && m.id === lastAgent?.id && member && (
@@ -221,7 +224,7 @@ export default function BookingAssistant({ doctor, intake, onManual }) {
         )}
         {typing && (
           <div className={c.agentRow} aria-label="Mira is typing">
-            <span className={c.agentTile} aria-hidden="true" />
+            <MiraAvatar size={32} />
             <img src={A("typing.gif")} alt="" width="48" height="40" />
           </div>
         )}
@@ -313,7 +316,9 @@ export default function BookingAssistant({ doctor, intake, onManual }) {
               <input
                 aria-label="Type your message"
                 placeholder={
-                  atConfirm ? "Or tell me what to change" : "Type your message here"
+                  atConfirm
+                    ? "Or tell me what to change"
+                    : "Type your message here"
                 }
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}

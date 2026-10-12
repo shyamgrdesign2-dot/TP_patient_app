@@ -33,7 +33,9 @@ const ownerPhone = (account) =>
   account?.accountPhone ||
   account?.members?.find((m) => m.relation === "Self")?.phone;
 const pick = (obj, keys) =>
-  Object.fromEntries(keys.filter((k) => obj[k] != null).map((k) => [k, obj[k]]));
+  Object.fromEntries(
+    keys.filter((k) => obj[k] != null).map((k) => [k, obj[k]]),
+  );
 function read(key, fallback) {
   try {
     return JSON.parse(localStorage.getItem(key)) || fallback;
@@ -81,21 +83,93 @@ export function AppProvider({ children }) {
           const s = seed[key].find((y) => y.id === x.id);
           if (!s) return x;
           const { note: _note, ...rest } = x;
-          return { ...(s.note ? x : rest), ...pick(s, [
-            "rx",
-            "appointmentId",
-            "doctorId",
-            "params",
-            "category",
-            "type",
-            "summary",
-            "discharge",
-            "certificate",
-            "note",
-          ]) };
+          return {
+            ...(s.note ? x : rest),
+            ...pick(s, [
+              "rx",
+              "appointmentId",
+              "doctorId",
+              "params",
+              "category",
+              "type",
+              "summary",
+              "discharge",
+              "certificate",
+              "note",
+            ]),
+          };
         }),
         ...fresh,
       ];
+    }
+    if ((saved.seedVersion || 0) < 6) {
+      const ids = new Set((saved.records || []).map((r) => r.id));
+      // Add examples only to the original demo profiles, never newly registered patients.
+      const demoMembers = new Set(
+        saved.members
+          .filter((m) =>
+            seed.members.some((s) => s.id === m.id && s.mrn === m.mrn),
+          )
+          .map((m) => m.id),
+      );
+      saved.records = [
+        ...(saved.records || []),
+        ...seed.records.filter(
+          (r) => r.demo && demoMembers.has(r.memberId) && !ids.has(r.id),
+        ),
+      ];
+      saved.members = saved.members.map((m) => {
+        const example = seed.members.find((s) => s.id === m.id);
+        return demoMembers.has(m.id) && m.history
+          ? {
+              ...m,
+              history: {
+                injuries: example?.history?.injuries || [],
+                rehabilitation: example?.history?.rehabilitation || [],
+                ...m.history,
+              },
+            }
+          : m;
+      });
+    }
+    if ((saved.seedVersion || 0) < 7) {
+      const ids = new Set((saved.records || []).map((r) => r.id));
+      const demoMembers = new Set(
+        saved.members
+          .filter((m) =>
+            seed.members.some((s) => s.id === m.id && s.mrn === m.mrn),
+          )
+          .map((m) => m.id),
+      );
+      saved.records = [
+        ...(saved.records || []),
+        ...seed.records.filter(
+          (r) =>
+            r.demo &&
+            r.id.startsWith("demo-v7-") &&
+            demoMembers.has(r.memberId) &&
+            !ids.has(r.id),
+        ),
+      ];
+      saved.members = saved.members.map((m) => {
+        if (m.id !== "father" || !demoMembers.has(m.id)) return m;
+        const example = seed.members.find((s) => s.id === m.id);
+        // Existing clinical entries, including an explicitly empty list, remain untouched.
+        return {
+          ...m,
+          history: {
+            ...pick(example.history, [
+              "lifestyle",
+              "conditions",
+              "family",
+              "allergies",
+              "surgeries",
+              "additional",
+            ]),
+            ...m.history,
+          },
+        };
+      });
     }
     // Package and vaccine booking requests arrived later; keep the patient's
     // own requests and any status the hospital has set.
@@ -107,11 +181,13 @@ export function AppProvider({ children }) {
     // Medical history is kept by the hospital against each member.
     saved.members = (saved.members || []).map((m) => {
       const s = seed.members.find((x) => x.id === m.id);
-      return s?.history && !m.history ? { ...m, history: s.history } : m;
+      return s?.history && s.mrn === m.mrn && !m.history
+        ? { ...m, history: s.history }
+        : m;
     });
     // Records saved under the older document categories move to their tab.
     saved.records = (saved.records || []).map(normalizeRecord);
-    saved.seedVersion = 5;
+    saved.seedVersion = 7;
     return saved;
   });
   const stateRef = useRef(state);

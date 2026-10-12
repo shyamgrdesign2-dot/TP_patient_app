@@ -1,0 +1,54 @@
+.familyMember {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--tesseract-space-3);
+}
+
+.familyMember h3,
+.familyMember p,
+.familyMember span {
+  overflow-wrap: anywhere;
+}
+
+.familyActions {
+  grid-column: 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--tesseract-space-2);
+}
+
+.familyAction {
+  display: grid;
+  place-items: center;
+  min-width: var(--tesseract-patient-touch, 44px);
+  min-height: var(--tesseract-patient-touch, 44px);
+  padding: var(--tesseract-space-2);
+  border: 0;
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-bg-subtle);
+  color: var(--tesseract-fg-secondary);
+}
+
+.familyAction[data-tone="primary"] {
+  background: var(--tesseract-bg-brand-soft);
+  color: var(--tesseract-fg-link);
+}
+
+.familyAction:hover {
+  background: var(--tesseract-bg-selected);
+}
+
+.familyAction:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: 2px;
+}
+
+@media (min-width: 400px) {
+  .familyMember {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+  }
+  .familyActions {
+    grid-column: 3;
+  }
+}

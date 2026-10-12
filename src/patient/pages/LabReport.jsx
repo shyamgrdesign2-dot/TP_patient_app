@@ -31,6 +31,7 @@ import {
   Sheet,
   SectionTitle,
 } from "../components/ui";
+import AiNote, { AiSpark } from "../components/AiNote";
 import { recordSource } from "./Records";
 import shared from "../App.module.css";
 import s from "./LabReport.module.css";
@@ -44,7 +45,8 @@ function useLabReport() {
   const { id } = useParams();
   const { state, activeMember } = useApp();
   const record = state.records.find(
-    (r) => r.id === id && r.memberId === activeMember.id,
+    (r) =>
+      r.id === id && r.memberId === activeMember.id && r.released !== false,
   );
   return { record, analysis: analyzeReport(record) };
 }
@@ -57,7 +59,7 @@ function Unavailable() {
       <Empty
         icon="document-text"
         title="This report isn’t available"
-        description="Select a lab report for the current patient from Health records."
+        description="Select a report for the current patient from Health records."
         action="Go to health records"
         onAction={() => navigate("/records")}
       />
@@ -74,95 +76,175 @@ export default function LabReport() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [explain, setExplain] = useState(null);
-  if (!record || !analysis.params.length) return <Unavailable />;
+  const preparedSummary = ["Radiology", "Pathology"].includes(record?.type)
+    ? record?.summary
+    : null;
+  const hasPreparedSummary =
+    typeof preparedSummary === "string"
+      ? !!preparedSummary.trim()
+      : !!(
+          preparedSummary?.headline ||
+          preparedSummary?.points?.length ||
+          preparedSummary?.next
+        );
+  const hasAnalysis = analysis.params.length > 0 || hasPreparedSummary;
+  const selectedTab = hasAnalysis ? tab : "original";
+  useEffect(() => {
+    setTab("analysis");
+    setFilter("all");
+    setSearch("");
+    setExplain(null);
+  }, [record?.id]);
+  if (!record) return <Unavailable />;
   const shown = filterParams(analysis.params, filter, search);
   const concerning = analysis.concerning.length;
   return (
     <div className={`${shared.page} ${s.page}`}>
       <PageHeader title={record.title} />
       <Meta className={shared.metaText} items={recordSource(record)} />
-      <Tabs value={tab} onValueChange={setTab} size="md" className={s.tabs}>
+      <Tabs
+        value={selectedTab}
+        onValueChange={setTab}
+        size="md"
+        className={s.tabs}
+      >
         <TabsList aria-label="Report view" fullWidth>
-          <TabsTrigger value="analysis">Intelligent analysis</TabsTrigger>
-          <TabsTrigger value="original">Original report</TabsTrigger>
+          <TabsTrigger
+            value="analysis"
+            disabled={!hasAnalysis}
+            id="lab-analysis-tab"
+            aria-controls="lab-report-panel"
+          >
+            Intelligent analysis
+          </TabsTrigger>
+          <TabsTrigger
+            value="original"
+            id="lab-original-tab"
+            aria-controls="lab-report-panel"
+          >
+            Original report
+          </TabsTrigger>
         </TabsList>
       </Tabs>
-      {tab === "analysis" ? (
-        <>
-          <button
-            type="button"
-            className={s.summary}
-            data-tone={concerning ? "alert" : "ok"}
-            onClick={() => navigate(`/records/${record.id}/concerning`)}
-          >
-            <span className={s.summaryIcon} aria-hidden="true">
-              <Icon
-                name={concerning ? "health" : "tick-circle"}
-                bulk
-                size={30}
+      <div
+        role="tabpanel"
+        id="lab-report-panel"
+        aria-labelledby={`lab-${selectedTab}-tab`}
+        className={s.reportPanel}
+      >
+        {selectedTab === "analysis" && hasPreparedSummary ? (
+          <PreparedReportSummary summary={preparedSummary} />
+        ) : selectedTab === "analysis" ? (
+          <>
+            <button
+              type="button"
+              className={s.summary}
+              data-tone={concerning ? "alert" : "ok"}
+              onClick={() => navigate(`/records/${record.id}/concerning`)}
+            >
+              <span className={s.summaryIcon} aria-hidden="true">
+                <Icon
+                  name={concerning ? "health" : "tick-circle"}
+                  bulk
+                  size={30}
+                />
+              </span>
+              <span className={shared.grow}>
+                <strong>{concerningSummary(concerning)}</strong>
+                <small>
+                  {concerning
+                    ? "Some parameters need attention. See their impact and get tips on what to do."
+                    : "Every value sits inside its ideal range. See what each parameter means."}
+                </small>
+              </span>
+              <span className={s.summaryArrow} aria-hidden="true">
+                <Icon name="arrow-right3" size={20} />
+              </span>
+            </button>
+            <Field
+              aria-label="Search by parameter"
+              placeholder="Search by parameter"
+              leftIcon={<Icon name="search-normal" />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <ChoiceGroup
+              label="Filter parameters"
+              hideLabel
+              options={FILTERS.map((f) => ({
+                value: f.value,
+                label:
+                  f.value === "all"
+                    ? f.label
+                    : `${f.label} (${analysis.counts[f.value]})`,
+              }))}
+              value={filter}
+              onChange={setFilter}
+            />
+            <ul className={s.list} aria-label="Parameters">
+              {shown.map((p) => (
+                <ParameterCard key={p.id} param={p} onExplain={setExplain} />
+              ))}
+            </ul>
+            {!shown.length && (
+              <Empty
+                icon="document-text"
+                title={
+                  search ? "No matching parameters" : "Nothing in this filter"
+                }
+                description={
+                  search
+                    ? "Try another parameter name."
+                    : filter === STATUS.out
+                      ? "No parameter is out of its ideal range."
+                      : "No parameter is borderline."
+                }
+                action={search ? "Clear search" : "Show all parameters"}
+                onAction={() => (search ? setSearch("") : setFilter("all"))}
               />
-            </span>
-            <span className={shared.grow}>
-              <strong>{concerningSummary(concerning)}</strong>
-              <small>
-                {concerning
-                  ? "Some parameters need attention. See their impact and get tips on what to do."
-                  : "Every value sits inside its ideal range. See what each parameter means."}
-              </small>
-            </span>
-            <span className={s.summaryArrow} aria-hidden="true">
-              <Icon name="arrow-right3" size={20} />
-            </span>
-          </button>
-          <Field
-            aria-label="Search by parameter"
-            placeholder="Search by parameter"
-            leftIcon={<Icon name="search-normal" />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <ChoiceGroup
-            label="Filter parameters"
-            hideLabel
-            options={FILTERS.map((f) => ({
-              value: f.value,
-              label:
-                f.value === "all"
-                  ? f.label
-                  : `${f.label} (${analysis.counts[f.value]})`,
-            }))}
-            value={filter}
-            onChange={setFilter}
-          />
-          <ul className={s.list} aria-label="Parameters">
-            {shown.map((p) => (
-              <ParameterCard key={p.id} param={p} onExplain={setExplain} />
+            )}
+            <Notice icon="info-circle">{DISCLAIMER}</Notice>
+            <ExplainSheet param={explain} onClose={() => setExplain(null)} />
+          </>
+        ) : (
+          <OriginalReport record={record} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PreparedReportSummary({ summary }) {
+  const content =
+    typeof summary === "string"
+      ? { headline: "Report explanation", points: [summary] }
+      : summary;
+  return (
+    <>
+      <section className={s.preparedSummary} aria-label="Report explanation">
+        <div className={s.preparedSummaryHeading}>
+          <AiSpark size={26} />
+          <h2>{content.headline || "Your report explained"}</h2>
+        </div>
+        {content.points?.length > 0 && (
+          <ul className={s.preparedSummaryPoints}>
+            {content.points.map((point, index) => (
+              <li key={index}>{point}</li>
             ))}
           </ul>
-          {!shown.length && (
-            <Empty
-              icon="document-text"
-              title={
-                search ? "No matching parameters" : "Nothing in this filter"
-              }
-              description={
-                search
-                  ? "Try another parameter name."
-                  : filter === STATUS.out
-                    ? "No parameter is out of its ideal range."
-                    : "No parameter is borderline."
-              }
-              action={search ? "Clear search" : "Show all parameters"}
-              onAction={() => (search ? setSearch("") : setFilter("all"))}
-            />
-          )}
-          <Notice icon="info-circle">{DISCLAIMER}</Notice>
-          <ExplainSheet param={explain} onClose={() => setExplain(null)} />
-        </>
-      ) : (
-        <OriginalReport record={record} />
-      )}
-    </div>
+        )}
+        {content.next && (
+          <div className={s.preparedSummaryNext}>
+            <h3>Next steps</h3>
+            <p>{content.next}</p>
+          </div>
+        )}
+      </section>
+      <Notice icon="info-circle">
+        This explanation summarises the report findings. It is not a diagnosis.
+        Review the original report and discuss it with your doctor.
+      </Notice>
+    </>
   );
 }
 
@@ -172,14 +254,14 @@ function ParameterCard({ param: p, onExplain }) {
   return (
     <li className={s.param} data-status={p.status}>
       <div className={s.paramHead}>
-        <h3>{p.name}</h3>
+        <h2>{p.name}</h2>
         <button
           type="button"
           className={s.aiButton}
           aria-label={`Explain ${p.name}`}
           onClick={() => onExplain(p)}
         >
-          <span>AI</span>
+          <AiSpark size={20} />
           <Icon name="arrow-right3" size={16} />
         </button>
       </div>
@@ -212,6 +294,9 @@ function ParameterCard({ param: p, onExplain }) {
           {p.high ?? "and above"} {p.unit}
         </span>
       </p>
+      <AiNote title="AI explanation" onClick={() => onExplain(p)}>
+        What this parameter means · Original value unchanged
+      </AiNote>
     </li>
   );
 }
@@ -274,6 +359,8 @@ function OriginalReport({ record }) {
     setBlob(null);
     setUrl(null);
     setError("");
+    setPage(1);
+    setPages(0);
     (record.uploaded
       ? getFile(record.id)
       : makeSamplePdf(record, activeMember, brand)
@@ -290,7 +377,10 @@ function OriginalReport({ record }) {
         setBlob(file);
         setUrl(objectUrl);
       })
-      .catch(() => setError("Could not load the file. Go back and try again."));
+      .catch(() => {
+        if (!cancelled)
+          setError("Could not load the file. Go back and try again.");
+      });
     return () => {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
@@ -298,7 +388,7 @@ function OriginalReport({ record }) {
   }, [record.id]);
   const fileName = record.uploaded
     ? record.fileName
-    : `${record.title.replace(/\W+/g, "-")}-sample.pdf`;
+    : `${record.title.replace(/\W+/g, "-")}.pdf`;
   return (
     <div className={s.original}>
       <div className={s.originalBar}>
@@ -367,9 +457,7 @@ export function ConcerningParameters() {
     <div className={`${shared.page} ${s.page}`}>
       <PageHeader title="Concerning parameters" />
       <div className={s.aiNote}>
-        <span className={s.aiMark} aria-hidden="true">
-          AI
-        </span>
+        <AiSpark size={28} />
         <p>
           {list.length
             ? `The lab report analysis has identified the following ${
@@ -382,7 +470,7 @@ export function ConcerningParameters() {
         <ul className={s.concernList} aria-label="Concerning parameters">
           {list.map((p) => (
             <li key={p.id} className={s.concern}>
-              <h3>{p.name}</h3>
+              <h2>{p.name}</h2>
               <div className={s.concernValue}>
                 <strong>
                   {formatValue(p)} {p.unit}

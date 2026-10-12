@@ -9,7 +9,7 @@ import s from "../App.module.css";
 import AgentNavigation from "./AgentNavigation";
 const tabs = [
   { path: "/", label: "Home", icon: "home-2" },
-  { path: "/appointments", label: "Calendar", icon: "calendar-2" },
+  { path: "/appointments", label: "Visits", icon: "calendar-2" },
   { path: "/records", label: "Records", icon: "document-text" },
   { path: "/more", label: "More", icon: "category" },
 ];
@@ -19,8 +19,16 @@ export default function Shell() {
   const navigate = useNavigate();
   const scroll = useRef(null);
   const dock = useRef(null);
+  const previousPath = useRef(location.pathname);
   useEffect(() => {
     scroll.current?.scrollTo({ top: 0 });
+    if (previousPath.current !== location.pathname) {
+      const destination = scroll.current?.querySelector("h1") || scroll.current;
+      if (destination && !destination.hasAttribute("tabindex"))
+        destination.tabIndex = -1;
+      destination?.focus({ preventScroll: true });
+      previousPath.current = location.pathname;
+    }
   }, [location.pathname]);
   const parentTab = ["/doctors", "/assistant"].includes(location.pathname)
     ? "/appointments"
@@ -63,6 +71,9 @@ export default function Shell() {
   }, [showNav]);
   return (
     <div className={s.previewStage}>
+      <a className={s.skipLink} href="#app-content">
+        Skip to patient content
+      </a>
       <aside className={s.previewIntro}>
         {/* The product pitch beside the phone stays Tatva Practice. */}
         <Logo variant="wordmark" height={24} tone="blue" />
@@ -103,7 +114,9 @@ export default function Shell() {
             <Button
               variant="link"
               size="sm"
-              onClick={() => window.open("/admin/app#theme", "_blank", "noopener")}
+              onClick={() =>
+                window.open("/admin/app#theme", "_blank", "noopener")
+              }
             >
               Customise <Icon name="chevron-right" size={16} />
             </Button>
@@ -116,10 +129,20 @@ export default function Shell() {
       </aside>
       <div className={s.phone}>
         <div className={s.appViewport} data-has-nav={showNav}>
-          <main className={s.scrollArea} ref={scroll} id="app-content">
+          <main
+            className={s.scrollArea}
+            ref={scroll}
+            id="app-content"
+            tabIndex={-1}
+          >
             <Outlet />
           </main>
-          <div ref={dock} className={s.careDock}>
+          <div
+            ref={dock}
+            className={s.careDock}
+            role="region"
+            aria-label="Page actions"
+          >
             <div id="page-action" className={s.floatingActionSlot} />
           </div>
           <AgentNavigation />

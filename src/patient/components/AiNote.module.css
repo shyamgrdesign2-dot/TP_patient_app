@@ -1,0 +1,49 @@
+.spark {
+  display: inline-block;
+  mask: url("/icons/ai-sparkle.svg") center / contain no-repeat;
+  background: var(--tesseract-gradient-ai-hero) !important;
+  flex-shrink: 0;
+}
+.note {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--tesseract-space-2-5);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  border: 0;
+  border-radius: 0 0 var(--tesseract-radius-14) var(--tesseract-radius-14);
+  text-align: left;
+  color: var(--tesseract-violet-800);
+  background: linear-gradient(
+    110deg,
+    var(--tesseract-violet-50),
+    var(--tesseract-blue-50)
+  );
+}
+button.note {
+  cursor: pointer;
+}
+button.note:hover {
+  filter: brightness(0.98);
+}
+.note:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: 2px;
+}
+.copy {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.copy strong {
+  display: block;
+  font-size: var(--tesseract-text-body-xs);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.copy small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-secondary);
+}

@@ -21,7 +21,9 @@ import {
   Status,
   IconButton,
 } from "../components/ui";
-import s from "../App.module.css";
+import shared from "../App.module.css";
+import family from "./Family.module.css";
+const s = { ...shared, ...family };
 export default function Family() {
   const { state, activeMember, dispatch, notify } = useApp();
   const navigate = useNavigate();
@@ -40,7 +42,10 @@ export default function Family() {
         }
       />
       <div className={s.familyIntro}>
-        <SectionTitle>{state.members.length} family profiles</SectionTitle>
+        <SectionTitle>
+          {state.members.length} family{" "}
+          {state.members.length === 1 ? "profile" : "profiles"}
+        </SectionTitle>
         <p className={s.bodyText}>
           Book visits, keep records and look after the ones you love.
         </p>
@@ -193,7 +198,9 @@ export function Profile() {
           <dt>Blood group</dt>
           <dd>{activeMember.blood || "Not added"}</dd>
           <dt>Mobile</dt>
-          <dd>+91 {activeMember.phone}</dd>
+          <dd>
+            {activeMember.phone ? `+91 ${activeMember.phone}` : "Not added"}
+          </dd>
         </dl>
       </div>
       <div className={s.rowCard}>

@@ -296,8 +296,12 @@
   pointer-events: none;
 }
 .successActions {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  width: 100%;
+  padding: var(--tesseract-space-2);
+  border-radius: var(--tesseract-radius-16);
+  background: var(--tesseract-bg-surface);
   gap: var(--tesseract-space-2-5);
 }
 .successActions > button {
@@ -310,5 +314,71 @@
   }
   .option {
     transition: none;
+  }
+}
+
+.contactLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: var(--tesseract-fg-link);
+  font-size: var(--tesseract-text-body-xs);
+}
+.successActions > button {
+  min-width: 0;
+  padding-inline: 8px;
+  font-size: var(--tesseract-text-body-xs);
+}
+
+.contact {
+  margin-top: 2px;
+  gap: 2px;
+}
+.contact > * {
+  min-height: 0;
+}
+.contactLink {
+  color: var(--tesseract-fg-secondary);
+}
+.switchRow {
+  padding: 12px;
+  border: 1px solid var(--tesseract-violet-200);
+  border-radius: 14px;
+  background: linear-gradient(
+    115deg,
+    var(--tesseract-violet-50),
+    var(--tesseract-blue-50)
+  );
+}
+.switchRow > span {
+  max-width: 105px;
+  color: var(--tesseract-violet-800);
+  font-weight: 500;
+}
+
+/* Small screens keep both choices readable and clinic links easy to tap. */
+.contactLink {
+  min-height: 24px;
+  width: fit-content;
+}
+.switchRow {
+  flex-wrap: wrap;
+}
+.switchRow > button {
+  margin-left: auto;
+}
+@media (max-width: 360px) {
+  .option {
+    padding: var(--tesseract-space-3);
+    gap: var(--tesseract-space-2);
+  }
+  .optionIcon {
+    width: 40px;
+    height: 40px;
+  }
+  .option strong {
+    font-size: var(--tesseract-text-body-sm);
   }
 }

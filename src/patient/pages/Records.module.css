@@ -16,6 +16,8 @@
   width: 100%;
   padding: var(--tesseract-space-4);
   border-radius: inherit;
+  border: 0;
+  background: transparent;
   text-align: left;
   color: var(--tesseract-fg-primary);
 }
@@ -154,8 +156,8 @@
   display: flex;
   gap: var(--tesseract-space-3);
   align-items: flex-start;
-  margin: calc(-1 * var(--tesseract-space-2)) calc(-1 * var(--tesseract-space-2))
-    0;
+  margin: calc(-1 * var(--tesseract-space-2))
+    calc(-1 * var(--tesseract-space-2)) 0;
   padding: var(--tesseract-space-4);
   border-radius: var(--tesseract-radius-16);
   background:
@@ -164,7 +166,11 @@
       color-mix(in srgb, var(--tesseract-violet-200) 70%, transparent),
       transparent 55%
     ),
-    linear-gradient(135deg, var(--tesseract-blue-50), var(--tesseract-violet-50));
+    linear-gradient(
+      135deg,
+      var(--tesseract-blue-50),
+      var(--tesseract-violet-50)
+    );
 }
 .summaryHero .heroMark {
   display: flex;
@@ -396,7 +402,7 @@
   padding: var(--tesseract-space-3-5) var(--tesseract-space-4)
     var(--tesseract-space-2);
 }
-.historyHead h3 {
+.historyHead h2 {
   flex: 1;
   font-size: var(--tesseract-text-body-sm);
   line-height: var(--tesseract-text-body-sm-lh);
@@ -456,4 +462,336 @@
   font-size: var(--tesseract-text-body-sm);
   line-height: var(--tesseract-text-body-sm-lh);
   color: var(--tesseract-fg-primary);
+}
+
+.prescriptionLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  margin-top: var(--tesseract-space-2);
+  font-size: var(--tesseract-text-caption);
+  color: var(--tesseract-fg-link);
+}
+.sectionIntro {
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}
+.card:has([class*="AiNote"]) {
+  overflow: hidden;
+}
+.titleText,
+.line,
+.historyList li {
+  overflow-wrap: anywhere;
+}
+
+/* Tatva Practice history: section headings followed by readable pointers. */
+.history {
+  gap: 0;
+  padding: 16px;
+  background: var(--tesseract-bg-surface);
+  border-radius: 14px;
+}
+.historySection {
+  border-radius: 0;
+  padding: 16px 0;
+}
+.historySection + .historySection {
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.historyHead {
+  padding: 0 0 8px;
+}
+.historyList {
+  list-style: disc;
+  padding: 0 0 0 20px;
+  margin: 0;
+}
+.historyList li {
+  display: list-item;
+  padding: 3px 0;
+}
+.historyList li + li {
+  border: 0;
+}
+.historyEmpty {
+  padding: 0;
+}
+
+/* The records shell stays still while the prescription scrolls independently. */
+.prescriptionPage {
+  height: 100%;
+  min-height: 0;
+  padding-bottom: 0;
+  gap: 0;
+}
+.prescriptionPage > header,
+.prescriptionPage > div:first-of-type {
+  flex-shrink: 0;
+}
+.prescriptionPage > div:first-of-type {
+  margin-top: 0;
+}
+.prescriptionReader {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  margin-inline: calc(-1 * var(--tesseract-page-inset));
+}
+.visitDateNav {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 2px 12px;
+  background: var(--tesseract-bg-subtle);
+  border-block: 1px solid var(--tesseract-border-soft);
+}
+.visitDateNav label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--tesseract-fg-secondary);
+}
+.visitDateNav select {
+  max-width: 100%;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--tesseract-fg-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.visitDateNav > button {
+  width: 44px;
+  min-height: 44px;
+  padding: 4px;
+}
+.inlinePdf {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--tesseract-bg-muted);
+  padding: 12px 10px calc(var(--patient-dock-space, 140px) + 24px);
+}
+.inlinePdf > div {
+  padding-bottom: 0;
+}
+.inlinePdf canvas {
+  box-shadow: 0 2px 8px #26375f1c;
+}
+.inlinePdf:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: -2px;
+}
+.documentGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.documentTile {
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--tesseract-bg-surface);
+  border: 1px solid var(--tesseract-border-soft);
+  min-width: 0;
+}
+.documentTileMain {
+  width: 100%;
+  display: block;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+}
+.documentTileMain:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: -2px;
+}
+.thumbnail {
+  height: 144px;
+  overflow: hidden;
+  background: white;
+  pointer-events: none;
+}
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thumbnail > [data-tp-icon] {
+  margin: 48px auto;
+}
+.thumbnail canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+.documentTileCopy {
+  display: block;
+  padding: 12px;
+  background: #f0f3fb;
+  min-height: 82px;
+}
+.documentTileCopy strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.documentTileCopy small {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--tesseract-fg-secondary);
+}
+.documentTile [class*="note"] {
+  padding: 10px;
+  gap: 6px;
+}
+
+.readerTools {
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 4px 8px;
+  background: var(--tesseract-bg-surface);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: 28px;
+  color: var(--tesseract-fg-primary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-width: 100%;
+  box-shadow: 0 4px 16px #26375f26;
+}
+.readerTools.readerTools > button {
+  color: var(--tesseract-fg-primary);
+  min-width: 40px;
+  width: 40px;
+  min-height: 44px;
+  padding: 0;
+}
+.readerTools > button:disabled {
+  opacity: 0.4;
+}
+.readerTools > button:hover:not(:disabled) {
+  background: var(--tesseract-bg-muted);
+}
+.uploadFloat {
+  min-height: 48px;
+  padding-inline: 16px;
+  box-shadow: 0 4px 18px #26375f20;
+}
+
+.readerTools.readerTools [data-tp-icon] {
+  color: var(--tesseract-fg-primary);
+  background-color: var(--tesseract-fg-primary);
+}
+.readerTools.readerTools .zoomFit {
+  width: auto;
+  padding-inline: 6px;
+  box-shadow: none;
+}
+.readerTools > button:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: 1px;
+}
+
+.recordsPanel {
+  display: contents;
+}
+.inlinePdf > div + div {
+  margin-top: 12px;
+}
+
+.historyHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.historyHead > [data-tp-icon] {
+  color: var(--tesseract-fg-brand);
+}
+
+.toolDivider {
+  width: 1px;
+  height: 18px;
+  background: var(--tesseract-border-soft);
+  margin-inline: 2px;
+}
+
+/* Compact native date selection retains keyboard and mobile picker behavior. */
+.visitDateNav .datePicker {
+  position: relative;
+  gap: 6px;
+  padding: 0 8px;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--tesseract-fg-primary);
+}
+.datePicker > span:not([data-tp-icon]) {
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.datePicker select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.datePicker:focus-within {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+.recordsBand.recordsBand {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--tesseract-bg-surface);
+  border-bottom: 1px solid var(--tesseract-border-soft);
+}
+.recordsBand.recordsBand > div {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border-radius: var(--tesseract-radius-10);
+  background: var(--tesseract-bg-subtle);
+}
+.recordsBand > button {
+  flex-shrink: 0;
+}
+.recordsBand [role="tablist"] {
+  padding: 4px;
+  gap: 2px;
+  border: 0;
+}
+.recordsBand [role="tablist"] [role="tab"] {
+  min-height: 36px;
+  border-radius: var(--tesseract-radius-8);
+  color: var(--tesseract-fg-secondary);
+}
+.recordsBand [role="tablist"] [role="tab"][data-state="active"] {
+  color: var(--tesseract-fg-heading);
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+}
+
+.visitDateNav > button {
+  color: var(--tesseract-fg-secondary);
 }
