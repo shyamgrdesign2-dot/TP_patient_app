@@ -36,7 +36,10 @@
 .days {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 6 * var(--tesseract-space-1)) / 7);
+  grid-auto-columns: minmax(
+    max(44px, 3.25em),
+    calc((100% - 6 * var(--tesseract-space-1)) / 7)
+  );
   gap: var(--tesseract-space-1);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -125,7 +128,8 @@
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(2.4em, 1fr));
+  overflow-x: auto;
   gap: var(--tesseract-space-1);
   text-align: center;
 }

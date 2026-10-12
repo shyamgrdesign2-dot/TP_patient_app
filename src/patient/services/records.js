@@ -25,8 +25,6 @@ export const MEDICAL_RECORD_TYPES = [
   "Pathology",
   "Radiology",
   "Prescription",
-  "Rehabilitation",
-  "Procedure notes",
   "Other",
 ];
 
@@ -62,15 +60,26 @@ const LEGACY = {
 };
 export function normalizeRecord(record) {
   const map = LEGACY[record?.category];
-  if (!map) return record;
-  return { ...record, ...map(record) };
+  const normalized = map ? { ...record, ...map(record) } : record;
+  if (
+    normalized?.category === CATEGORY.medical &&
+    !MEDICAL_RECORD_TYPES.includes(normalized.type)
+  ) {
+    // Keep the source label and clinical content while grouping older saves
+    // under the same four types used by the upload form and record filters.
+    return {
+      ...normalized,
+      ...(normalized.type && !normalized.originalType
+        ? { originalType: normalized.type }
+        : {}),
+      type: "Other",
+    };
+  }
+  return normalized;
 }
 
-// Where a record opens: structured lab results have their own page, the
-// rest open as a document on the Health records page.
+// Keep every report in the shared sheet above its Health records list.
 export function recordPath(record) {
-  if (record.category === CATEGORY.lab && record.params?.length)
-    return `/records/${encodeURIComponent(record.id)}`;
   return `/records?tab=${tabFor(record)}&record=${encodeURIComponent(record.id)}`;
 }
 

@@ -263,25 +263,6 @@
   margin-bottom: calc(-1 * var(--tesseract-space-2));
 }
 
-/* Original document ------------------------------------------------------ */
-.original {
-  display: flex;
-  flex-direction: column;
-  gap: var(--tesseract-space-3);
-  margin-inline: calc(-1 * var(--tesseract-space-2));
-  padding: var(--tesseract-space-3);
-  border-radius: var(--tesseract-radius-14);
-  background: var(--tesseract-slate-100);
-}
-.originalBar {
-  display: flex;
-  align-items: center;
-  gap: var(--tesseract-space-2);
-  font-size: var(--tesseract-text-body-xs);
-  font-variant-numeric: tabular-nums;
-  color: var(--tesseract-fg-secondary);
-}
-
 /* Concerning parameters -------------------------------------------------- */
 .aiNote {
   display: flex;
@@ -429,4 +410,86 @@
   color: var(--tesseract-fg-secondary);
   font-size: var(--tesseract-text-body-sm);
   line-height: var(--tesseract-text-body-sm-lh);
+}
+
+/* Report details: one compact header, with the document or intelligence beneath. */
+.reportPage {
+  gap: 0;
+}
+.reportPage > .tabs {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+.reportPage .reportPanel {
+  padding-top: var(--tesseract-space-4);
+}
+.tabs .intelligenceTab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tesseract-space-1-5);
+}
+.tabs .intelligenceTab,
+.tabs .intelligenceTab[data-state="active"] {
+  background: var(--tesseract-slate-0);
+}
+.tabs .intelligenceTab[data-state="active"] .intelligenceLabel {
+  background: var(--tesseract-gradient-ai-hero);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.preparedSummary {
+  border-color: var(--tesseract-violet-100);
+  background: linear-gradient(
+    120deg,
+    var(--tesseract-violet-50),
+    var(--tesseract-bg-surface) 68%
+  );
+}
+.documentPage {
+  height: 100%;
+  min-height: 0;
+  padding-bottom: 0;
+}
+.documentPage > header {
+  flex-shrink: 0;
+}
+.documentPage .reportPanel {
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+  padding-top: 0;
+  margin-inline: calc(-1 * var(--tesseract-page-inset));
+}
+.documentViewer {
+  padding-bottom: calc(var(--patient-dock-space, 70px) + 24px);
+}
+
+.sheetReport {
+  height: calc(100% + 24px) !important;
+  margin: -12px;
+}
+.embeddedReport {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.embeddedReport > .tabs {
+  position: static;
+  margin: 0;
+  padding-inline: var(--tesseract-space-3);
+}
+.embeddedReport .reportPanel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--tesseract-space-4);
+}
+.embeddedReport.documentPage .reportPanel {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }

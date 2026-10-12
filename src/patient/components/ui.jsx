@@ -660,12 +660,13 @@ export function MemberContext({ plain = false }) {
       <button
         className={plain ? s.memberContextPlain : s.memberContext}
         aria-label={`For ${activeMember.name}. Switch patient`}
+        title={activeMember.name}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
       >
         {plain ? (
-          <Icon name="profile-circle" size={20} bulk />
+          <Icon name="user" family="users" corner="rounded" size={16} bulk />
         ) : (
           <Avatar name={activeMember.name} size={24} color="primary" />
         )}

@@ -77,36 +77,38 @@ function AadhaarInput({ value, onChange, invalid }) {
   const refs = useRef([]);
   const parts = [value.slice(0, 4), value.slice(4, 8), value.slice(8, 12)];
   return (
-    <div className={s.aadhaar}>
-      <div className={s.aadhaarHead}>
-        <span className={s.aadhaarArt} aria-hidden="true">
-          <Icon name="personalcard" size={22} bulk />
-        </span>
-        Enter your Aadhaar number
+    <div className={s.aadhaar} role="group" aria-label="Aadhaar number">
+      <div className={s.aadhaarIllustration} aria-hidden="true">
+        <img src="/brand/aadhaar-card.webp" alt="" />
       </div>
-      <div className={s.aadhaarRow} data-invalid={invalid || undefined}>
-        {parts.map((p, i) => (
-          <input
-            key={i}
-            ref={(n) => (refs.current[i] = n)}
-            inputMode="numeric"
-            placeholder="X X X X"
-            aria-label={`Aadhaar digits ${i * 4 + 1} to ${i * 4 + 4}`}
-            maxLength={4}
-            value={p}
-            onChange={(e) => {
-              const v = e.target.value.replace(/\D/g, "").slice(0, 4);
-              const next = parts.slice();
-              next[i] = v;
-              onChange(next.join(""));
-              if (v.length === 4 && i < 2) refs.current[i + 1]?.focus();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Backspace" && !p && i > 0)
-                refs.current[i - 1]?.focus();
-            }}
-          />
-        ))}
+      <div className={s.aadhaarEntry}>
+        <p className={s.aadhaarHead}>Enter your Aadhaar number</p>
+        <div className={s.aadhaarRow} data-invalid={invalid || undefined}>
+          {parts.map((p, i) => (
+            <input
+              key={i}
+              ref={(n) => (refs.current[i] = n)}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="XXXX"
+              aria-label={`Aadhaar digits ${i * 4 + 1} to ${i * 4 + 4}`}
+              aria-invalid={invalid || undefined}
+              maxLength={4}
+              value={p}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                const next = parts.slice();
+                next[i] = v;
+                onChange(next.join(""));
+                if (v.length === 4 && i < 2) refs.current[i + 1]?.focus();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace" && !p && i > 0)
+                  refs.current[i - 1]?.focus();
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

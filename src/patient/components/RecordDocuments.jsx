@@ -1,14 +1,13 @@
-import { createPortal } from "react-dom";
+import DocumentViewer from "./DocumentViewer";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { makeSamplePdf } from "../services/recordPdf";
-import { download, getFile } from "../services/files";
+import { getFile } from "../services/files";
 import { formatDate } from "../../shared/data";
-import { Button, Icon, ErrorText } from "./ui";
-import shared from "../App.module.css";
+import { Button, Icon } from "./ui";
 import r from "../pages/Records.module.css";
 const PdfViewer = lazy(() => import("./PdfViewer"));
-function useRecordFile(record) {
+export function useRecordFile(record) {
   const { activeMember, brand } = useApp();
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
@@ -37,9 +36,6 @@ function useRecordFile(record) {
   return { file, error };
 }
 export function PrescriptionReader({ records }) {
-  const { notify } = useApp();
-  const [host, setHost] = useState(null);
-  useEffect(() => setHost(document.getElementById("page-action")), []);
   const [selectedId, setSelectedId] = useState(records[0]?.id);
   const index = Math.max(
     0,
@@ -47,26 +43,6 @@ export function PrescriptionReader({ records }) {
   );
   const record = records[index];
   const { file, error } = useRecordFile(record);
-  const [pages, setPages] = useState(0);
-  async function sharePrescription() {
-    if (!file) return;
-    const sharedFile = new File([file], `${record.title}.pdf`, {
-      type: "application/pdf",
-    });
-    try {
-      if (navigator.canShare?.({ files: [sharedFile] })) {
-        await navigator.share({ files: [sharedFile], title: record.title });
-      } else {
-        download(sharedFile.name, file);
-        notify(
-          "File downloaded. Share it from your device’s Files or Downloads app.",
-        );
-      }
-    } catch (error) {
-      if (error.name !== "AbortError")
-        notify("Sharing could not start. Download the file to share it.", true);
-    }
-  }
   if (!record) return null;
   return (
     <section className={r.prescriptionReader} aria-label="Your prescription">
@@ -108,69 +84,20 @@ export function PrescriptionReader({ records }) {
           <Icon name="chevron-right" />
         </Button>
       </div>
-      <ErrorText>{error}</ErrorText>
-      {!file && !error && <p role="status">Loading prescription…</p>}
-      {file && (
-        <div
-          className={r.inlinePdf}
-          role="region"
-          aria-label="Prescription document viewer"
-          tabIndex={0}
-          key={record.id}
-        >
-          <Suspense fallback={<p>Loading prescription…</p>}>
-            <PdfViewer
-              blob={file}
-              title={record.title}
-              onPageCount={setPages}
-            />
-            {Array.from({ length: Math.max(0, pages - 1) }, (_, i) => (
-              <PdfViewer
-                key={`${record.id}-${i}`}
-                blob={file}
-                title={record.title}
-                pageNumber={i + 2}
-              />
-            ))}
-          </Suspense>
-        </div>
-      )}
-      {host &&
-        createPortal(
-          <div
-            className={`${shared.floatingAction} ${r.readerTools}`}
-            data-record-tools
-            role="toolbar"
-            aria-label="Prescription PDF controls"
-          >
-            <Button
-              variant="ghost"
-              disabled={!file}
-              theme="neutral"
-              aria-label="Download prescription"
-              onClick={() => download(`${record.title}.pdf`, file)}
-            >
-              <Icon name="document-download" />
-            </Button>
-            <span className={r.toolDivider} aria-hidden="true" />
-            <Button
-              variant="ghost"
-              theme="neutral"
-              disabled={!file}
-              aria-label="Share prescription"
-              onClick={sharePrescription}
-            >
-              <Icon
-                name="share-2"
-                corner="rounded"
-                variant="linear"
-                family="essential"
-                size={18}
-              />
-            </Button>
-          </div>,
-          host,
-        )}
+      <DocumentViewer
+        key={record.id}
+        record={record}
+        file={file}
+        error={error}
+        label="Prescription document"
+        toolbarLabel="Prescription PDF controls"
+        controlNames={{
+          share: "Share prescription",
+          download: "Download prescription",
+          print: "Print prescription",
+        }}
+        portalControls
+      />
     </section>
   );
 }

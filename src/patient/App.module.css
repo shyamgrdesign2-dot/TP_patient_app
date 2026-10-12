@@ -3280,7 +3280,7 @@
 /* A page with a floating primary action reserves room for it, so the last
    card always scrolls fully clear of the button. */
 .appViewport:has(.floatingActionSlot:not(:empty))
-  .page:not([data-prescription-page]) {
+  .page:not([data-prescription-page]):not([data-report-page]) {
   padding-bottom: calc(
     var(--tesseract-patient-bottom-space) + var(--tesseract-size-56, 56px) +
       var(--tesseract-space-4)
@@ -3730,8 +3730,8 @@
 }
 .birthHead {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--tesseract-space-3);
 }
 .agePair {
@@ -3774,9 +3774,6 @@
   padding: 12px var(--tesseract-page-inset);
   margin: -16px calc(-1 * var(--tesseract-page-inset)) 0;
   background: var(--tesseract-bg-page, #f8faff);
-}
-.visitControls > :first-child {
-  position: static;
 }
 
 .floatingActionSlot:has([data-record-tools]) {
@@ -3860,13 +3857,14 @@
   min-width: 36px;
 }
 .headerPatientSelector {
-  flex: 0 1 140px;
+  flex: 0 1 auto;
   min-width: 0;
   max-width: 42%;
 }
 .headerPatientSelector > button {
   width: 100%;
-  min-height: 44px;
+  position: relative;
+  min-height: 32px;
   margin: 0;
   padding-inline: 8px;
   gap: 4px;
@@ -3891,4 +3889,22 @@
 }
 .headerPatientSelector > button > [data-tp-icon]:first-child {
   color: var(--tesseract-fg-brand);
+}
+
+.headerPatientSelector {
+  width: max-content;
+  max-width: min(160px, 46%);
+}
+.headerPatientSelector > button::before {
+  content: "";
+  position: absolute;
+  inset: -6px 0;
+}
+@media (max-width: 360px) {
+  .headerPatientSelector > button > [data-tp-icon]:first-child {
+    display: none;
+  }
+  .patientPageHeader h1 {
+    font-size: 16px;
+  }
 }

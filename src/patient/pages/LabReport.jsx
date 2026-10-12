@@ -1,8 +1,9 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import DocumentViewer from "../components/DocumentViewer";
+import { useRecordFile } from "../components/RecordDocuments";
 import { useNavigate, useParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../state/AppContext";
-import { formatDate } from "../../shared/data";
 import { packagesEnabled } from "../../shared/catalog";
 import {
   analyzeReport,
@@ -14,28 +15,21 @@ import {
   FILTERS,
   STATUS,
 } from "../../shared/labAnalysis";
-import { getFile, download } from "../services/files";
-import { makeSamplePdf } from "../services/recordPdf";
 import {
   Badge,
   Button,
   ChoiceGroup,
   Empty,
-  ErrorText,
   Field,
   Icon,
-  IconButton,
-  Meta,
   Notice,
   PageHeader,
   Sheet,
   SectionTitle,
 } from "../components/ui";
 import AiNote, { AiSpark } from "../components/AiNote";
-import { recordSource } from "./Records";
 import shared from "../App.module.css";
 import s from "./LabReport.module.css";
-const PdfViewer = lazy(() => import("../components/PdfViewer"));
 
 const DISCLAIMER =
   "This analysis is generated automatically from the report values. It is not a diagnosis. Please discuss your results with your doctor.";
@@ -69,13 +63,21 @@ function Unavailable() {
 
 // Lab report: an intelligent analysis of each parameter against its ideal
 // range, with the original document one tab away.
-export default function LabReport() {
+export default function LabReport({
+  record: suppliedRecord,
+  embedded = false,
+}) {
   const navigate = useNavigate();
-  const { record, analysis } = useLabReport();
-  const [tab, setTab] = useState("analysis");
+  const routeReport = useLabReport();
+  const record = suppliedRecord || routeReport.record;
+  const analysis = suppliedRecord
+    ? analyzeReport(suppliedRecord)
+    : routeReport.analysis;
+  const [tab, setTab] = useState("original");
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [explain, setExplain] = useState(null);
+  const [concerningOnly, setConcerningOnly] = useState(false);
   const preparedSummary = ["Radiology", "Pathology"].includes(record?.type)
     ? record?.summary
     : null;
@@ -90,46 +92,60 @@ export default function LabReport() {
   const hasAnalysis = analysis.params.length > 0 || hasPreparedSummary;
   const selectedTab = hasAnalysis ? tab : "original";
   useEffect(() => {
-    setTab("analysis");
+    setTab("original");
     setFilter("all");
     setSearch("");
     setExplain(null);
+    setConcerningOnly(false);
   }, [record?.id]);
   if (!record) return <Unavailable />;
-  const shown = filterParams(analysis.params, filter, search);
+  const shown = filterParams(
+    concerningOnly ? analysis.concerning : analysis.params,
+    filter,
+    search,
+  );
   const concerning = analysis.concerning.length;
   return (
-    <div className={`${shared.page} ${s.page}`}>
-      <PageHeader title={record.title} />
-      <Meta className={shared.metaText} items={recordSource(record)} />
-      <Tabs
-        value={selectedTab}
-        onValueChange={setTab}
-        size="md"
-        className={s.tabs}
-      >
-        <TabsList aria-label="Report view" fullWidth>
-          <TabsTrigger
-            value="analysis"
-            disabled={!hasAnalysis}
-            id="lab-analysis-tab"
-            aria-controls="lab-report-panel"
-          >
-            Intelligent analysis
-          </TabsTrigger>
-          <TabsTrigger
-            value="original"
-            id="lab-original-tab"
-            aria-controls="lab-report-panel"
-          >
-            Original report
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+    <div
+      className={`${embedded ? s.embeddedReport : shared.page} ${s.page} ${s.reportPage} ${selectedTab === "original" ? s.documentPage : ""}`}
+      data-report-page={selectedTab === "original" || undefined}
+    >
+      {!embedded && <PageHeader title="Report" />}
+      {hasAnalysis && (
+        <Tabs
+          value={selectedTab}
+          onValueChange={setTab}
+          size="md"
+          className={s.tabs}
+        >
+          <TabsList aria-label="Report view" fullWidth>
+            <TabsTrigger
+              value="original"
+              id="lab-original-tab"
+              aria-controls="lab-report-panel"
+            >
+              Original Report
+            </TabsTrigger>
+            {hasAnalysis && (
+              <TabsTrigger
+                value="analysis"
+                className={s.intelligenceTab}
+                disabled={!hasAnalysis}
+                id="lab-analysis-tab"
+                aria-controls="lab-report-panel"
+              >
+                <AiSpark size={18} />
+                <span className={s.intelligenceLabel}>Intelligence</span>
+              </TabsTrigger>
+            )}
+          </TabsList>
+        </Tabs>
+      )}
       <div
-        role="tabpanel"
+        role={hasAnalysis ? "tabpanel" : "region"}
         id="lab-report-panel"
-        aria-labelledby={`lab-${selectedTab}-tab`}
+        aria-labelledby={hasAnalysis ? `lab-${selectedTab}-tab` : undefined}
+        aria-label={!hasAnalysis ? "Original Report" : undefined}
         className={s.reportPanel}
       >
         {selectedTab === "analysis" && hasPreparedSummary ? (
@@ -140,7 +156,13 @@ export default function LabReport() {
               type="button"
               className={s.summary}
               data-tone={concerning ? "alert" : "ok"}
-              onClick={() => navigate(`/records/${record.id}/concerning`)}
+              onClick={() => {
+                if (embedded) {
+                  setConcerningOnly(concerning > 0);
+                  setFilter("all");
+                  setSearch("");
+                } else navigate(`/records/${record.id}/concerning`);
+              }}
             >
               <span className={s.summaryIcon} aria-hidden="true">
                 <Icon
@@ -161,6 +183,11 @@ export default function LabReport() {
                 <Icon name="arrow-right3" size={20} />
               </span>
             </button>
+            {concerningOnly && (
+              <Button variant="link" onClick={() => setConcerningOnly(false)}>
+                Show all parameters
+              </Button>
+            )}
             <Field
               aria-label="Search by parameter"
               placeholder="Search by parameter"
@@ -207,7 +234,7 @@ export default function LabReport() {
             <ExplainSheet param={explain} onClose={() => setExplain(null)} />
           </>
         ) : (
-          <OriginalReport record={record} />
+          <OriginalReport key={record.id} record={record} />
         )}
       </div>
     </div>
@@ -347,102 +374,31 @@ function StatusBadge({ param: p }) {
 
 // The uploaded or hospital-issued document, rendered in place.
 function OriginalReport({ record }) {
-  const { activeMember, brand, notify } = useApp();
-  const [blob, setBlob] = useState(null);
-  const [url, setUrl] = useState(null);
-  const [error, setError] = useState("");
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(0);
-  useEffect(() => {
-    let objectUrl;
-    let cancelled = false;
-    setBlob(null);
-    setUrl(null);
-    setError("");
-    setPage(1);
-    setPages(0);
-    (record.uploaded
-      ? getFile(record.id)
-      : makeSamplePdf(record, activeMember, brand)
-    )
-      .then((file) => {
-        if (cancelled) return;
-        if (!file) {
-          setError(
-            "The local file is no longer available in this browser. Please upload it again.",
-          );
-          return;
-        }
-        objectUrl = URL.createObjectURL(file);
-        setBlob(file);
-        setUrl(objectUrl);
-      })
-      .catch(() => {
-        if (!cancelled)
-          setError("Could not load the file. Go back and try again.");
-      });
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [record.id]);
-  const fileName = record.uploaded
-    ? record.fileName
-    : `${record.title.replace(/\W+/g, "-")}.pdf`;
+  const { file, error } = useRecordFile(record);
   return (
-    <div className={s.original}>
-      <div className={s.originalBar}>
-        {pages > 1 && (
-          <>
-            <IconButton
-              name="chevron-left"
-              label="Previous PDF page"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-            />
-            <span aria-live="polite">
-              {page} / {pages}
-            </span>
-            <IconButton
-              name="chevron-right"
-              label="Next PDF page"
-              disabled={page >= pages}
-              onClick={() => setPage(page + 1)}
-            />
-          </>
-        )}
-        <span className={shared.grow} />
-        <Button
-          variant="outline"
-          theme="neutral"
-          size="sm"
-          disabled={!blob}
-          onClick={() => {
-            download(fileName, blob);
-            notify("Download started.");
-          }}
-        >
-          <Icon name="document-download" size={18} />
-          Download
-        </Button>
-      </div>
-      <ErrorText>{error}</ErrorText>
-      {!blob && !error && <p role="status">Loading document…</p>}
-      {blob &&
-        (blob.type === "application/pdf" ? (
-          <Suspense fallback={<p role="status">Preparing PDF viewer…</p>}>
-            <PdfViewer
-              blob={blob}
-              title={record.title}
-              onDocument={(doc) => setPages(doc?.numPages || 0)}
-              pageNumber={page}
-              onPageChange={setPage}
-            />
-          </Suspense>
-        ) : (
-          <img src={url} alt={record.title} className={shared.reportImage} />
-        ))}
-    </div>
+    <DocumentViewer
+      record={record}
+      file={file}
+      error={error}
+      label="Report document"
+    />
+  );
+}
+
+export function ReportSheet({ record, onClose }) {
+  return (
+    <Sheet
+      open={!!record}
+      onClose={onClose}
+      title={record?.title || "Report"}
+      documentView
+    >
+      {record && (
+        <div className={s.sheetReport}>
+          <LabReport key={record.id} record={record} embedded />
+        </div>
+      )}
+    </Sheet>
   );
 }
 

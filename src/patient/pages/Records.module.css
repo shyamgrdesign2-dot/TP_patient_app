@@ -548,7 +548,7 @@
   justify-content: space-between;
   gap: 4px;
   padding: 2px 12px;
-  background: var(--tesseract-bg-subtle);
+  background: color-mix(in srgb, var(--tesseract-blue-500) 4%, white);
   border-block: 1px solid var(--tesseract-border-soft);
 }
 .visitDateNav label {
@@ -674,6 +674,12 @@
   max-width: 100%;
   box-shadow: 0 4px 16px #26375f26;
 }
+.readerTools.readerTools {
+  background: var(--tesseract-bg-subtle);
+  border-color: var(--tesseract-border-soft);
+  box-shadow: 0 4px 16px
+    color-mix(in srgb, var(--tesseract-slate-900) 12%, transparent);
+}
 .readerTools.readerTools > button {
   color: var(--tesseract-fg-primary);
   min-width: 40px;
@@ -762,36 +768,284 @@
   flex-direction: row;
   align-items: center;
   gap: 4px;
-  padding: 8px 12px;
+  padding: 0;
   background: var(--tesseract-bg-surface);
   border-bottom: 1px solid var(--tesseract-border-soft);
+  box-shadow: none;
 }
 .recordsBand.recordsBand > div {
   flex: 1;
   min-width: 0;
   margin: 0;
-  border-radius: var(--tesseract-radius-10);
-  background: var(--tesseract-bg-subtle);
+  border-radius: 0;
+  background: transparent;
+  --fade: var(--tesseract-space-4);
 }
 .recordsBand > button {
   flex-shrink: 0;
 }
 .recordsBand [role="tablist"] {
-  padding: 4px;
-  gap: 2px;
+  padding: 0 var(--tesseract-space-3);
+  gap: var(--tesseract-space-2);
   border: 0;
+  background: transparent;
 }
 .recordsBand [role="tablist"] [role="tab"] {
-  min-height: 36px;
-  border-radius: var(--tesseract-radius-8);
+  min-height: 44px;
+  padding-inline: var(--tesseract-space-2);
+  border-radius: 0;
   color: var(--tesseract-fg-secondary);
 }
 .recordsBand [role="tablist"] [role="tab"][data-state="active"] {
-  color: var(--tesseract-fg-heading);
-  background: var(--tesseract-bg-surface);
-  box-shadow: var(--tesseract-shadow-xs);
+  font-weight: 800;
+  color: var(--tesseract-fg-link);
+  background: transparent;
+  box-shadow: none;
 }
 
-.visitDateNav > button {
+.visitDateNav > button[data-variant] {
+  color: var(--tesseract-fg-secondary) !important;
+  width: 44px;
+  min-width: 44px;
+}
+.visitDateNav > button[data-variant]:hover:not(:disabled) {
+  background: var(--tesseract-bg-muted);
+}
+.visitDateNav {
+  padding-inline: var(--tesseract-space-2);
+}
+.visitDateNav .datePicker {
+  gap: var(--tesseract-space-1);
+  padding-inline: 0;
+  font-size: var(--tesseract-text-body-xs);
+}
+.datePicker > span:not([data-tp-icon]) {
+  white-space: nowrap;
+}
+.historyHead h2 {
+  font-weight: var(--tesseract-weight-bold);
+}
+.historySection:first-child {
+  padding-top: 0;
+}
+.historySection:last-child {
+  padding-bottom: 0;
+}
+@media (max-width: 360px) {
+  .documentGrid {
+    gap: var(--tesseract-space-3);
+  }
+}
+
+/* A compact file queue keeps metadata separate for every document. */
+.uploadForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.uploadChooseRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.uploadPicker.uploadPicker {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-surface);
+  color: var(--tesseract-fg-link);
+  font-size: var(--tesseract-text-body-sm);
+}
+.uploadPicker.uploadPicker strong {
+  text-decoration: none;
+}
+.uploadPicker:has(input:disabled) {
   color: var(--tesseract-fg-secondary);
+}
+.uploadCount {
+  margin: 0;
+  color: var(--tesseract-fg-secondary);
+  font-size: var(--tesseract-text-body-xs);
+  white-space: nowrap;
+}
+.uploadHint {
+  margin: 0 0 2px;
+  color: var(--tesseract-fg-secondary);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: 1.6;
+}
+.uploadDraft {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-14);
+  background: var(--tesseract-bg-surface);
+  overflow: hidden;
+}
+.uploadFileHeading {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+}
+.uploadFileToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--tesseract-fg-primary);
+  text-align: left;
+}
+.uploadFileIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--tesseract-bg-subtle);
+  color: var(--tesseract-fg-secondary);
+}
+.uploadFileInfo {
+  flex: 1;
+  min-width: 0;
+}
+.uploadFileInfo strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--tesseract-text-body-sm);
+}
+.uploadFileInfo small {
+  display: block;
+  margin-top: 3px;
+  font-size: var(--tesseract-text-body-xs);
+  color: var(--tesseract-fg-secondary);
+}
+.uploadRemove {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--tesseract-fg-secondary);
+}
+.uploadRemove:focus-visible,
+.uploadFileToggle:focus-visible,
+.uploadNotes textarea:focus-visible,
+.uploadType select:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: -2px;
+}
+.uploadFields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.uploadFields[hidden] {
+  display: none;
+}
+.uploadMetaFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.uploadType,
+.uploadNotes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: var(--tesseract-text-body-sm);
+  min-width: 0;
+}
+.uploadType > span {
+  font-weight: var(--tesseract-weight-medium);
+}
+.uploadType > span > span {
+  color: var(--tesseract-fg-error);
+}
+.uploadType select {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: 12px;
+  background: var(--tesseract-bg-surface);
+  color: var(--tesseract-fg-primary);
+  font: inherit;
+  font-size: 16px;
+}
+.uploadNotes > span {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+}
+.uploadNotes small {
+  color: var(--tesseract-fg-secondary);
+  font-weight: var(--tesseract-weight-regular);
+}
+.uploadNotes > span > small:last-child {
+  margin-left: auto;
+}
+.uploadNotes textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 76px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: 12px;
+  background: var(--tesseract-bg-surface);
+  color: var(--tesseract-fg-primary);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.uploadFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+@media (min-width: 370px) {
+  .uploadMetaFields {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+  .uploadMetaFields :is(label, span) {
+    font-size: 12px;
+  }
+}
+/* Upload actions occupy their own row; PDF toolbars retain their overlay. */
+:global([role="dialog"]) > :global([class*="_footer_"]):has(.uploadFooter) {
+  position: relative;
+  inset: auto;
+  flex-shrink: 0;
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom)) !important;
+  pointer-events: auto;
+  background: var(--tesseract-bg-surface) !important;
+  border-top: 1px solid var(--tesseract-border-soft) !important;
+}
+.uploadNotes textarea,
+.uploadType select {
+  border-color: var(--tesseract-border-strong, #d6d6e2);
 }

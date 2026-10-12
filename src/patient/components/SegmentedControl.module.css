@@ -1,0 +1,40 @@
+/* Keep selection on the option itself: the library's measured overlay can
+   become stale when fonts, translated labels or text size change. */
+.control.control[data-variant][data-size] {
+  position: relative;
+  height: auto;
+  min-height: 52px;
+  padding: 4px;
+  gap: 2px;
+  background: var(--tesseract-bg-subtle);
+  isolation: isolate;
+}
+.control.control[data-variant][data-size] > span[aria-hidden="true"] {
+  display: none;
+}
+.control.control[data-variant][data-size] > [role="radio"] {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 8px;
+  font-size: var(--tesseract-text-body-xs);
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--tesseract-fg-secondary);
+}
+.control.control[data-variant][data-size] > [role="radio"] > span {
+  min-width: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.control.control[data-variant][data-size]
+  > [role="radio"][aria-checked="true"] {
+  background: var(--tesseract-bg-surface);
+  box-shadow: var(--tesseract-shadow-xs);
+  color: var(--tesseract-fg-heading);
+}
+.control.control[data-variant][data-size] > [role="radio"]:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: -2px;
+}

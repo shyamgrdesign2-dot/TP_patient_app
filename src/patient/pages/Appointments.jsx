@@ -1,3 +1,4 @@
+import SegmentedControl from "../components/SegmentedControl";
 import VisitDocumentSheet from "../components/VisitDocumentSheet";
 import { AiSpark } from "../components/AiNote";
 import { useEffect, useState } from "react";
@@ -8,12 +9,7 @@ import {
   useSearchParams,
   useParams,
 } from "react-router-dom";
-import {
-  ConfirmDialog,
-  Chip,
-  Divider,
-  SegmentedControl,
-} from "@dhspl-tatvacare/tesseract-ui";
+import { ConfirmDialog, Chip, Divider } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../state/AppContext";
 import {
   doctors,
@@ -48,6 +44,7 @@ import {
   useAction,
 } from "../components/ui";
 import s from "../App.module.css";
+import a from "./Appointments.module.css";
 import v from "../components/VisitExperience.module.css";
 import VisitType from "../components/VisitType";
 import { MemberForm } from "../components/MemberForm";
@@ -436,7 +433,7 @@ function ManualBooking({ doctor, onAssistant }) {
       <PageHeader title="Book an appointment" />
       <BookingDoctor doctor={doctor} />
       {step === 0 && (
-        <div className={b.switchRow}>
+        <div className={`${b.switchRow} ${a.assistantSwitch}`}>
           <span>Prefer to chat or speak?</span>
           <Button
             size="sm"
@@ -850,8 +847,8 @@ export function AppointmentCard({
   const d = doctors.find((x) => x.id === visit.doctorId);
   if (!d) return null;
   return (
-    <article className={`${s.appointmentCard} ${className}`}>
-      <div className={s.appointmentDate}>
+    <article className={`${s.appointmentCard} ${a.card} ${className}`}>
+      <div className={`${s.appointmentDate} ${a.cardDate}`}>
         <span>
           <Icon name="calendar-2" size={16} bulk />
           <Meta>
@@ -862,14 +859,14 @@ export function AppointmentCard({
         <Status status={visit.status} />
       </div>
       <button
-        className={s.doctorProfileButton}
+        className={`${s.doctorProfileButton} ${a.cardProfile}`}
         aria-label={`View appointment with ${d.name}`}
         onClick={onDetails}
       >
         <Avatar
           src={d.image}
           name={d.name.replace("Dr. ", "")}
-          size={56}
+          size={48}
           shape="rounded"
           radius={12}
           color="primary"
@@ -882,7 +879,7 @@ export function AppointmentCard({
         </span>
         <Icon name="chevron-right" size={16} />
       </button>
-      <div className={s.appointmentBottom}>
+      <div className={`${s.appointmentBottom} ${a.cardBottom}`}>
         <span className={s.appointmentMeta}>
           <VisitType
             type={visit.type}
@@ -1012,7 +1009,10 @@ export function Appointments() {
           onValueChange={setTab}
         />
       </div>
-      <div className={s.stack}>
+      <div
+        className={`${s.stack} ${a.visitList}`}
+        aria-label={`${tab} appointments`}
+      >
         {items.map((a) => (
           <AppointmentCard
             key={a.id}
@@ -1045,7 +1045,7 @@ export function Appointments() {
       >
         {selected && (
           <>
-            <div className={s.doctorRow}>
+            <div className={`${s.doctorRow} ${a.detailsDoctor}`}>
               <Avatar
                 src={selectedDoctor.image}
                 name={selectedDoctor.name.replace("Dr. ", "")}
@@ -1057,42 +1057,47 @@ export function Appointments() {
                   <DoctorName doctor={selectedDoctor} />
                 </h3>
                 <p>{selectedDoctor.specialty}</p>
-                <span style={{ display: "inline-flex", marginTop: 6 }}>
+                <span className={a.detailsStatus}>
                   <Status status={refreshSelected.status} />
                 </span>
               </div>
             </div>
             {!reschedule ? (
               <>
-                <dl className={s.details}>
-                  <dt>Appointment ID</dt>
-                  <dd>{selected.id}</dd>
-                  <dt>Date & time</dt>
-                  <dd>
-                    <Meta>
-                      {formatDate(refreshSelected.date)}
-                      {refreshSelected.time}
-                    </Meta>
-                  </dd>
-                  <dt>Patient</dt>
-                  <dd>
-                    <PatientName member={activeMember} />
-                  </dd>
-                  <dt>Visit type</dt>
-                  <dd>
-                    <VisitType type={selected.type} />
-                  </dd>
-                  {!isVideo(selected) && (
-                    <>
-                      <dt>Location</dt>
-                      <dd>
-                        {locations.find((l) => l.id === selected.location).name}
-                      </dd>
-                    </>
-                  )}
-
-                  <dt>Booked by</dt>
-                  <dd>{selected.source}</dd>
+                <dl className={a.details}>
+                  {[
+                    [
+                      "Date & time",
+                      <Meta key="when">
+                        {formatDate(refreshSelected.date)}
+                        {refreshSelected.time}
+                      </Meta>,
+                    ],
+                    [
+                      "Patient",
+                      <PatientName key="patient" member={activeMember} />,
+                    ],
+                    [
+                      "Visit type",
+                      <VisitType key="type" type={selected.type} />,
+                    ],
+                    ...(!isVideo(selected)
+                      ? [
+                          [
+                            "Location",
+                            locations.find((l) => l.id === selected.location)
+                              ?.name || "Hospital",
+                          ],
+                        ]
+                      : []),
+                    ["Appointment ID", selected.id],
+                    ["Booked by", selected.source],
+                  ].map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
                 </dl>
                 {refreshSelected.status === "Confirmed" && (
                   <div className={v.visitActions}>

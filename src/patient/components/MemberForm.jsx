@@ -1,9 +1,6 @@
 import { useState } from "react";
-import {
-  Checkbox,
-  Dropdown,
-  SegmentedControl,
-} from "@dhspl-tatvacare/tesseract-ui";
+import { Checkbox, Dropdown } from "@dhspl-tatvacare/tesseract-ui";
+import SegmentedControl from "./SegmentedControl";
 import { useApp } from "../state/AppContext";
 import { dateKey } from "../../shared/data";
 import {
@@ -60,7 +57,8 @@ export function BirthField({ value, onChange }) {
         </RequiredLabel>
         <SegmentedControl
           aria-label="Enter date of birth or age"
-          size="sm"
+          size="md"
+          fullWidth
           radius={10}
           options={[
             { value: "dob", label: "Date of birth" },
@@ -229,10 +227,13 @@ export function MemberForm({ member, onClose, onSave }) {
         label="Blood group (optional)"
         ariaLabel="Blood group (optional)"
         placeholder="Select blood group"
-        options={BLOOD_GROUPS.map((b) => ({ value: b, label: b }))}
-        value={values.blood || undefined}
-        onChange={(v) => field("blood", v)}
-        clearable
+        options={[
+          { value: "not-provided", label: "Not provided" },
+          ...BLOOD_GROUPS.map((b) => ({ value: b, label: b })),
+        ]}
+        value={values.blood || "not-provided"}
+        onChange={(v) => field("blood", v === "not-provided" ? "" : v)}
+        clearable={false}
         placement="top"
         maxMenuHeight={220}
       />

@@ -1,13 +1,6 @@
 import MedicalRecordTile from "../components/MedicalRecordTile";
 import { PrescriptionReader } from "../components/RecordDocuments";
-import {
-  lazy,
-  Suspense,
-  useEffect,
-  useRef,
-  useCallback,
-  useState,
-} from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@dhspl-tatvacare/tesseract-ui";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "../state/AppContext";
@@ -22,7 +15,7 @@ import {
   tabFor,
   sortRecords,
 } from "../services/records";
-import { getFile, saveFile, download } from "../services/files";
+import { saveFile } from "../services/files";
 import {
   Button,
   AbhaLogo,
@@ -39,8 +32,7 @@ import {
   ErrorText,
 } from "../components/ui";
 import { AbhaCardSheet, AbhaSyncSheet } from "../components/abha/Abha";
-import { makeSamplePdf } from "../services/recordPdf";
-const PdfViewer = lazy(() => import("../components/PdfViewer"));
+import { ReportSheet } from "./LabReport";
 import s from "../App.module.css";
 import r from "./Records.module.css";
 
@@ -76,7 +68,7 @@ const matches = (text, search) =>
   text.toLowerCase().includes(search.trim().toLowerCase());
 
 export default function Records() {
-  const { state, activeMember, dispatch, notify, brand } = useApp();
+  const { state, activeMember, dispatch, notify } = useApp();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const tab = RECORD_TABS.some((t) => t.id === params.get("tab"))
@@ -95,22 +87,17 @@ export default function Records() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [upload, setUpload] = useState(() => params.get("upload") === "1");
-  const [file, setFile] = useState(null);
-  const [title, setTitle] = useState("");
-  const [fileType, setFileType] = useState("Pathology");
-  const [fileDate, setFileDate] = useState(dateKey());
-  const [fileUrl, setFileUrl] = useState(null);
-  const [recordBlob, setRecordBlob] = useState(null);
-  const pdfDocument = useRef(null);
-  const [pdfReady, setPdfReady] = useState(false);
-  const [pageCount, setPageCount] = useState(0);
-  const [pdfPage, setPdfPage] = useState(1);
-  const setPdfDocument = useCallback((doc) => {
-    pdfDocument.current = doc;
-    setPdfReady(!!doc);
-    setPageCount(doc?.numPages || 0);
-  }, []);
-  const [fileError, setFileError] = useState("");
+  const [uploadDrafts, setUploadDrafts] = useState([]);
+  const [expandedUploads, setExpandedUploads] = useState({});
+  const uploadMember = useRef(activeMember.id);
+  useEffect(() => {
+    if (uploadMember.current !== activeMember.id) {
+      uploadMember.current = activeMember.id;
+      setUploadDrafts([]);
+      setExpandedUploads({});
+      setUpload(false);
+    }
+  }, [activeMember.id]);
   const [discharge, setDischarge] = useState(null);
   const [abhaSheet, setAbhaSheet] = useState(() =>
     params.get("abha") === "card" ? "card" : null,
@@ -123,34 +110,60 @@ export default function Records() {
   const updateTabFade = useCallback(() => {
     const n = tabStrip.current;
     if (!n) return;
-    setTabFade({
+    const next = {
       left: n.scrollLeft > 2,
       right: n.scrollLeft + n.clientWidth < n.scrollWidth - 2,
-    });
+    };
+    setTabFade((previous) =>
+      previous.left === next.left && previous.right === next.right
+        ? previous
+        : next,
+    );
   }, []);
   useEffect(() => {
-    updateTabFade();
-    window.addEventListener("resize", updateTabFade);
-    return () => window.removeEventListener("resize", updateTabFade);
-  }, [updateTabFade]);
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      const strip = tabStrip.current;
-      const selectedTab = strip?.querySelector(
-        '[role="tab"][aria-selected="true"]',
-      );
-      if (!strip || !selectedTab) return;
-      const bounds = strip.getBoundingClientRect();
-      const item = selectedTab.getBoundingClientRect();
-      if (item.left < bounds.left + 16 || item.right > bounds.right - 16) {
-        strip.scrollLeft +=
-          item.left - bounds.left - (bounds.width - item.width) / 2;
-      }
-      updateTabFade();
+    const strip = tabStrip.current;
+    if (!strip) return;
+    let frame = 0;
+    let disposed = false;
+    const revealSelected = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (disposed) return;
+        const selectedTab = strip.querySelector(
+          '[role="tab"][aria-selected="true"]',
+        );
+        if (!selectedTab) return;
+        const bounds = strip.getBoundingClientRect();
+        const item = selectedTab.getBoundingClientRect();
+        if (item.left < bounds.left + 16 || item.right > bounds.right - 16) {
+          strip.scrollLeft +=
+            item.left - bounds.left - (bounds.width - item.width) / 2;
+        }
+        updateTabFade();
+      });
+    };
+    // Counts, web fonts and narrow preview resizing can all change tab widths.
+    const observer = new ResizeObserver(revealSelected);
+    observer.observe(strip);
+    const list = strip.querySelector('[role="tablist"]');
+    if (list) observer.observe(list);
+    const selectedTab = strip.querySelector(
+      '[role="tab"][aria-selected="true"]',
+    );
+    if (selectedTab) observer.observe(selectedTab);
+    document.fonts?.ready.then(() => {
+      if (!disposed) revealSelected();
     });
-    return () => cancelAnimationFrame(frame);
+    document.fonts?.addEventListener("loadingdone", revealSelected);
+    revealSelected();
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      document.fonts?.removeEventListener("loadingdone", revealSelected);
+      cancelAnimationFrame(frame);
+    };
   }, [tab, activeMember.id, updateTabFade]);
-  const { busy, error, run } = useAction();
+  const { busy, error, setError, run } = useAction();
   const records = state.records.filter(
     (r) =>
       r.memberId === activeMember.id &&
@@ -194,142 +207,113 @@ export default function Records() {
     discharge: discharges.length,
     certificates: certificates.length,
   }[tab];
-  useEffect(() => {
-    let url;
-    let cancelled = false;
-    setFileUrl(null);
-    setRecordBlob(null);
-    setFileError("");
-    setPdfReady(false);
-    if (selected)
-      (selected.uploaded
-        ? getFile(selected.id)
-        : makeSamplePdf(selected, activeMember, brand)
-      )
-        .then((blob) => {
-          if (cancelled) return;
-          if (!blob) {
-            setFileError(
-              "The local file is no longer available in this browser. Please upload it again.",
-            );
-            return;
-          }
-          url = URL.createObjectURL(blob);
-          setFileUrl(url);
-          setRecordBlob(blob);
-        })
-        .catch(() =>
-          setFileError(
-            "Could not load the file. Close this panel and try again.",
-          ),
-        );
-    return () => {
-      cancelled = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [selected?.id]);
   function openRecord(record) {
-    if (
-      (record.category === CATEGORY.lab && record.params?.length) ||
-      (["Radiology", "Pathology"].includes(record.type) && record.summary)
-    )
-      navigate(`/records/${record.id}`);
-    else {
-      const p = new URLSearchParams(params);
-      p.set("record", record.id);
-      setParams(p);
-    }
+    const p = new URLSearchParams(params);
+    p.set("record", record.id);
+    setParams(p);
   }
   function closeRecord() {
     const p = new URLSearchParams(params);
     p.delete("record");
-    setParams(p);
+    setParams(p, { replace: true });
+  }
+  function addUploadFiles(event) {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (!files.length) return;
+    if (uploadDrafts.length + files.length > 5) {
+      setError(
+        "Add up to 5 documents at a time. Remove a document before adding more.",
+      );
+      return;
+    }
+    const invalid = files.find(
+      (file) =>
+        !["application/pdf", "image/png", "image/jpeg", "image/gif"].includes(
+          file.type,
+        ) ||
+        file.size > 10 * 1024 * 1024 ||
+        file.size === 0,
+    );
+    if (invalid) {
+      setError(
+        `${invalid.name}: choose a PDF, JPG, PNG or GIF between 1 byte and 10 MB.`,
+      );
+      return;
+    }
+    setError("");
+    setUploadDrafts((drafts) => [
+      ...drafts,
+      ...files.map((file) => ({
+        id: crypto.randomUUID(),
+        file,
+        title: file.name.replace(/\.[^.]+$/, "").slice(0, 120),
+        type: "Pathology",
+        date: dateKey(),
+        notes: "",
+      })),
+    ]);
+  }
+  function updateUploadDraft(id, key, value) {
+    setUploadDrafts((drafts) =>
+      drafts.map((draft) =>
+        draft.id === id ? { ...draft, [key]: value } : draft,
+      ),
+    );
   }
   function uploadRecord(e) {
     e.preventDefault();
     run(async () => {
-      if (!file) throw new Error("Choose a PDF, PNG or JPEG file.");
-      if (!["application/pdf", "image/png", "image/jpeg"].includes(file.type))
-        throw new Error("Use a PDF, PNG or JPEG file.");
-      if (file.size > 10 * 1024 * 1024)
-        throw new Error("Choose a file smaller than 10 MB.");
-      if (!title.trim()) throw new Error("Give this record a title.");
-      if (!fileDate || fileDate > dateKey())
-        throw new Error("Choose today or a past record date.");
-      const id = crypto.randomUUID();
-      await saveFile(id, file);
-      dispatch({
-        type: "RECORD",
-        record: {
-          id,
-          memberId: activeMember.id,
-          title: title.trim(),
-          category: CATEGORY.medical,
-          type: fileType,
-          date: fileDate,
-          author: "Uploaded by you",
-          format: file.type === "application/pdf" ? "PDF" : "Image",
-          uploaded: true,
-          fileName: file.name,
-          mime: file.type,
-        },
-      });
+      if (!uploadDrafts.length)
+        throw new Error("Choose at least one document.");
+      for (const draft of uploadDrafts) {
+        if (!draft.title.trim()) {
+          setExpandedUploads((current) => ({ ...current, [draft.id]: true }));
+          throw new Error(`Give ${draft.file.name} a title.`);
+        }
+        if (!draft.date || draft.date > dateKey()) {
+          setExpandedUploads((current) => ({ ...current, [draft.id]: true }));
+          throw new Error(
+            "Choose today or a past investigation date for every document.",
+          );
+        }
+        if (!MEDICAL_RECORD_TYPES.includes(draft.type))
+          throw new Error("Choose a supported record type for every document.");
+      }
+      // Publish records only after every original file is safely stored. Draft
+      // IDs remain stable so retrying a storage failure cannot duplicate files.
+      await Promise.all(
+        uploadDrafts.map((draft) => saveFile(draft.id, draft.file)),
+      );
+      for (const draft of uploadDrafts) {
+        dispatch({
+          type: "RECORD",
+          record: {
+            id: draft.id,
+            memberId: activeMember.id,
+            title: draft.title.trim(),
+            category: CATEGORY.medical,
+            type: draft.type,
+            date: draft.date,
+            note: draft.notes.trim(),
+            author: "Uploaded by you",
+            format: draft.file.type === "application/pdf" ? "PDF" : "Image",
+            uploaded: true,
+            fileName: draft.file.name,
+            mime: draft.file.type,
+          },
+        });
+      }
       setUpload(false);
-      setFile(null);
-      setTitle("");
+      setUploadDrafts([]);
       setTab("records");
       setTypeFilter("All");
-      notify("Record saved.");
-    });
-  }
-  const recordFileName = selected?.uploaded
-    ? selected.fileName
-    : `${selected?.title.replace(/\W+/g, "-")}.pdf`;
-  function downloadRecord() {
-    if (recordBlob) {
-      download(recordFileName, recordBlob);
-      notify("Download started.");
-    }
-  }
-  async function shareRecord() {
-    if (!recordBlob) return;
-    const file = new File([recordBlob], recordFileName, {
-      type: recordBlob.type,
-    });
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: selected.title });
-      } catch (error) {
-        if (error.name !== "AbortError")
-          notify(
-            "Sharing could not start. Download the file to share it.",
-            true,
-          );
-      }
-    } else {
-      downloadRecord();
       notify(
-        "File downloaded. Share it from your device’s Files or Downloads app.",
+        uploadDrafts.length === 1
+          ? "Record saved."
+          : `${uploadDrafts.length} records saved.`,
       );
-    }
-  }
-  async function printRecord() {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      notify("Allow pop-ups to open the print preview.", true);
-      return;
-    }
-    try {
-      const { printDocument } = await import("../components/PdfViewer");
-      await printDocument(printWindow, {
-        pdf: pdfDocument.current,
-        imageUrl: recordBlob?.type.startsWith("image/") ? fileUrl : null,
-        title: selected.title,
-      });
-    } catch (error) {
-      printWindow.close();
-      notify(error.message, true);
-    }
+    });
   }
   const emptyCopy = {
     visits: {
@@ -395,7 +379,12 @@ export default function Records() {
           data-fade-left={tabFade.left || undefined}
           data-fade-right={tabFade.right || undefined}
         >
-          <Tabs value={tab} onValueChange={setTab} size="sm" variant="segment">
+          <Tabs
+            value={tab}
+            onValueChange={setTab}
+            size="sm"
+            variant="underline"
+          >
             <TabsList aria-label="Record type">
               {RECORD_TABS.map((t) => (
                 <TabsTrigger
@@ -642,122 +631,195 @@ export default function Records() {
           openRecord(record);
         }}
       />
-      <Sheet
-        open={!!selected}
-        onClose={closeRecord}
-        title={selected?.title || "Health record"}
-        documentView
-        headerIcon="document-text"
-        description={selected && formatDate(selected.date, { year: "numeric" })}
-        footer={
-          <DocumentBar
-            page={pdfPage}
-            pages={recordBlob?.type === "application/pdf" ? pageCount : 0}
-            onPage={setPdfPage}
-          >
-            <button
-              type="button"
-              aria-label="Share"
-              title="Share"
-              onClick={shareRecord}
-              disabled={!recordBlob}
-            >
-              <Icon name="share-2" size={20} />
-            </button>
-            <button
-              type="button"
-              aria-label="Download file"
-              title="Download"
-              onClick={downloadRecord}
-              disabled={!recordBlob}
-            >
-              <Icon name="document-download" size={20} />
-            </button>
-            <button
-              type="button"
-              aria-label="Print"
-              title="Print"
-              onClick={printRecord}
-              disabled={
-                !recordBlob ||
-                !!fileError ||
-                (recordBlob.type === "application/pdf" && !pdfReady)
-              }
-            >
-              <Icon name="printer" size={20} />
-            </button>
-          </DocumentBar>
-        }
-      >
-        <ErrorText>{fileError}</ErrorText>
-        {!recordBlob && !fileError && <p role="status">Loading document…</p>}
-        {recordBlob &&
-          (recordBlob.type === "application/pdf" ? (
-            <Suspense fallback={<p role="status">Preparing PDF viewer…</p>}>
-              <PdfViewer
-                blob={recordBlob}
-                title={selected?.title}
-                onDocument={setPdfDocument}
-                pageNumber={pdfPage}
-                onPageChange={setPdfPage}
-              />
-            </Suspense>
-          ) : (
-            <img
-              src={fileUrl}
-              alt={selected?.title}
-              className={s.reportImage}
-            />
-          ))}
-      </Sheet>
+      <ReportSheet record={selected} onClose={closeRecord} />
       <Sheet
         open={upload}
         documentView
         headerIcon="document-upload"
-        onClose={() => setUpload(false)}
-        title="Add a medical record"
-        description={`Save a record to ${activeMember.name}’s profile.`}
+        onClose={() => {
+          if (!busy) setUpload(false);
+        }}
+        title="Upload medical records"
+        description={`For ${activeMember.name} · Up to 5 documents at once`}
+        footer={
+          <div className={r.uploadFooter}>
+            <ErrorText>{error}</ErrorText>
+            <Button
+              type="submit"
+              form="medical-record-upload"
+              loading={busy}
+              disabled={!uploadDrafts.length}
+              fullWidth
+            >
+              {uploadDrafts.length > 1
+                ? `Save ${uploadDrafts.length} records`
+                : "Save record"}
+            </Button>
+          </div>
+        }
       >
-        <form className={s.stack} onSubmit={uploadRecord}>
-          <label className={s.uploadZone}>
-            <Icon name="document-upload" size={32} />
-            <strong>{file ? file.name : "Choose a file"}</strong>
-            <small>PDF, JPG or PNG · Up to 10 MB</small>
-            <input
-              aria-label="Record file"
-              type="file"
-              accept="application/pdf,image/jpeg,image/png"
-              onChange={(e) => {
-                const f = e.target.files[0];
-                setFile(f);
-                if (f && !title) setTitle(f.name.replace(/\.[^.]+$/, ""));
-              }}
-            />
-          </label>
-          <Field
-            label="Record title"
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <ChoiceGroup
-            label="Record type"
-            options={MEDICAL_RECORD_TYPES}
-            value={fileType}
-            onChange={setFileType}
-          />
-          <Field
-            label="Record date"
-            type="date"
-            required
-            max={dateKey()}
-            value={fileDate}
-            onChange={(e) => setFileDate(e.target.value)}
-          />
-          <ErrorText>{error}</ErrorText>
-          <Button type="submit" loading={busy} fullWidth>
-            Save record
-          </Button>
+        <form
+          id="medical-record-upload"
+          className={r.uploadForm}
+          onSubmit={uploadRecord}
+          noValidate
+        >
+          <div className={r.uploadChooseRow}>
+            <label className={`${s.uploadZone} ${r.uploadPicker}`}>
+              <Icon name="document-upload" size={20} />
+              <strong>
+                {uploadDrafts.length === 5
+                  ? "5 files selected"
+                  : uploadDrafts.length
+                    ? "Add files"
+                    : "Choose files"}
+              </strong>
+              <input
+                aria-label="Record file"
+                type="file"
+                multiple
+                disabled={busy || uploadDrafts.length >= 5}
+                accept="application/pdf,image/jpeg,image/png,image/gif"
+                onChange={addUploadFiles}
+              />
+            </label>
+            <span className={r.uploadCount} role="status">
+              {uploadDrafts.length} of 5 selected
+            </span>
+          </div>
+          <p className={r.uploadHint}>
+            Select multiple files together, or add them one at a time.
+            <br />
+            PDF, JPG, PNG or GIF · Up to 10 MB each
+          </p>
+          {uploadDrafts.map((draft, index) => {
+            const expanded = expandedUploads[draft.id] ?? index === 0;
+            return (
+              <section
+                className={r.uploadDraft}
+                key={draft.id}
+                role="group"
+                aria-label={`Document ${index + 1}`}
+              >
+                <div className={r.uploadFileHeading}>
+                  <button
+                    type="button"
+                    className={r.uploadFileToggle}
+                    aria-expanded={expanded}
+                    aria-controls={`upload-fields-${draft.id}`}
+                    disabled={busy}
+                    onClick={() =>
+                      setExpandedUploads((current) => ({
+                        ...current,
+                        [draft.id]: !expanded,
+                      }))
+                    }
+                  >
+                    <span className={r.uploadFileIcon}>
+                      <Icon
+                        name={
+                          draft.file.type === "application/pdf"
+                            ? "document-text"
+                            : "gallery"
+                        }
+                        size={20}
+                      />
+                    </span>
+                    <span className={r.uploadFileInfo}>
+                      <strong>{draft.file.name}</strong>
+                      <small>
+                        {draft.type} · {formatDate(draft.date)} ·{" "}
+                        {Math.max(1, Math.ceil(draft.file.size / 1024))} KB
+                      </small>
+                    </span>
+                    <Icon
+                      name={expanded ? "arrow-up" : "arrow-down"}
+                      size={16}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    className={r.uploadRemove}
+                    aria-label={`Remove ${draft.file.name}`}
+                    disabled={busy}
+                    onClick={() => {
+                      setUploadDrafts((drafts) =>
+                        drafts.filter((item) => item.id !== draft.id),
+                      );
+                      setError("");
+                    }}
+                  >
+                    <Icon name="trash" size={18} />
+                  </button>
+                </div>
+                <div
+                  className={r.uploadFields}
+                  id={`upload-fields-${draft.id}`}
+                  hidden={!expanded}
+                >
+                  <Field
+                    label="Record title"
+                    required
+                    disabled={busy}
+                    maxLength={120}
+                    value={draft.title}
+                    onChange={(e) =>
+                      updateUploadDraft(draft.id, "title", e.target.value)
+                    }
+                  />
+                  <div className={r.uploadMetaFields}>
+                    <Field
+                      label="Date of Investigation"
+                      type="date"
+                      required
+                      disabled={busy}
+                      max={dateKey()}
+                      value={draft.date}
+                      onChange={(e) =>
+                        updateUploadDraft(draft.id, "date", e.target.value)
+                      }
+                    />
+                    <label className={r.uploadType}>
+                      <span>
+                        Record type <span aria-hidden="true">*</span>
+                      </span>
+                      <select
+                        aria-label="Record type"
+                        required
+                        disabled={busy}
+                        value={draft.type}
+                        onChange={(e) =>
+                          updateUploadDraft(draft.id, "type", e.target.value)
+                        }
+                      >
+                        {MEDICAL_RECORD_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <label className={r.uploadNotes}>
+                    <span>
+                      Notes <small>(optional)</small>
+                      <small>{draft.notes.length}/300</small>
+                    </span>
+                    <textarea
+                      rows={2}
+                      maxLength={300}
+                      disabled={busy}
+                      value={draft.notes}
+                      placeholder="Add details about this document"
+                      onChange={(e) =>
+                        updateUploadDraft(draft.id, "notes", e.target.value)
+                      }
+                    />
+                  </label>
+                </div>
+              </section>
+            );
+          })}
         </form>
       </Sheet>
     </div>
@@ -912,59 +974,6 @@ function MedicalHistory({ member }) {
         Recorded by your doctors during visits. Tell your doctor if anything
         here has changed.
       </Notice>
-    </div>
-  );
-}
-
-// Floating, translucent document controls: page switch and icon actions.
-// Hides while the document scrolls and returns once scrolling stops.
-function DocumentBar({ page, pages, onPage, children }) {
-  const bar = useRef(null);
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => {
-    const scroller = bar.current
-      ?.closest('[role="dialog"]')
-      ?.querySelector(`.${s.sheetBody}`);
-    if (!scroller) return;
-    let idle;
-    const onScroll = () => {
-      setHidden(true);
-      clearTimeout(idle);
-      idle = setTimeout(() => setHidden(false), 700);
-    };
-    scroller.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      clearTimeout(idle);
-      scroller.removeEventListener("scroll", onScroll);
-    };
-  }, []);
-  return (
-    <div className={s.documentBar} ref={bar} data-hidden={hidden}>
-      {pages > 1 && (
-        <>
-          <button
-            type="button"
-            aria-label="Previous PDF page"
-            disabled={page <= 1}
-            onClick={() => onPage(page - 1)}
-          >
-            <Icon name="chevron-left" size={18} />
-          </button>
-          <span className={s.documentBarPage} aria-live="polite">
-            {page} / {pages}
-          </span>
-          <button
-            type="button"
-            aria-label="Next PDF page"
-            disabled={page >= pages}
-            onClick={() => onPage(page + 1)}
-          >
-            <Icon name="chevron-right" size={18} />
-          </button>
-          <span className={s.documentBarDivider} aria-hidden="true" />
-        </>
-      )}
-      {children}
     </div>
   );
 }

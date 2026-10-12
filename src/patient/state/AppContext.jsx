@@ -204,6 +204,7 @@ export function AppProvider({ children }) {
           next.members?.length &&
           ownerPhone(next) === ownerPhone(stateRef.current)
         ) {
+          next.records = (next.records || []).map(normalizeRecord);
           stateRef.current = next;
           setState(next);
         }

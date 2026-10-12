@@ -1,0 +1,72 @@
+.root {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: color-mix(
+    in srgb,
+    var(--tesseract-slate-200) 65%,
+    var(--tesseract-slate-100)
+  );
+}
+.scroll {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px 10px 96px;
+}
+.scroll > div {
+  padding-bottom: 0;
+}
+.scroll > div + div {
+  margin-top: 12px;
+}
+.scroll canvas {
+  box-shadow: 0 2px 8px #26375f1c;
+}
+.scroll:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: -2px;
+}
+.tools {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+}
+.tools.portalTools {
+  position: static;
+  transform: none;
+}
+.tools [data-tp-icon] {
+  background-color: var(--tesseract-slate-0) !important;
+  color: var(--tesseract-slate-0) !important;
+}
+.tools > button:focus-visible {
+  outline: 2px solid var(--tesseract-slate-0);
+  outline-offset: -4px;
+}
+
+.notes {
+  padding: var(--tesseract-space-3);
+  margin-bottom: var(--tesseract-space-3);
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-surface);
+}
+.notes h3 {
+  margin: 0 0 var(--tesseract-space-1);
+  font-size: var(--tesseract-text-body-sm);
+  color: var(--tesseract-fg-heading);
+}
+.notes p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  color: var(--tesseract-fg-secondary);
+}

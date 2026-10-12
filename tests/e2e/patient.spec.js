@@ -136,7 +136,10 @@ test("record uploads persist and are attached to the current patient", async ({
     ),
   });
   await page.getByLabel("Record title", { exact: true }).fill("My sample scan");
-  await page.getByRole("button", { name: "Radiology", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByLabel("Record type", { exact: true })
+    .selectOption("Radiology");
   await page.getByRole("button", { name: "Save record", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.reload();
@@ -1027,6 +1030,14 @@ test("four-tab navigation keeps family in More and inputs use the new shared geo
   await expect(
     dialog.getByRole("button", { name: "Close", exact: true }),
   ).toHaveCSS("border-width", "0px");
+  await dialog.getByLabel("Record file", { exact: true }).setInputFiles({
+    name: "layout-check.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l8sAAAAASUVORK5CYII=",
+      "base64",
+    ),
+  });
   await expect(dialog.getByLabel("Record title", { exact: true })).toHaveCSS(
     "border-radius",
     "12px",
@@ -1037,7 +1048,7 @@ test("four-tab navigation keeps family in More and inputs use the new shared geo
   );
   await expect(dialog.locator('[class*="uploadZone"] strong')).toHaveCSS(
     "text-decoration-line",
-    "underline",
+    "none",
   );
 });
 
@@ -1064,7 +1075,7 @@ test("three Home promotions include empty reports and ABHA linking", async ({
   await page.getByRole("button", { name: /Show banner 2:/ }).click();
   await page.getByRole("button", { name: "Add a record", exact: true }).click();
   await expect(
-    page.getByRole("dialog", { name: "Add a medical record" }),
+    page.getByRole("dialog", { name: "Upload medical records" }),
   ).toBeVisible();
   await page.goto("/");
   await page.getByRole("button", { name: /Show banner 3:/ }).click();
@@ -1114,6 +1125,12 @@ test("PDF records render in a tall sheet with share, download, print and no grip
 }) => {
   await page.goto("/records?record=r2");
   const sheet = page.getByRole("dialog");
+  await expect(sheet.getByRole("tablist", { name: "Report view" })).toHaveCount(
+    0,
+  );
+  await expect(
+    sheet.getByRole("region", { name: "Original Report", exact: true }),
+  ).toBeVisible();
   await expect(
     sheet.getByRole("img", { name: "Consultation prescription, page 1" }),
   ).toBeVisible();
@@ -1176,7 +1193,15 @@ test("floating action and compact glass patient selector stay clear of navigatio
   expect((await tag.boundingBox()).height).toBeLessThan(45);
   await expect(tag).toHaveCSS("border-top-width", "0px");
   await page.locator("#app-content").evaluate((n) => (n.scrollTop = 250));
-  expect((await tag.boundingBox()).y).toBeGreaterThanOrEqual(64);
+  const headerBox = await page
+    .locator("header")
+    .filter({ has: tag })
+    .boundingBox();
+  const patientBox = await tag.boundingBox();
+  expect(patientBox.y).toBeGreaterThanOrEqual(headerBox.y);
+  expect(patientBox.y + patientBox.height).toBeLessThanOrEqual(
+    headerBox.y + headerBox.height,
+  );
   expect(
     (await action.boundingBox()).y + (await action.boundingBox()).height,
   ).toBeLessThan((await nav.boundingBox()).y);
@@ -1992,17 +2017,23 @@ test("confirmation screen has no ID, a full card, two actions and survives sympt
   await expect(page).toHaveURL(/\/$/);
 });
 
-test("lab reports open an intelligent analysis with filters, explanations and a concerning parameters page", async ({
+test("lab reports open on original documents with analysis and nested explanations in the same sheet", async ({
   page,
 }) => {
   await page.goto("/records?tab=labs");
   const card = page.getByRole("button", { name: /^View Diabetes screening/ });
   await expect(card).toContainText("AI analysis");
   await card.click();
-  await expect(page).toHaveURL(/\/records\/r12$/);
+  await expect(page).toHaveURL(/\/records\?tab=labs&record=r12$/);
+  const report = page.getByRole("dialog", {
+    name: "Diabetes screening",
+    exact: true,
+  });
   await expect(
-    page.getByRole("heading", { name: "Diabetes screening", exact: true }),
-  ).toBeVisible();
+    report.getByRole("tab", { name: "Original Report" }),
+  ).toHaveAttribute("aria-selected", "true");
+  await expect(report.locator("canvas")).toBeVisible();
+  await report.getByRole("tab", { name: "Intelligence" }).click();
   const summary = page.getByRole("button", {
     name: /3 parameters are concerning/,
   });
@@ -2035,29 +2066,23 @@ test("lab reports open an intelligent analysis with filters, explanations and a 
   await sheet.getByRole("button", { name: "Close" }).click();
   await expect(sheet).toHaveCount(0);
   // The original document is one tab away.
-  await page.getByRole("tab", { name: "Original report" }).click();
+  await page.getByRole("tab", { name: "Original Report", exact: true }).click();
   await expect(
     page.getByRole("img", { name: "Diabetes screening, page 1" }),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Intelligent analysis" }).click();
-  // The summary leads to the concerning parameters.
+  await page.getByRole("tab", { name: "Intelligence" }).click();
+  // The summary narrows the analysis in place; the report sheet stays open.
   await summary.click();
-  await expect(page).toHaveURL(/\/records\/r12\/concerning$/);
-  await expect(
-    page.getByRole("heading", { name: "Concerning parameters", exact: true }),
-  ).toBeVisible();
-  const concerns = page.getByRole("list", { name: "Concerning parameters" });
-  await expect(concerns.getByRole("listitem")).toHaveCount(3);
-  await expect(concerns.getByRole("listitem").first()).toContainText("High");
-  await expect(concerns.getByRole("listitem").first()).toContainText(
-    "112 mg/dL",
-  );
-  await expect(concerns.getByRole("listitem").nth(1)).toContainText(
-    "Borderline",
-  );
+  await expect(page).toHaveURL(/\/records\?tab=labs&record=r12$/);
+  await expect(list.getByRole("listitem")).toHaveCount(3);
+  await expect(list.getByRole("listitem").first()).toContainText(/112.*mg\/dL/);
+  await report
+    .getByRole("button", { name: "Show all parameters", exact: true })
+    .click();
+  await expect(list.getByRole("listitem")).toHaveCount(4);
   await expect(page.getByText(/not a diagnosis/)).toBeVisible();
-  await page.getByRole("button", { name: "Consult a doctor" }).click();
-  await expect(page).toHaveURL(/\/doctors$/);
+  await report.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page).toHaveURL(/\/records\?tab=labs$/);
   // Another patient's report is not shown.
   await page.goto("/records/r13");
   await expect(page.getByText("This report isn’t available")).toBeVisible();
@@ -2102,13 +2127,16 @@ test("health records are grouped into visits, lab results, medical records, disc
       exact: true,
     })
     .click();
+  await expect(page.getByRole("tab", { name: "Intelligence" })).toBeVisible();
+  await page.getByRole("tab", { name: "Intelligence" }).click();
   await expect(
-    page.getByRole("tab", { name: "Intelligent analysis" }),
-  ).toBeVisible();
-  await expect(page.getByRole("tabpanel")).toContainText("A normal urine test");
-  await expect(page.getByRole("tabpanel")).toContainText("Next steps");
-  await page.getByRole("tab", { name: "Original report" }).click();
-  await expect(page.locator("canvas")).toBeVisible();
+    page.getByRole("tabpanel", { name: "Intelligence" }),
+  ).toContainText("A normal urine test");
+  await expect(
+    page.getByRole("tabpanel", { name: "Intelligence" }),
+  ).toContainText("Next steps");
+  await page.getByRole("tab", { name: "Original Report", exact: true }).click();
+  await expect(page.getByRole("dialog").locator("canvas")).toBeVisible();
   // Certificates and medical history for the current patient.
   await page.goto("/records?tab=certificates");
   await expect(page.getByText("2 records")).toBeVisible();

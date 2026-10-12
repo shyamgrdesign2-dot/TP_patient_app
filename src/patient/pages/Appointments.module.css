@@ -1,0 +1,120 @@
+/* Compact visit cards keep the date, doctor and next action in a clear order. */
+.card.card {
+  box-shadow: 0 1px 2px
+    color-mix(in srgb, var(--tesseract-slate-900) 3%, transparent);
+}
+.cardDate.cardDate {
+  padding: var(--tesseract-space-2-5) var(--tesseract-space-3-5);
+  background: var(--tesseract-bg-subtle);
+}
+.card .cardProfile {
+  gap: var(--tesseract-space-3);
+  padding: var(--tesseract-space-4) var(--tesseract-space-3-5);
+  min-width: 0;
+}
+.cardProfile h2 {
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+}
+.cardProfile > span {
+  min-width: 0;
+}
+.cardProfile > span h2 > span:first-child {
+  overflow-wrap: anywhere;
+}
+.card .cardBottom {
+  flex-wrap: wrap;
+  gap: var(--tesseract-space-2) var(--tesseract-space-3);
+  padding: 0 var(--tesseract-space-3-5) var(--tesseract-space-3-5);
+}
+.cardBottom > span {
+  flex: 1 1 110px;
+  min-width: 0;
+}
+.cardBottom > span [data-compact] {
+  align-items: flex-start;
+}
+.cardBottom > span [data-compact] > span:last-child {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.cardBottom > button {
+  margin-left: auto;
+}
+.cardProfile:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: -3px;
+  border-radius: var(--tesseract-radius-10);
+}
+.visitList {
+  gap: var(--tesseract-space-3);
+}
+.detailsDoctor {
+  padding-bottom: var(--tesseract-space-1);
+}
+.detailsDoctor > div {
+  min-width: 0;
+}
+.detailsStatus {
+  display: inline-flex;
+  margin-top: var(--tesseract-space-1-5);
+}
+.details {
+  margin: 0;
+  padding: var(--tesseract-space-1) var(--tesseract-space-3-5);
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: var(--tesseract-radius-12);
+  background: var(--tesseract-bg-surface);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+}
+.details > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: var(--tesseract-space-3);
+  padding-block: var(--tesseract-space-2-5);
+}
+.details > div + div {
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.details dt {
+  color: var(--tesseract-fg-secondary);
+}
+.details dd {
+  margin: 0;
+  text-align: right;
+  font-weight: var(--tesseract-weight-medium);
+  color: var(--tesseract-fg-heading);
+  overflow-wrap: anywhere;
+}
+.details dd > span {
+  justify-content: flex-end;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cardProfile {
+    transition: background-color var(--tesseract-duration-150);
+  }
+}
+@media (hover: hover) {
+  .cardProfile:hover {
+    background: var(--tesseract-bg-surface-hover);
+  }
+}
+
+.assistantSwitch > button {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  white-space: normal;
+}
+.assistantSwitch > button [class*="_content_"] {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+}
+.assistantSwitch > button [class*="_content_"] > span:last-child {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

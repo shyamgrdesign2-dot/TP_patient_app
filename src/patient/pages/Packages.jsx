@@ -5,7 +5,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { SegmentedControl } from "@dhspl-tatvacare/tesseract-ui";
+import SegmentedControl from "../components/SegmentedControl";
 import { useApp } from "../state/AppContext";
 import { dateKey, formatDate, money } from "../../shared/data";
 import { listedCatalog, packagesEnabled } from "../../shared/catalog";

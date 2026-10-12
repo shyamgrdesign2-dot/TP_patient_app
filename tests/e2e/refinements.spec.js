@@ -79,7 +79,7 @@ test("mobile confirmation actions share a sticky row", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Directions to/ })).toBeVisible();
 });
 
-test("PDF viewer scrolls internally with compact download and share actions", async ({
+test("PDF viewer scrolls internally with floating share, download and print actions", async ({
   page,
 }) => {
   await page.goto("/records");
@@ -93,7 +93,10 @@ test("PDF viewer scrolls internally with compact download and share actions", as
   const nav = page.getByRole("navigation", { name: "Main navigation" });
   const bounds = await toolbar.boundingBox();
   expect(bounds.y + bounds.height).toBeLessThan((await nav.boundingBox()).y);
-  await expect(toolbar.getByRole("button")).toHaveCount(2);
+  await expect(toolbar.getByRole("button")).toHaveCount(3);
+  await expect(
+    toolbar.getByRole("button", { name: "Print prescription" }),
+  ).toBeEnabled();
   await expect(
     toolbar.getByRole("button", { name: "Share prescription" }),
   ).toBeVisible();
@@ -150,4 +153,87 @@ test("new booking always offers the mode sheet and visit filters stay pinned", a
       .locator("header")
       .getByRole("button", { name: "Book a new appointment" }),
   ).toHaveCount(0);
+});
+
+test("segmented controls keep selection inside the track and support radio keys", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto("/appointments");
+  const group = page.getByRole("radiogroup", { name: "Appointment status" });
+  const options = group.getByRole("radio");
+  await options.first().focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(options.nth(1)).toHaveAttribute("aria-checked", "true");
+  await expect(options.nth(1)).toBeFocused();
+  await page.keyboard.press("End");
+  await expect(options.last()).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("Home");
+  await expect(options.first()).toHaveAttribute("aria-checked", "true");
+  for (const enlarged of [false, true]) {
+    if (enlarged)
+      await group.locator("button > span").evaluateAll((nodes) =>
+        nodes.forEach((n) => {
+          n.style.fontSize = "24px";
+          n.style.lineHeight = "1.4";
+        }),
+      );
+    const bounds = await group.boundingBox();
+    for (const option of await options.all()) {
+      const box = await option.boundingBox();
+      expect(box.x).toBeGreaterThanOrEqual(bounds.x);
+      expect(box.x + box.width).toBeLessThanOrEqual(
+        bounds.x + bounds.width + 1,
+      );
+      expect(box.y).toBeGreaterThanOrEqual(bounds.y);
+      expect(box.y + box.height).toBeLessThanOrEqual(
+        bounds.y + bounds.height + 1,
+      );
+      expect(box.height).toBeGreaterThanOrEqual(44);
+    }
+    expect(
+      await options
+        .first()
+        .evaluate((n) => getComputedStyle(n).backgroundColor),
+    ).toBe("rgb(255, 255, 255)");
+  }
+});
+
+test("reports open a sheet with an internal viewer and floating document actions", async ({
+  page,
+}) => {
+  await page.goto("/records?tab=labs");
+  await page.getByRole("button", { name: /^View Diabetes screening/ }).click();
+  await expect(page).toHaveURL(/\/records\?tab=labs&record=r12$/);
+  const sheet = page.getByRole("dialog", {
+    name: "Diabetes screening",
+    exact: true,
+  });
+  await expect(
+    sheet.getByRole("tab", { name: "Original Report", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  await expect(
+    sheet.getByRole("img", { name: "Diabetes screening, page 1" }),
+  ).toBeVisible();
+  const tools = sheet.getByRole("toolbar");
+  await expect(tools.getByRole("button")).toHaveCount(3);
+  await expect(
+    tools.getByRole("button", { name: "Print", exact: true }),
+  ).toBeEnabled();
+  const viewer = sheet.getByRole("region", { name: "Report document viewer" });
+  expect(await viewer.evaluate((n) => getComputedStyle(n).overflowY)).toBe(
+    "auto",
+  );
+  const bounds = await tools.boundingBox();
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(844);
+  const download = page.waitForEvent("download");
+  await tools.getByRole("button", { name: "Download file" }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.pdf$/);
+  await sheet.getByRole("tab", { name: "Intelligence", exact: true }).click();
+  await expect(tools).toHaveCount(0);
+  await sheet.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page).toHaveURL(/\/records\?tab=labs$/);
+  await expect(
+    page.getByRole("button", { name: /^View Diabetes screening/ }),
+  ).toBeVisible();
 });

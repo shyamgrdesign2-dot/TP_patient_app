@@ -68,38 +68,46 @@
   color: var(--tesseract-fg-secondary);
 }
 .aadhaar {
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--tesseract-blue-200);
+  border-radius: var(--tesseract-radius-20, 20px);
+  background: var(--tesseract-bg-surface);
+  box-shadow: 3px 4px 0
+    color-mix(
+      in srgb,
+      var(--tesseract-blue-500) 38%,
+      var(--tesseract-bg-surface)
+    );
+}
+/* Reuses the same placeholder card artwork as Tatva Practice's ABHA drawer. */
+.aadhaarIllustration {
+  padding: var(--tesseract-space-5) var(--tesseract-space-4);
+}
+.aadhaarIllustration img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.aadhaarEntry {
   display: flex;
   flex-direction: column;
   gap: var(--tesseract-space-3);
   padding: var(--tesseract-space-4);
-  border: 1px solid var(--tesseract-blue-100);
-  border-radius: var(--tesseract-radius-16);
-  background: linear-gradient(
-    150deg,
-    var(--tesseract-bg-brand-soft),
-    var(--tesseract-bg-surface) 70%
-  );
+  border-top: 1px solid var(--tesseract-amber-100);
+  background: var(--tesseract-amber-50);
 }
 .aadhaarHead {
-  display: flex;
-  align-items: center;
-  gap: var(--tesseract-space-2);
+  margin: 0;
+  text-align: center;
   font-size: var(--tesseract-text-body-sm);
-  font-weight: var(--tesseract-weight-semibold);
-  color: var(--tesseract-fg-heading);
-}
-.aadhaarArt {
-  display: grid;
-  place-items: center;
-  width: var(--tesseract-size-36);
-  height: var(--tesseract-size-36);
-  border-radius: var(--tesseract-radius-10);
-  background: var(--tesseract-bg-surface);
-  color: var(--tesseract-fg-link);
+  line-height: var(--tesseract-text-body-sm-lh);
+  font-weight: var(--tesseract-weight-medium);
+  color: var(--tesseract-fg-secondary);
 }
 .aadhaarRow {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--tesseract-space-2);
 }
 .aadhaarRow input,
@@ -118,7 +126,9 @@
 .aadhaarRow input {
   width: 100%;
   text-align: center;
-  letter-spacing: 0.2em;
+  min-width: 0;
+  padding: 0 var(--tesseract-space-1);
+  letter-spacing: 0.12em;
   font-variant-numeric: tabular-nums;
 }
 .aadhaarRow[data-invalid] input,
@@ -515,7 +525,8 @@
 }
 @keyframes pulse {
   50% {
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--tesseract-blue-500) 15%, transparent);
+    box-shadow: 0 0 0 12px
+      color-mix(in srgb, var(--tesseract-blue-500) 15%, transparent);
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -11,7 +11,6 @@ import s from "./MedicalRecordTile.module.css";
 export default function MedicalRecordTile({ record, onOpen, line }) {
   const { activeMember, brand, notify } = useApp();
   const disclosure = useRef(null);
-  const statusLine = useRef(null);
   const analysisId = useId();
   const statusId = useId();
   const category = record.type || record.category || "Document";
@@ -25,11 +24,6 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
   const fileName = record.uploaded
     ? record.fileName || `${record.title}.pdf`
     : `${record.title.replace(/\W+/g, "-")}.pdf`;
-
-  useEffect(() => {
-    if (statusLine.current)
-      statusLine.current.title = statusLine.current.textContent || "";
-  }, [line]);
 
   useEffect(() => {
     if (!open) return;
@@ -122,7 +116,15 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
       </button>
       <div className={s.footer}>
         <div className={s.metadata}>
-          <span className={s.category} title={category}>
+          <span
+            className={s.category}
+            data-lab={
+              record.category === "Lab results" ||
+              ["Radiology", "Pathology"].includes(record.type) ||
+              undefined
+            }
+            title={category}
+          >
             {category}
           </span>
           <time dateTime={record.date}>{formatDate(record.date)}</time>
@@ -176,14 +178,11 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
           </div>
         </details>
       </div>
-      <div
-        className={s.statusLine}
-        id={line ? statusId : undefined}
-        ref={statusLine}
-        aria-hidden={!line || undefined}
-      >
-        {line}
-      </div>
+      {line && (
+        <span className={s.srOnly} id={statusId}>
+          {line}
+        </span>
+      )}
     </article>
   );
 }
