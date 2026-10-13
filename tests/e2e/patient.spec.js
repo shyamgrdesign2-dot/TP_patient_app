@@ -625,42 +625,14 @@ test("bottom navigation labels only the active tab beside its icon", async ({
   }
 });
 
-test("patients link UHID and ABHA with verification and consent, persist and unlink", async ({
+test("patients link ABHA with verification, persist and unlink without UHID linking", async ({
   page,
 }) => {
   await page.goto("/records?tab=records");
   await page.getByRole("button", { name: /Link your health records/ }).click();
-  // UHID links through the in-page verification and consent sheet.
-  await page.getByRole("button", { name: "Link UHID", exact: true }).click();
-  const dialog = page.getByRole("dialog");
-  await dialog.getByLabel("UHID", { exact: true }).fill("TP-10482");
-  await dialog
-    .getByRole("button", { name: "Continue to verification" })
-    .click();
-  await dialog
-    .getByLabel("Demo verification code", { exact: true })
-    .fill("000000");
-  await dialog
-    .getByRole("button", { name: "Verify code", exact: true })
-    .click();
-  await expect(dialog.getByRole("alert")).toContainText("Incorrect");
-  await dialog
-    .getByLabel("Demo verification code", { exact: true })
-    .fill("123456");
-  await dialog
-    .getByRole("button", { name: "Verify code", exact: true })
-    .click();
-  await dialog
-    .getByRole("button", { name: "Confirm link", exact: true })
-    .click();
-  await expect(dialog.getByRole("alert")).toContainText("consent");
-  await dialog.getByRole("checkbox").check();
-  await dialog
-    .getByRole("button", { name: "Confirm link", exact: true })
-    .click();
-  await expect(dialog).toContainText("Your link is ready");
-  await dialog.getByRole("button", { name: "Done", exact: true }).click();
-  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Link UHID", exact: true }),
+  ).toHaveCount(0);
   // ABHA links through the full ABHA flow (link existing by ABHA number).
   await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
   await expect(page).toHaveURL(/\/abha$/);
@@ -674,7 +646,7 @@ test("patients link UHID and ABHA with verification and consent, persist and unl
   await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
   await expect(page).toHaveURL(/\/link-records$/, { timeout: 8000 });
   await page.reload();
-  await expect(page.getByText("Linked", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Linked", { exact: true })).toHaveCount(1);
   await page.getByRole("button", { name: /For Aarav Sharma/ }).click();
   await page
     .getByRole("dialog")
@@ -687,9 +659,7 @@ test("patients link UHID and ABHA with verification and consent, persist and unl
     .getByRole("dialog")
     .getByRole("button", { name: /Aarav Sharma/ })
     .click();
-  await page
-    .getByRole("button", { name: "Hospital UHID linked. Manage" })
-    .click();
+  await page.getByRole("button", { name: "ABHA linked. Manage" }).click();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Unlink", exact: true })
@@ -698,10 +668,13 @@ test("patients link UHID and ABHA with verification and consent, persist and unl
     .getByRole("alertdialog")
     .getByRole("button", { name: "Unlink identity", exact: true })
     .click();
-  await expect(page.getByText("Linked", { exact: true })).toHaveCount(1);
+  await expect(page.getByText("Linked", { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Link ABHA", exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Link UHID", exact: true }),
-  ).toBeVisible();
+  ).toHaveCount(0);
 });
 
 test("direct ABHA entry and reduced-motion sheets remain accessible", async ({
@@ -1929,7 +1902,7 @@ test("lab reports open on original documents with analysis and nested explanatio
 }) => {
   await page.goto("/records?tab=labs");
   const card = page.getByRole("button", { name: /^View Diabetes screening/ });
-  await expect(card).toContainText("Intelligence");
+  await expect(card).toContainText("AI analysis");
   await card.click();
   await expect(page).toHaveURL(/\/records\?tab=labs&record=r12$/);
   const report = page.getByRole("dialog", {
@@ -1940,9 +1913,9 @@ test("lab reports open on original documents with analysis and nested explanatio
     report.getByRole("tab", { name: "Original Report" }),
   ).toHaveAttribute("aria-selected", "true");
   await expect(report.locator("canvas")).toBeVisible();
-  await report.getByRole("tab", { name: "Intelligence" }).click();
+  await report.getByRole("tab", { name: "AI analysis" }).click();
   await report
-    .getByRole("button", { name: "Generate Intelligence Report", exact: true })
+    .getByRole("button", { name: "Generate AI analysis", exact: true })
     .click();
   const summary = page.getByRole("button", {
     name: /3 parameters are concerning/,
@@ -1980,7 +1953,7 @@ test("lab reports open on original documents with analysis and nested explanatio
   await expect(
     page.getByRole("img", { name: "Diabetes screening, page 1" }),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Intelligence" }).click();
+  await page.getByRole("tab", { name: "AI analysis" }).click();
   // The summary narrows the analysis in place; the report sheet stays open.
   await summary.click();
   await expect(page).toHaveURL(/\/records\?tab=labs&record=r12$/);
@@ -2041,16 +2014,16 @@ test("health records are grouped into visits, lab results, medical records, disc
       exact: true,
     })
     .click();
-  await expect(page.getByRole("tab", { name: "Intelligence" })).toBeVisible();
-  await page.getByRole("tab", { name: "Intelligence" }).click();
+  await expect(page.getByRole("tab", { name: "AI analysis" })).toBeVisible();
+  await page.getByRole("tab", { name: "AI analysis" }).click();
   await page
-    .getByRole("button", { name: "Generate Intelligence Report", exact: true })
+    .getByRole("button", { name: "Generate AI analysis", exact: true })
     .click();
   await expect(
-    page.getByRole("tabpanel", { name: "Intelligence" }),
+    page.getByRole("tabpanel", { name: "AI analysis" }),
   ).toContainText("A normal urine test");
   await expect(
-    page.getByRole("tabpanel", { name: "Intelligence" }),
+    page.getByRole("tabpanel", { name: "AI analysis" }),
   ).toContainText("Next steps");
   await page.getByRole("tab", { name: "Original Report", exact: true }).click();
   await expect(page.getByRole("dialog").locator("canvas")).toBeVisible();

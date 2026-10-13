@@ -25,7 +25,7 @@ test("website branding is reviewed before selected fields enter the draft", asyn
           {
             key: "ctaGradient",
             label: "Primary button gradient",
-            value: "linear-gradient(90deg, #006b68, #003d3b)",
+            value: "linear-gradient(90deg, #b45bc5, #1a1994)",
             evidence: "CTA",
           },
           {
@@ -67,17 +67,17 @@ test("website branding is reviewed before selected fields enter the draft", asyn
   await expect(name).toHaveValue(before);
   await expect(
     page.getByLabel("Primary colour hex", { exact: true }),
-  ).toHaveCount(0);
+  ).toHaveValue("#006b68");
   // Analyzed colours preview before applying identity or saving configuration.
   await expect
     .poll(() =>
       page.evaluate(() =>
         getComputedStyle(document.querySelector("main")).getPropertyValue(
-          "--brand-cta-background",
+          "--tesseract-blue-500",
         ),
       ),
     )
-    .toContain("#006b68");
+    .toBe("#006b68");
   await expect(
     page
       .getByRole("group", { name: "Brand details to apply" })

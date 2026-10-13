@@ -19,7 +19,8 @@ export function addDays(key, days) {
   d.setDate(d.getDate() + days);
   return toKey(d);
 }
-const offsetOf = (key, today) => Math.round((noon(key) - noon(today)) / 86400000);
+const offsetOf = (key, today) =>
+  Math.round((noon(key) - noon(today)) / 86400000);
 export function dayLabel(key, today) {
   const offset = offsetOf(key, today);
   if (offset === 0) return "Today";
@@ -116,7 +117,9 @@ function findDate(text, today) {
     take(m);
     return { date: fromParts(+m[1], MONTHS.indexOf(m[2])), rest };
   }
-  if ((m = new RegExp(`\\b${MONTH} (\\d{1,2})(?:st|nd|rd|th)?\\b`).exec(text))) {
+  if (
+    (m = new RegExp(`\\b${MONTH} (\\d{1,2})(?:st|nd|rd|th)?\\b`).exec(text))
+  ) {
     take(m);
     return { date: fromParts(+m[2], MONTHS.indexOf(m[1])), rest };
   }
@@ -126,14 +129,17 @@ function findDate(text, today) {
   }
   const weekday = WEEKDAYS.findIndex((re) => re.test(text));
   if (weekday >= 0) {
-    rest = rest.replace(WEEKDAYS[weekday], " ").replace(/\b(next|this|coming)\b/, " ");
+    rest = rest
+      .replace(WEEKDAYS[weekday], " ")
+      .replace(/\b(next|this|coming)\b/, " ");
     const ahead = (weekday - noon(today).getDay() + 7) % 7 || 7;
     return { date: addDays(today, ahead), rest };
   }
   if ((m = /\b(\d{1,2})(st|nd|rd|th)\b/.exec(text))) {
     take(m);
     const base = noon(today);
-    const month = +m[1] >= base.getDate() ? base.getMonth() : base.getMonth() + 1;
+    const month =
+      +m[1] >= base.getDate() ? base.getMonth() : base.getMonth() + 1;
     const d = new Date(base.getFullYear(), month, +m[1], 12);
     return { date: d.getDate() === +m[1] ? toKey(d) : null, rest };
   }
@@ -193,7 +199,11 @@ export function extract(message, ctx, stage) {
   if (time) found.time = time;
   const part = PARTS.find(([, re]) => re.test(rest))?.[0];
   if (part) found.part = part;
-  if (/\b(yes|yep|yeah|yup|ok|okay|sure|confirm|book( it)?|go ahead|looks good|correct|done)\b/.test(text))
+  if (
+    /\b(yes|yep|yeah|yup|ok|okay|sure|confirm|book( it)?|go ahead|looks good|correct|done)\b/.test(
+      text,
+    )
+  )
     found.yes = true;
   if (/\b(no|nope|change|edit|wrong|not right|different)\b/.test(text))
     found.no = true;
@@ -202,7 +212,8 @@ export function extract(message, ctx, stage) {
 
 export function createSession(ctx, prefill = {}) {
   return {
-    stage: "member",
+    stage: ctx.doctor ? "member" : "doctor",
+    doctorId: ctx.doctor?.id || null,
     memberId: null,
     type: ctx.videoEnabled ? null : IN_PERSON,
     date: null,
@@ -213,19 +224,27 @@ export function createSession(ctx, prefill = {}) {
 }
 
 const memberChip = (m) => ({
-  label: m.relation === "Self" ? `Myself (${first(m.name)})` : `${first(m.name)} (${m.relation})`,
+  label:
+    m.relation === "Self"
+      ? `Myself (${first(m.name)})`
+      : `${first(m.name)} (${m.relation})`,
   text: m.relation === "Self" ? "For me" : `For ${first(m.name)}`,
   set: { memberId: m.id },
 });
 
 // Open times for the session's day, narrowed to a part of day when asked.
 function timesFor(s, ctx) {
-  const open = ctx.openSlots(s.date, s.memberId);
+  const open = ctx.openSlots(s.date, s.memberId, s.doctorId);
   const inPart = s.part ? open.filter((t) => partOf(t) === s.part) : open;
-  return { open, shown: inPart.length ? inPart : open, partEmpty: !!s.part && !inPart.length };
+  return {
+    open,
+    shown: inPart.length ? inPart : open,
+    partEmpty: !!s.part && !inPart.length,
+  };
 }
 
-function nextStage(s) {
+function nextStage(s, ctx) {
+  if (ctx.doctors && !s.doctorId) return "doctor";
   if (!s.memberId) return "member";
   if (!s.type) return "type";
   if (!s.date) return "day";
@@ -235,7 +254,21 @@ function nextStage(s) {
 
 function ask(s, ctx, lead = "") {
   const say = (text) => [lead, text].filter(Boolean).join("\n\n");
-  s.stage = nextStage(s);
+  s.stage = nextStage(s, ctx);
+  if (s.stage === "doctor")
+    return {
+      session: s,
+      turn: {
+        text: say(
+          "Which doctor or specialty would you like? You can type a name or choose below.",
+        ),
+        chips: ctx.doctors.map((d) => ({
+          label: `${d.name} · ${d.specialty}`,
+          text: d.name,
+          set: { doctorId: d.id },
+        })),
+      },
+    };
   if (s.stage === "member")
     return {
       session: s,
@@ -256,7 +289,11 @@ function ask(s, ctx, lead = "") {
         ),
         chips: [
           { label: "In clinic", text: "In clinic", set: { type: IN_PERSON } },
-          { label: "Video consultation", text: "Video consultation", set: { type: VIDEO } },
+          {
+            label: "Video consultation",
+            text: "Video consultation",
+            set: { type: VIDEO },
+          },
         ],
       },
     };
@@ -271,7 +308,11 @@ function ask(s, ctx, lead = "") {
             const label = dayLabel(date, ctx.today);
             return { label, text: label, set: { date } };
           }),
-          { label: "Another date", text: "Another date", set: { otherDate: true } },
+          {
+            label: "Another date",
+            text: "Another date",
+            set: { otherDate: true },
+          },
         ],
       },
     };
@@ -302,17 +343,24 @@ function ask(s, ctx, lead = "") {
 }
 
 export function greeting(ctx, session) {
-  const me = ctx.members.find((m) => m.id === ctx.activeMemberId) || ctx.members[0];
+  const me =
+    ctx.members.find((m) => m.id === ctx.activeMemberId) || ctx.members[0];
   return ask(
     { ...session },
     ctx,
-    `Hi ${first(me.name)}, I’m Mira. I’ll help you book a visit with ${ctx.doctor.name} (${ctx.doctor.specialty}).`,
+    ctx.doctor
+      ? `Hi ${first(me.name)}, I’m Mira. I’ll help you book a visit with ${ctx.doctor.name} (${ctx.doctor.specialty}).`
+      : `Hi ${first(me.name)}, I’m Mira. Let’s book your visit here.`,
   );
 }
 
 const CHANGE_CHIPS = [
   { label: "Patient", text: "Change the patient", set: { clear: "memberId" } },
-  { label: "Visit type", text: "Change the visit type", set: { clear: "type" } },
+  {
+    label: "Visit type",
+    text: "Change the visit type",
+    set: { clear: "type" },
+  },
   { label: "Day", text: "Change the day", set: { clear: "date" } },
   { label: "Time", text: "Change the time", set: { clear: "time" } },
   { label: "Keep it as it is", text: "Keep it as it is", set: { keep: true } },
@@ -325,6 +373,43 @@ export function respond(session, message, ctx, set) {
   const found = set || extract(message, ctx, s.stage);
   const notes = [];
   let moved = false;
+  if (ctx.doctors) {
+    const query = message.toLowerCase().trim();
+    const matches = found.doctorId
+      ? ctx.doctors.filter((d) => d.id === found.doctorId)
+      : ctx.doctors.filter(
+          (d) =>
+            query &&
+            (query.includes(d.name.replace(/^Dr\.?\s*/i, "").toLowerCase()) ||
+              d.name
+                .toLowerCase()
+                .split(/\s+/)
+                .some((part) => part.length > 2 && query.includes(part)) ||
+              query.includes(d.specialty.toLowerCase())),
+        );
+    if (s.stage === "doctor" && matches.length !== 1) {
+      const reply = ask(
+        s,
+        ctx,
+        query ? "Please choose a doctor from the available options." : "",
+      );
+      if (matches.length)
+        reply.turn.chips = matches.map((d) => ({
+          label: `${d.name} · ${d.specialty}`,
+          text: d.name,
+          set: { doctorId: d.id },
+        }));
+      return reply;
+    }
+    if (matches.length === 1 && (s.stage === "doctor" || found.doctorId)) {
+      s.doctorId = matches[0].id;
+      s.time = null;
+      moved = true;
+      notes.push(`I’ll help you book with ${matches[0].name}.`);
+    }
+    const selected = ctx.doctors.find((d) => d.id === s.doctorId);
+    if (selected) ctx = { ...ctx, doctor: selected };
+  }
 
   if (found.clear) {
     s[found.clear] = null;
@@ -332,7 +417,11 @@ export function respond(session, message, ctx, set) {
     if (found.clear === "time") s.part = null;
     if (found.clear === "type" && !ctx.videoEnabled) {
       s.type = IN_PERSON;
-      return ask(s, ctx, "Video consultations aren’t available right now, so this stays an in-clinic visit.");
+      return ask(
+        s,
+        ctx,
+        "Video consultations aren’t available right now, so this stays an in-clinic visit.",
+      );
     }
     return ask(s, ctx, "Sure.");
   }
@@ -378,7 +467,9 @@ export function respond(session, message, ctx, set) {
 
   if (found.type) {
     if (found.type === VIDEO && !ctx.videoEnabled)
-      notes.push("Video consultations aren’t available right now, so I’ll keep this as an in-clinic visit.");
+      notes.push(
+        "Video consultations aren’t available right now, so I’ll keep this as an in-clinic visit.",
+      );
     else {
       s.type = found.type;
       moved = true;
@@ -428,7 +519,7 @@ export function respond(session, message, ctx, set) {
       s.time = null;
     }
   }
-  if (s.date && !ctx.openSlots(s.date, s.memberId).length) {
+  if (s.date && !ctx.openSlots(s.date, s.memberId, s.doctorId).length) {
     notes.push(
       `There are no open times ${inSentence(dayLabel(s.date, ctx.today))}.`,
     );

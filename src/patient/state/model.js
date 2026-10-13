@@ -467,7 +467,13 @@ export function updateState(state, action) {
           ...state.healthLinks,
           [action.memberId]: {
             ...state.healthLinks[action.memberId],
-            abha: { ...link, lastSyncAt: new Date().toISOString() },
+            abha: {
+              ...link,
+              lastSyncAt: new Date().toISOString(),
+              ...(action.consent
+                ? { syncConsent: action.consent, autoSync: !!action.autoSync }
+                : {}),
+            },
           },
         },
       };

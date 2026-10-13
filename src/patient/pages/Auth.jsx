@@ -222,7 +222,7 @@ export function Welcome() {
         ))}
       </div>
       <div className={s.brandRow}>
-        <BrandLogo height={48} />
+        <BrandLogo height={28} />
       </div>
       <section
         className={s.story}
@@ -357,7 +357,7 @@ export function Login() {
         >
           <Icon name="arrow-left3" size={22} />
         </Button>
-        <BrandLogo height={48} />
+        <BrandLogo height={28} />
       </div>
       <form className={s.loginForm} onSubmit={submit}>
         <div className={s.loginBody} key={`${method}-${sent}-${verified}`}>

@@ -70,7 +70,7 @@ const matches = (text, search) =>
   text.toLowerCase().includes(search.trim().toLowerCase());
 
 export default function Records() {
-  const { state, activeMember, dispatch, notify, brand } = useApp();
+  const { state, activeMember, dispatch, notify } = useApp();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const tab = RECORD_TABS.some((t) => t.id === params.get("tab"))
@@ -107,8 +107,6 @@ export default function Records() {
   const [abhaOnly, setAbhaOnly] = useState(false);
   const healthLinks = state.healthLinks?.[activeMember.id] || {};
   const abhaLink = healthLinks.abha;
-  const hospitalLink =
-    healthLinks.uhid?.hospitalId === brand.id ? healthLinks.uhid : null;
   // Edge fades show only on the side that still has tabs to scroll to.
   const tabStrip = useRef(null);
   const [tabFade, setTabFade] = useState({ left: false, right: false });
@@ -202,7 +200,9 @@ export default function Records() {
   const medicalShown =
     typeFilter === "All"
       ? medical
-      : medical.filter((r) => (r.type || "Other") === typeFilter);
+      : typeFilter === "abha"
+        ? medical.filter((r) => r.source === "abha")
+        : medical.filter((r) => (r.type || "Other") === typeFilter);
   const discharges = inTab(CATEGORY.discharge);
   const certificates = inTab(CATEGORY.certificate);
   const count = {
@@ -442,7 +442,6 @@ export default function Records() {
                 <span className={s.grow}>
                   <strong>{abhaLink.address || "ABHA linked"}</strong>
                   <small>
-                    {hospitalLink && "UHID linked · "}
                     {abhaLink.autoSync
                       ? "Auto-sync on"
                       : abhaLink.lastSyncAt
@@ -459,29 +458,6 @@ export default function Records() {
                 Sync
               </button>
             </div>
-          ) : hospitalLink ? (
-            <div className={s.abhaRow}>
-              <button
-                className={s.abhaRowMain}
-                onClick={() => navigate("/link-records")}
-                aria-label={`Hospital UHID ${hospitalLink.identifier}. Manage linked records`}
-              >
-                <span className={s.rowIcon}>
-                  <Icon name="hospital" family="building" bulk size={22} />
-                </span>
-                <span className={s.grow}>
-                  <strong>UHID {hospitalLink.identifier}</strong>
-                  <small>{brand.hospitalName} · Linked</small>
-                </span>
-              </button>
-              <button
-                className={s.abhaRowSync}
-                onClick={() => navigate("/link-records")}
-                aria-label="Manage linked hospital records"
-              >
-                Manage
-              </button>
-            </div>
           ) : (
             <button
               className={s.linkRecordsBanner}
@@ -492,7 +468,7 @@ export default function Records() {
               </span>
               <span className={s.grow}>
                 <strong>Link your health records</strong>
-                <small>Connect with your UHID or ABHA</small>
+                <small>Connect with your ABHA</small>
               </span>
               <Icon name="chevron-right" size={18} />
             </button>
@@ -520,9 +496,20 @@ export default function Records() {
                 value: t,
                 label: `${t} (${typeCounts[t]})`,
               })),
+              {
+                value: "abha",
+                label: (
+                  <>
+                    From ABHA <AbhaLogo />
+                  </>
+                ),
+              },
             ]}
             value={typeFilter}
-            onChange={setTypeFilter}
+            onChange={(value) => {
+              setTypeFilter(value);
+              setAbhaOnly(false);
+            }}
           />
         )}
         {tab !== "history" && tab !== "visits" && (

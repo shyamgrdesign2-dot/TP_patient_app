@@ -824,7 +824,7 @@
 .sheet :global(h2) {
   white-space: normal !important;
 }
-.sheet button {
+.sheet button:not([role="switch"]) {
   min-height: var(--tesseract-patient-touch);
 }
 .sheet > div:last-child {
@@ -3189,6 +3189,7 @@
 }
 
 .patientName {
+  max-width: 100%;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -3265,8 +3266,8 @@
 }
 .careDock {
   position: absolute;
-  /* Nav: 20px inset + 66px bar. 16px of air keeps the action off the glass. */
-  bottom: calc(102px + env(safe-area-inset-bottom));
+  /* 56px items + 6px top + 2px border + safe bottom, then a 12px gap. */
+  bottom: calc(76px + max(8px, env(safe-area-inset-bottom)));
   left: var(--tesseract-space-5);
   right: var(--tesseract-space-5);
   z-index: 25;
@@ -4000,8 +4001,8 @@
   mask: url("/brand/abha.svg") center / contain no-repeat;
 }
 .rowIcon > .abhaMonochrome {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
 }
 
 @supports not (
@@ -4010,4 +4011,15 @@
   .navbar {
     background: rgb(255 255 255 / 96%);
   }
+}
+
+.patientNameText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.memberContextPlain > [data-tp-icon],
+.memberContext > [data-tp-icon] {
+  flex-shrink: 0;
 }

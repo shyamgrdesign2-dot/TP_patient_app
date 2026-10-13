@@ -47,3 +47,7 @@ button.note:hover {
   line-height: var(--tesseract-text-caption-lh);
   color: var(--tesseract-fg-secondary);
 }
+
+.spark[data-monochrome] {
+  background: currentColor !important;
+}

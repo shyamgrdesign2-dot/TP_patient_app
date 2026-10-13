@@ -83,7 +83,8 @@
   gap: var(--tesseract-space-2);
   margin: 0;
   padding-top: var(--tesseract-space-3);
-  border-top: 1px solid color-mix(in srgb, var(--tesseract-slate-0) 22%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--tesseract-slate-0) 22%, transparent);
 }
 .facts dt {
   font-size: var(--tesseract-text-caption);
@@ -265,4 +266,14 @@
   .doneIcon {
     animation: none;
   }
+}
+
+.syncToggle {
+  position: relative;
+  flex: 0 0 42px;
+}
+.syncToggle::after {
+  content: "";
+  position: absolute;
+  inset: -10px 0;
 }

@@ -27,15 +27,26 @@ test("navigation keeps all labels visible and booking starts with an early choic
   await page.getByRole("button", { name: "Book visit", exact: true }).click();
   await page.getByRole("button", { name: /Book with AI assistant/ }).click();
   await expect(page).toHaveURL(/\/book\?mode=assistant$/);
+  await expect(
+    page.getByRole("textbox", { name: "Type your message" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: /Dr. Meera Iyer/ }).click();
-  await expect(page).toHaveURL(/\/book\/meera\?mode=assistant$/);
+  await expect(
+    page.getByText("Who is this visit for?", { exact: false }),
+  ).toBeVisible();
   await page.goto("/book");
   await page.getByRole("button", { name: /Book manually/ }).click();
+  await expect(
+    page.getByRole("button", { name: /Book with AI assistant/ }),
+  ).toHaveCount(0);
   await page
     .getByRole("button", { name: "Book a visit", exact: true })
     .first()
     .click();
   await expect(page).toHaveURL(/\/book\/meera\?mode=manual$/);
+  await expect(
+    page.getByRole("button", { name: /Book with assistant/ }),
+  ).toHaveCount(0);
   await expect(
     page.getByRole("dialog", { name: "How would you like to book?" }),
   ).toHaveCount(0);
@@ -45,21 +56,21 @@ test("intelligence requires an explicit request and stays generated after reopen
   page,
 }) => {
   await page.goto("/records?tab=labs&record=r12");
-  await page.getByRole("tab", { name: "Intelligence", exact: true }).click();
+  await page.getByRole("tab", { name: "AI analysis", exact: true }).click();
   await expect(page.getByRole("list", { name: "Parameters" })).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Generate Intelligence Report", exact: true })
+    .getByRole("button", { name: "Generate AI analysis", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: /Generating intelligence/ }),
+    page.getByRole("button", { name: /Generating AI analysis/ }),
   ).toBeDisabled();
   await expect(page.getByRole("list", { name: "Parameters" })).toBeVisible();
   await page.reload();
-  await page.getByRole("tab", { name: "Intelligence", exact: true }).click();
+  await page.getByRole("tab", { name: "AI analysis", exact: true }).click();
   await expect(page.getByRole("list", { name: "Parameters" })).toBeVisible();
   await expect(
     page.getByRole("button", {
-      name: "Generate Intelligence Report",
+      name: "Generate AI analysis",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -91,7 +102,7 @@ test("white auth logo areas and exact primary actions coexist with dark banners"
       "rgb(255, 255, 255)",
     );
     const logo = page.locator('#app-content [data-brand-logo="horizontal"]');
-    expect((await logo.boundingBox()).height).toBeGreaterThanOrEqual(48);
+    expect((await logo.boundingBox()).height).toBe(28);
     await expect(page.locator('#app-content [class*="grid"]')).toHaveCount(0);
   }
   await page.goto("/");
@@ -125,9 +136,9 @@ test("uploaded reports without extracted values cannot invent intelligence", asy
     localStorage.setItem("tatva-patient-demo-v1", JSON.stringify(state));
   });
   await page.goto("/records?tab=labs&record=r12");
-  await page.getByRole("tab", { name: "Intelligence", exact: true }).click();
+  await page.getByRole("tab", { name: "AI analysis", exact: true }).click();
   await page
-    .getByRole("button", { name: "Generate Intelligence Report", exact: true })
+    .getByRole("button", { name: "Generate AI analysis", exact: true })
     .click();
   await expect(
     page

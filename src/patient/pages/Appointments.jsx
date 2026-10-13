@@ -118,21 +118,23 @@ export function Doctors() {
         trailing={<LocationChip />}
       />
       <MemberContext />
-      <button
-        type="button"
-        className={b.option}
-        data-ai
-        onClick={() => navigate("/book?mode=assistant")}
-      >
-        <span className={b.optionIcon}>
-          <AiSpark size={22} />
-        </span>
-        <span className={s.grow}>
-          <strong>Book with AI assistant</strong>
-          <small>Help finding a doctor and a time that suits you.</small>
-        </span>
-        <Icon name="chevron-right" size={16} />
-      </button>
+      {!bookingMode && (
+        <button
+          type="button"
+          className={b.option}
+          data-ai
+          onClick={() => navigate("/book?mode=assistant")}
+        >
+          <span className={b.optionIcon}>
+            <AiSpark size={22} />
+          </span>
+          <span className={s.grow}>
+            <strong>Book with AI assistant</strong>
+            <small>Help finding a doctor and a time that suits you.</small>
+          </span>
+          <Icon name="chevron-right" size={16} />
+        </button>
+      )}
       <Field
         aria-label="Search doctors"
         placeholder="Doctor, specialty or language"
@@ -378,13 +380,7 @@ export function Booking() {
       />
     );
   if (mode === "manual")
-    return (
-      <ManualBooking
-        key={doctor.id}
-        doctor={doctor}
-        onAssistant={(prefill) => choose("assistant", { prefill })}
-      />
-    );
+    return <ManualBooking key={doctor.id} doctor={doctor} />;
   return (
     <div className={s.page}>
       <PageHeader title="Book an appointment" />
@@ -430,7 +426,7 @@ export function Booking() {
     </div>
   );
 }
-function ManualBooking({ doctor, onAssistant }) {
+function ManualBooking({ doctor }) {
   const { state, activeMember } = useApp();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -480,19 +476,6 @@ function ManualBooking({ doctor, onAssistant }) {
     <div className={s.page}>
       <PageHeader title="Book an appointment" />
       <BookingDoctor doctor={doctor} />
-      {step === 0 && (
-        <div className={`${b.switchRow} ${a.assistantSwitch}`}>
-          <span>Prefer to chat or speak?</span>
-          <Button
-            size="sm"
-            className={v.aiAction}
-            leftIcon={<AiSpark size={18} />}
-            onClick={() => onAssistant({ memberId, type, date, time })}
-          >
-            Book with assistant
-          </Button>
-        </div>
-      )}
       <BookingStep
         title="When"
         open={step === 0}

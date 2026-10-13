@@ -252,3 +252,26 @@
 .metadata time {
   white-space: nowrap;
 }
+
+.category {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.category img {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+button.actions {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--tesseract-fg-secondary);
+}

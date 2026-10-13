@@ -219,3 +219,38 @@ test("harmless SVG export comments do not discard coloured header logos", () => 
     '<?xml version="1.0"?><!-- Adobe export --><svg xmlns="http://www.w3.org/2000/svg"><path fill="#964488" d="M0 0h20v20z"/></svg>';
   assert.ok(safeSvg(Buffer.from(source)));
 });
+
+test("CTA variables and inline link colours outrank headings and decorative gradients", () => {
+  const value = (html, css) =>
+    extractBrand(html, css, "https://hospital.example").candidates.find(
+      (c) => c.key === "primary",
+    )?.value;
+  assert.equal(
+    value(
+      '<h1 class="heading">Hospital</h1><a class="book primary" href="/book">Book</a>',
+      ":root{--primary-heading:#832369;--cta:var(--action);--action:#006b68}.heading{color:#832369}.primary{background:var(--cta)}.unused-button{background:linear-gradient(90deg,#b45bc5,#1a1994)}",
+    ),
+    "#006b68",
+  );
+  assert.equal(
+    value(
+      '<button style="background:linear-gradient(90deg,#b45bc5,#1a1994)">AI helper</button><a class="cta-shimmer" style="background-image:linear-gradient(101deg,#4B4AD5 0%,#27276F 131.58%)">Start Free Trial</a>',
+      "",
+    ),
+    "#4b4ad5",
+  );
+  assert.equal(
+    value(
+      '<button class="book">Book</button>',
+      ".book{background-color:rgb(0,107,104)}.book:hover{background:#ff0000}",
+    ),
+    "#006b68",
+  );
+  assert.equal(
+    value(
+      '<h1 class="primary">Heading</h1>',
+      ":root{--primary-heading:#832369}.primary{color:#832369}",
+    ),
+    undefined,
+  );
+});

@@ -88,7 +88,7 @@ export default function BrandWebsiteImport({
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.error || "Could not analyze this website.");
-      const hasGradient = data.candidates.some((c) => c.key === "ctaGradient");
+      const hasPrimary = data.candidates.some((c) => c.key === "primary");
       const supported = new Set([
         ...expectedFields.map(([key]) => key),
         "ctaGradient",
@@ -97,7 +97,7 @@ export default function BrandWebsiteImport({
         .filter(
           (c) =>
             supported.has(c.key) &&
-            !(hasGradient && c.key === "primary") &&
+            !(hasPrimary && c.key === "ctaGradient") &&
             (!c.key.startsWith("font") || availableFonts.has(c.value)),
         )
         .map((c) =>

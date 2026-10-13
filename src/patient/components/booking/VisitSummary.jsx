@@ -121,21 +121,19 @@ export default function VisitSummary({
             ) : (
               <span className={s.sub}>{clinic.address}</span>
             )}
-            {contact && (
-              <span className={s.contact}>
-                {clinic.phone && (
-                  <a
-                    className={s.contactLink}
-                    href={`tel:${clinic.phone.replace(/[^\d+]/g, "")}`}
-                    aria-label={`Call ${clinic.name} clinic on ${clinic.phone}`}
-                  >
-                    {clinic.phone}
-                  </a>
-                )}
-              </span>
-            )}
           </Line>
         )
+      )}
+      {contact && !video && clinic?.phone && (
+        <Line icon="call" label="Phone number">
+          <a
+            className={s.contactLink}
+            href={`tel:${clinic.phone.replace(/[^\d+]/g, "")}`}
+            aria-label={`Call ${clinic.name} clinic on ${clinic.phone}`}
+          >
+            {clinic.phone}
+          </a>
+        </Line>
       )}
       <div className={s.fee}>
         <div className={s.lineBody}>

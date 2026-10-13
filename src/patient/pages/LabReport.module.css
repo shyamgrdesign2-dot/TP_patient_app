@@ -501,8 +501,11 @@
   gap: 16px;
   margin: 16px;
   padding: 24px 20px;
-  background: var(--tesseract-gradient-ai-card);
-  border: 1px solid var(--tesseract-violet-200);
+  background:
+    linear-gradient(135deg, #fff, #f8f6ff) padding-box,
+    linear-gradient(135deg, #dba9f5, #aaa4ef, #e6d9fa) border-box;
+  border: 1px solid transparent;
+  color: #252338;
   border-radius: 16px;
 }
 .generateCard h2 {
@@ -515,4 +518,65 @@
 .generateCard small {
   color: var(--tesseract-fg-secondary);
   font-size: 12px;
+}
+
+.generateCard p,
+.generateCard small {
+  color: #57546c;
+}
+.generateCard h2 {
+  color: #252338;
+}
+
+.sourceTitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sourceTitle img {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.sourceInfo {
+  display: flex;
+  gap: 10px;
+  margin: 12px;
+  padding: 12px;
+  border: 1px solid #e2e2e8;
+  border-radius: 10px;
+  background: #f6f6f8;
+  color: #545460;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sourceInfo > [data-tp-icon] {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.sourceInfo strong {
+  color: #454551;
+}
+.sourceInfo p {
+  margin: 2px 0 0;
+  font-size: inherit;
+}
+
+.generateCard .generateAction {
+  background: linear-gradient(110deg, #8940b3, #3730a3) !important;
+  color: #fff !important;
+  border: 0 !important;
+}
+.generateCard .generateAction:hover {
+  filter: brightness(1.08);
+}
+.generateCard .generateAction:disabled {
+  opacity: 0.7;
+}
+
+.tabs .intelligenceTab[data-state="active"]::after {
+  background: linear-gradient(90deg, #f5cc52, #df9e18);
+  height: 3px;
 }

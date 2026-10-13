@@ -57,7 +57,7 @@ test("records show prescription documents, limited report summaries and history 
     ).toBeVisible();
   await page.goto("/records?tab=records");
   await page.getByRole("button", { name: /Radiology \(/ }).click();
-  await expect(page.getByText("Intelligence", { exact: true })).toBeVisible();
+  await expect(page.getByText("AI analysis", { exact: true })).toBeVisible();
 });
 
 test("mobile confirmation actions share a sticky row", async ({ page }) => {
@@ -242,7 +242,7 @@ test("reports open a sheet with an internal viewer and floating document actions
   const download = page.waitForEvent("download");
   await tools.getByRole("button", { name: "Download file" }).click();
   expect((await download).suggestedFilename()).toMatch(/\.pdf$/);
-  await sheet.getByRole("tab", { name: "Intelligence", exact: true }).click();
+  await sheet.getByRole("tab", { name: "AI analysis", exact: true }).click();
   await expect(tools).toHaveCount(0);
   await sheet.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page).toHaveURL(/\/records\?tab=labs$/);

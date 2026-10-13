@@ -216,6 +216,19 @@ function absolute(value, base) {
   }
 }
 function hexColor(value) {
+  const rgb = String(value || "")
+    .trim()
+    .match(
+      /^rgba?\(\s*(\d+)\s*[, ]\s*(\d+)\s*[, ]\s*(\d+)(?:\s*[,/]\s*(1(?:\.0+)?))?\s*\)/i,
+    );
+  if (rgb && rgb.slice(1, 4).every((v) => Number(v) <= 255))
+    return (
+      "#" +
+      rgb
+        .slice(1, 4)
+        .map((v) => Number(v).toString(16).padStart(2, "0"))
+        .join("")
+    );
   const match = String(value || "")
     .trim()
     .match(/^#([\da-f]{3}|[\da-f]{6})\b/i);
@@ -263,34 +276,92 @@ function ctaGradient(css, html) {
   }
   return null;
 }
-function matchedStyles(html, css, tagName) {
-  const elements = tags(html, tagName);
-  const classes = new Set(
-    elements.flatMap((a) => (a.class || "").split(/\s+/)),
+// Resolve public CSS tokens before comparing actual CTA backgrounds. Keep a
+// bounded depth so cycles and missing variables cannot become guessed colours.
+function resolvedCss(css) {
+  const variables = new Map(
+    [...css.matchAll(/(--[\w-]+)\s*:\s*([^;{}]+)/g)].map((m) => [
+      m[1],
+      m[2].trim(),
+    ]),
   );
+  let result = css;
+  for (let i = 0; i < 8; i++) {
+    const next = result.replace(
+      /var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*))?\)/g,
+      (match, key, fallback) => variables.get(key) || fallback || match,
+    );
+    if (next === result) break;
+    result = next;
+  }
+  return result;
+}
+function matchedStyles(html, css, tagName) {
   const isCta = tagName === "button";
-  if (isCta)
-    for (const a of tags(html, "a"))
-      if (/button|btn|cta/i.test(a.class || "") || a.role === "button")
-        for (const name of (a.class || "").split(/\s+/)) classes.add(name);
+  const elements = tags(html, tagName).map((a) => ({ ...a, tag: tagName }));
+  if (isCta) {
+    elements.push(
+      ...tags(html, "a")
+        .filter(
+          (a) =>
+            /button|btn|cta|book|appointment|trial|signup/i.test(
+              `${a.class || ""} ${a.id || ""}`,
+            ) || a.role === "button",
+        )
+        .map((a) => ({ ...a, tag: "a" })),
+    );
+  }
   const rows = [];
   for (const [index, m] of [
     ...css.matchAll(/([^{}]+)\{([^{}]*)\}/g),
   ].entries()) {
-    const selector = m[1].trim();
-    if (/hover|focus|disabled|before|after|placeholder/i.test(selector))
+    for (const selector of m[1].split(",").map((part) => part.trim())) {
+      if (
+        /hover|focus|disabled|before|after|placeholder|secondary|danger|cookie|dismiss/i.test(
+          selector,
+        )
+      )
+        continue;
+      const target = selector.split(/[\s>+~]+/).at(-1);
+      if (!target || /[:[\]\\]/.test(target)) continue;
+      const names = [...target.matchAll(/\.([\w-]+)/g)].map((x) => x[1]);
+      const id = target.match(/#([\w-]+)/)?.[1];
+      const tag = target.match(/^[a-z][\w-]*/i)?.[0];
+      if (!names.length && !id && !tag) continue;
+      if (
+        !elements.some(
+          (a) =>
+            (!tag || tag === a.tag) &&
+            (!id || id === a.id) &&
+            names.every((n) => (a.class || "").split(/\s+/).includes(n)),
+        )
+      )
+        continue;
+      const score =
+        (/(?:primary|book|trial|signup)/i.test(selector) ? 100 : 0) +
+        (id ? 50 : 0) +
+        names.length * 10 +
+        index / 100000;
+      rows.push({ selector, body: m[2], score, source: tagName });
+    }
+  }
+  for (const [index, a] of elements.entries()) {
+    if (!a.style || /secondary|disabled|cookie|dismiss/i.test(a.class || ""))
       continue;
-    const names = [...selector.matchAll(/\.([\w-]+)/g)].map((x) => x[1]);
-    const matching = names.filter((n) => classes.has(n));
-    if (names.length && matching.length !== names.length) continue;
-    const direct = selector.split(",").some((part) => part.trim() === tagName);
-    if (!matching.length && !direct) continue;
-    const score =
-      matching.filter((n) => !/^w-|^btn$|^button$/.test(n)).length * 20 +
-      matching.length * 2 +
-      (direct ? 1 : 0) +
-      index / 100000;
-    rows.push({ selector, body: m[2], score });
+    const resolved = resolvedCss(`${css} .inline-style { ${a.style} }`);
+    rows.push({
+      selector: `${a.tag}${a.class ? `.${a.class.split(/\s+/).join(".")}` : ""} (inline)`,
+      body: resolved.slice(resolved.lastIndexOf(".inline-style {") + 15, -1),
+      score:
+        1000 +
+        (/cta|btn|primary|book|trial|signup/i.test(
+          `${a.class || ""} ${a.id || ""}`,
+        )
+          ? 2000
+          : 0) -
+        index,
+      source: tagName,
+    });
   }
   return rows.sort((a, b) => b.score - a.score);
 }
@@ -477,6 +548,7 @@ export function findLogoCandidates(html, base) {
     .slice(0, 4);
 }
 export function extractBrand(html, css, base) {
+  css = resolvedCss(css.replace(/\/\*[\s\S]*?\*\//g, ""));
   const meta = tags(html, "meta");
   const links = tags(html, "link");
   const candidates = [];
@@ -497,10 +569,11 @@ export function extractBrand(html, css, base) {
   const ctaRules = matchedStyles(html, css, "button");
   const bodyRules = matchedStyles(html, css, "body");
   const headingRules = matchedStyles(html, css, "h1");
-  const ctaColour = ctaRules
+  const ctaBackground = ctaRules
+    .map((row) => declaration([row], "background(?:-color)?"))
+    .find((background) => colour(background?.value));
+  const ctaOutline = ctaRules
     .map((row) => {
-      const background = declaration([row], "background(?:-color)?");
-      if (colour(background?.value)) return background;
       const border = row.body.match(
         /(?:^|;)\s*border(?:-color)?\s*:[^;]*?(#[\da-f]{3,6})\b/i,
       )?.[1];
@@ -512,13 +585,31 @@ export function extractBrand(html, css, base) {
         : null;
     })
     .find(Boolean);
+  const ctaAnchor = ctaRules
+    .map((row) => {
+      const background = declaration([row], "background(?:-image)?");
+      if (!/^linear-gradient\(/i.test(background?.value || "")) return null;
+      const anchor = background.value.match(
+        /#[\da-f]{6}\b|#[\da-f]{3}\b|rgba?\([^)]*\)/i,
+      )?.[0];
+      return colour(anchor)
+        ? {
+            value: colour(anchor),
+            evidence: `${row.selector.slice(0, 100)} CTA gradient base colour`,
+          }
+        : null;
+    })
+    .find(Boolean);
+  const ctaColour = ctaBackground || ctaOutline || ctaAnchor;
   const theme = colour(meta.find((m) => m.name === "theme-color")?.content);
   const primary = [
     ...css.matchAll(
       /--([\w-]*(?:primary|brand)[\w-]*)\s*:\s*(#[\da-f]{3,6})\b/gi,
     ),
   ]
-    .filter((m) => !/foreground|text|contrast|light|muted/.test(m[1]))
+    .filter(
+      (m) => !/foreground|text|heading|title|contrast|light|muted/.test(m[1]),
+    )
     .map((m) => colour(m[2]))
     .find(Boolean);
   const button = [
@@ -840,13 +931,15 @@ export async function analyzeWebsite(value) {
           n.toLowerCase() ===
           value.replace(/["']/g, "").split(",")[0].trim().toLowerCase(),
       );
-      if (color)
+      if (color && (match[1] === "color" || row.source === "button"))
         aiOptions.push({
           id: `style-${aiOptions.length}`,
           allowedKeys:
             match[1] === "color"
               ? ["textHeading", "textBody"]
-              : ["primary", "accent"],
+              : extracted.candidates.some((c) => c.key === "primary")
+                ? ["accent"]
+                : ["primary", "accent"],
           value: color,
           evidence: `${row.selector.slice(0, 100)} { ${match[1]}: ${value.slice(0, 100)} }`,
         });

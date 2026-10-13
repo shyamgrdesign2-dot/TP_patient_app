@@ -139,7 +139,7 @@ export function PatientName({ member, children }) {
   const { state } = useApp();
   return (
     <span className={s.patientName}>
-      {children ?? member.name}
+      <span className={s.patientNameText}>{children ?? member.name}</span>
       {state.healthLinks?.[member.id]?.abha && <AbhaLogo linked />}
     </span>
   );

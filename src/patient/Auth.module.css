@@ -18,8 +18,8 @@
   pointer-events: none;
   background: radial-gradient(
     ellipse at 100% 100%,
-    var(--tesseract-blue-50),
-    transparent 70%
+    color-mix(in srgb, var(--tesseract-blue-500) 22%, white),
+    transparent 85%
   );
 }
 .brandRow {
@@ -521,6 +521,25 @@
 }
 
 .brandRow [data-brand-logo] {
-  max-width: min(260px, 85%);
+  max-width: min(200px, 80%);
   object-position: left center;
+}
+
+.background::after {
+  content: "";
+  position: absolute;
+  inset: 35% 0 0;
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--tesseract-blue-500) 9%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--tesseract-blue-500) 9%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse at bottom right, #000, transparent 70%);
 }

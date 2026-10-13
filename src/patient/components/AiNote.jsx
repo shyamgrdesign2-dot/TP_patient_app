@@ -1,12 +1,17 @@
 import { Icon } from "./ui";
 import s from "./AiNote.module.css";
 
-export function AiSpark({ size = 20 }) {
+export function AiSpark({ size = 20, monochrome = false }) {
   return (
     <span
       aria-hidden="true"
       className={s.spark}
-      style={{ width: size, height: size }}
+      data-monochrome={monochrome || undefined}
+      style={{
+        width: size,
+        height: size,
+        ...(monochrome ? { background: "currentColor" } : {}),
+      }}
     />
   );
 }

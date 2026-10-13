@@ -16,6 +16,7 @@ import {
   STATUS,
 } from "../../shared/labAnalysis";
 import {
+  AbhaLogo,
   Badge,
   Button,
   ChoiceGroup,
@@ -164,7 +165,7 @@ export default function LabReport({
                 aria-controls="lab-report-panel"
               >
                 <AiSpark size={18} />
-                <span className={s.intelligenceLabel}>Intelligence</span>
+                <span className={s.intelligenceLabel}>AI analysis</span>
               </TabsTrigger>
             )}
           </TabsList>
@@ -179,6 +180,24 @@ export default function LabReport({
         aria-label={!supportsIntelligence ? "Original Report" : undefined}
         className={s.reportPanel}
       >
+        {selectedTab === "original" && record.source === "abha" && (
+          <div className={s.sourceInfo}>
+            <Icon name="info-circle" size={18} />
+            <div>
+              <strong>Fetched from ABHA</strong>
+              <p>
+                {record.author || "Healthcare provider"} · Record dated{" "}
+                {record.date}
+              </p>
+              {record.uploadedAt && (
+                <p>
+                  Uploaded{" "}
+                  {new Date(record.uploadedAt).toLocaleDateString("en-IN")}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
         {selectedTab === "analysis" && !record.intelligenceGeneratedAt ? (
           <section
             className={s.generateCard}
@@ -192,22 +211,23 @@ export default function LabReport({
             </p>
             <Button
               fullWidth
+              className={s.generateAction}
               disabled={generation === "generating"}
               onClick={generateIntelligence}
             >
-              <AiSpark size={18} />{" "}
+              <AiSpark size={18} monochrome />{" "}
               {generation === "generating"
-                ? "Generating intelligence…"
-                : "Generate Intelligence Report"}
+                ? "Generating AI analysis…"
+                : "Generate AI analysis"}
             </Button>
             {generation === "generating" && (
               <p role="status">Preparing your report summary…</p>
             )}
             {generation === "unavailable" && (
               <p role="alert">
-                We couldn’t read the clinical values in this upload.
-                Intelligence extraction for uploaded files isn’t connected in
-                this preview. You can still view and share the original report.
+                We couldn’t read the clinical values in this upload. AI analysis
+                extraction for uploaded files isn’t connected in this preview.
+                You can still view and share the original report.
               </p>
             )}
             <small>
@@ -457,7 +477,16 @@ export function ReportSheet({ record, onClose }) {
     <Sheet
       open={!!record}
       onClose={onClose}
-      title={record?.title || "Report"}
+      title={
+        record?.source === "abha" ? (
+          <span className={s.sourceTitle}>
+            {record.title}
+            <AbhaLogo />
+          </span>
+        ) : (
+          record?.title || "Report"
+        )
+      }
       documentView
     >
       {record && (

@@ -42,7 +42,7 @@ export function More() {
       "Your account",
       [
         ["people", "Manage family", "/family"],
-        [<AbhaLogo key="abha" monochrome />, "Link UHID / ABHA", "/link-records"],
+        [<AbhaLogo key="abha" monochrome />, "Link ABHA", "/link-records"],
         ["bill", "Bills & receipts", "/billing"],
         ...(packagesEnabled()
           ? [

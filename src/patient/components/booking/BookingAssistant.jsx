@@ -2,7 +2,7 @@ import MiraAvatar from "../MiraAvatar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../state/AppContext";
-import { dateKey, slots } from "../../../shared/data";
+import { dateKey, slots, doctors } from "../../../shared/data";
 import { Button, Icon, Sheet } from "../ui";
 import { MemberForm } from "../MemberForm";
 import VisitSummary from "./VisitSummary";
@@ -34,12 +34,16 @@ export default function BookingAssistant({ doctor, intake, onManual }) {
   const { state, activeMember } = useApp();
   const navigate = useNavigate();
   const { book, confirming } = useBookVisit();
+  const selectedDoctor = useRef(doctor);
   const stateRef = useRef(state);
   stateRef.current = state;
   // Read through refs so a profile added mid-chat is known straight away.
   const ctx = useMemo(
     () => ({
-      doctor,
+      get doctor() {
+        return selectedDoctor.current;
+      },
+      doctors: doctors.filter((d) => d.locations.includes(state.location)),
       get members() {
         return stateRef.current.members;
       },
@@ -49,8 +53,13 @@ export default function BookingAssistant({ doctor, intake, onManual }) {
       firstDay: 1,
       lastDay: 90,
       slots,
-      openSlots: (date, memberId) =>
-        openSlotsFor(stateRef.current, doctor, date, memberId),
+      openSlots: (date, memberId, doctorId) =>
+        openSlotsFor(
+          stateRef.current,
+          doctors.find((d) => d.id === doctorId) || selectedDoctor.current,
+          date,
+          memberId,
+        ),
     }),
     [doctor, activeMember.id],
   );
@@ -87,6 +96,8 @@ export default function BookingAssistant({ doctor, intake, onManual }) {
   const chips = lastAgent?.chips || [];
   const atConfirm = session.stage === "confirm" && !!lastAgent;
   const update = (next) => {
+    selectedDoctor.current =
+      doctors.find((d) => d.id === next.doctorId) || doctor;
     sessionRef.current = next;
     setSession(next);
   };
@@ -118,7 +129,14 @@ export default function BookingAssistant({ doctor, intake, onManual }) {
   async function confirm() {
     const { memberId, date, time, type } = sessionRef.current;
     try {
-      await book({ doctor, memberId, date, time, type, intake });
+      await book({
+        doctor: selectedDoctor.current,
+        memberId,
+        date,
+        time,
+        type,
+        intake,
+      });
     } catch (e) {
       // Slot taken meanwhile, or another clash: say why and offer new times.
       const next = { ...sessionRef.current, time: null };
@@ -173,8 +191,10 @@ export default function BookingAssistant({ doctor, intake, onManual }) {
   }
   const member = state.members.find((m) => m.id === session.memberId);
   const visit = {
-    doctorId: doctor.id,
-    location: clinicFor(doctor, state.location),
+    doctorId: selectedDoctor.current?.id,
+    location: selectedDoctor.current
+      ? clinicFor(selectedDoctor.current, state.location)
+      : state.location,
     date: session.date,
     time: session.time,
     type: session.type,

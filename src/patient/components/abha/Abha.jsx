@@ -94,6 +94,7 @@ export function AbhaCardSheet({ open, onClose, member, link, onSync, onView }) {
               </small>
             </div>
             <Toggle
+              className={s.syncToggle}
               ariaLabel="Auto-sync records from ABHA"
               checked={!!link.autoSync}
               onCheckedChange={(on) => {
@@ -131,7 +132,9 @@ export function AbhaCardSheet({ open, onClose, member, link, onSync, onView }) {
 
 // Consent, then fetch from each facility, then the result.
 export function AbhaSyncSheet({ open, onClose, member, onDone }) {
-  const { dispatch } = useApp();
+  const { dispatch, state } = useApp();
+  const link = state.healthLinks?.[member.id]?.abha;
+  const [autoSync, setAutoSync] = useState(!!link?.autoSync);
   const [step, setStep] = useState("consent");
   const [types, setTypes] = useState(ABHA_RECORD_TYPES);
   const [range, setRange] = useState("1 year");
@@ -151,8 +154,9 @@ export function AbhaSyncSheet({ open, onClose, member, onDone }) {
     if (open) {
       setStep("consent");
       setProgress(0);
+      setAutoSync(!!link?.autoSync);
     }
-  }, [open]);
+  }, [open, member.id]);
   const toggle = (list, set, value) =>
     set(
       list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
@@ -170,7 +174,13 @@ export function AbhaSyncSheet({ open, onClose, member, onDone }) {
     }
     const records = abhaRecords(member.id, { types, facilities });
     const before = records.length;
-    dispatch({ type: "ABHA_SYNC", memberId: member.id, records });
+    dispatch({
+      type: "ABHA_SYNC",
+      memberId: member.id,
+      records,
+      consent: { types, facilities, range },
+      autoSync,
+    });
     setAdded(before);
     setStep("done");
   }
@@ -238,6 +248,21 @@ export function AbhaSyncSheet({ open, onClose, member, onDone }) {
               </label>
             ))}
           </fieldset>
+          <div className={s.syncRow}>
+            <div className={s.grow}>
+              <strong>Automatically sync new records</strong>
+              <small>
+                Use these record types and facilities for future syncs. Change
+                this anytime from your ABHA card.
+              </small>
+            </div>
+            <Toggle
+              className={s.syncToggle}
+              ariaLabel="Automatically sync new records"
+              checked={autoSync}
+              onCheckedChange={setAutoSync}
+            />
+          </div>
           <Notice icon="shield-tick">
             You can revoke this consent anytime from your ABHA app.
           </Notice>

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { getFile, download } from "../services/files";
 import { makeSamplePdf } from "../services/recordPdf";
@@ -6,12 +6,11 @@ import { recordTag } from "../services/records";
 import { formatDate } from "../../shared/data";
 import { RecordThumbnail } from "./RecordDocuments";
 import { AiSpark } from "./AiNote";
-import { Icon } from "./ui";
+import { AbhaLogo, Button, Sheet, Icon } from "./ui";
 import s from "./MedicalRecordTile.module.css";
 
 export default function MedicalRecordTile({ record, onOpen, line }) {
   const { activeMember, brand, notify } = useApp();
-  const disclosure = useRef(null);
   const analysisId = useId();
   const statusId = useId();
   const category = recordTag(record);
@@ -49,23 +48,8 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
     };
   }, [open, record, activeMember, brand]);
 
-  useEffect(() => {
-    if (!open) return;
-    const dismiss = (event) => {
-      if (!disclosure.current?.contains(event.target)) close();
-    };
-    document.addEventListener("pointerdown", dismiss);
-    document.addEventListener("focusin", dismiss);
-    return () => {
-      document.removeEventListener("pointerdown", dismiss);
-      document.removeEventListener("focusin", dismiss);
-    };
-  }, [open]);
-
-  function close(restoreFocus = false) {
-    if (!disclosure.current) return;
-    disclosure.current.open = false;
-    if (restoreFocus) disclosure.current.querySelector("summary").focus();
+  function close() {
+    setOpen(false);
   }
   function save() {
     download(fileName, file);
@@ -108,11 +92,12 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
           {category && (
             <span className={s.category} title={category}>
               {category}
+              {record.source === "abha" && <AbhaLogo />}
             </span>
           )}
           {hasAnalysis && (
             <span className={s.analysisTag} id={analysisId}>
-              <AiSpark size={14} /> {record.intelligenceGeneratedAt ? "AI analysis" : "Intelligence"}
+              <AiSpark size={14} /> AI analysis
             </span>
           )}
         </span>
@@ -124,54 +109,67 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
         <div className={s.metadata}>
           <time dateTime={record.date}>{formatDate(record.date)}</time>
         </div>
-        <details
+        <button
+          type="button"
           className={s.actions}
-          ref={disclosure}
-          onToggle={(event) => setOpen(event.currentTarget.open)}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.preventDefault();
-              close(true);
-            }
-          }}
+          aria-label={`Actions for ${record.title}`}
+          aria-haspopup="dialog"
+          onClick={() => setOpen(true)}
         >
-          <summary aria-label={`Actions for ${record.title}`}>
-            <span className={s.dots} aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </span>
-          </summary>
-          <div
-            className={s.popover}
-            role="group"
-            aria-label={`Document actions for ${record.title}`}
+          <span className={s.dots} aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+        </button>
+        <Sheet
+          open={open}
+          onClose={close}
+          title="Document actions"
+          description={record.title}
+        >
+          <Button
+            variant="ghost"
+            theme="neutral"
+            fullWidth
+            onClick={() => {
+              close();
+              onOpen(record);
+            }}
+            leftIcon={<Icon name="document-text" size={20} />}
           >
-            <button
-              type="button"
-              onClick={() => {
-                close();
-                onOpen(record);
-              }}
-            >
-              <Icon name="document-text" size={18} /> View
-            </button>
-            <button type="button" disabled={!file} onClick={save}>
-              <Icon name="document-download" size={18} /> Download
-            </button>
-            <button type="button" disabled={!file} onClick={share}>
+            View Document
+          </Button>
+          <Button
+            variant="ghost"
+            theme="neutral"
+            fullWidth
+            disabled={!file}
+            onClick={save}
+            leftIcon={<Icon name="document-download" size={20} />}
+          >
+            Download Document
+          </Button>
+          <Button
+            variant="ghost"
+            theme="neutral"
+            fullWidth
+            disabled={!file}
+            onClick={share}
+            leftIcon={
               <Icon
                 name="share-2"
                 corner="rounded"
                 variant="linear"
                 family="essential"
-                size={18}
-              />{" "}
-              Share
-            </button>
-            {!file && <p role="status">{error || "Preparing document…"}</p>}
-          </div>
-        </details>
+                size={20}
+              />
+            }
+          >
+            Share Document
+          </Button>
+          {!file && <p role="status">{error || "Preparing document…"}</p>}
+        </Sheet>
       </div>
       {line && (
         <span className={s.srOnly} id={statusId}>
