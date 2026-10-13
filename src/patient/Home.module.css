@@ -5,6 +5,7 @@
   --tesseract-patient-header-height: 72px;
   --tesseract-home-inset: var(--tesseract-space-5);
   --tesseract-home-card-radius: var(--tesseract-radius-16);
+  --tesseract-on-dark: var(--brand-on-banner, white);
   isolation: isolate;
   min-height: 100%;
   background: var(--tesseract-bg-page);
@@ -19,8 +20,11 @@
   padding: var(--tesseract-space-1-5) var(--tesseract-home-inset);
   display: flex;
   align-items: center;
-  background: var(--tesseract-bg-surface);
-  border-bottom: 1px solid var(--tesseract-border-soft);
+  background: transparent;
+  border-bottom: 0;
+  transition:
+    background 180ms ease,
+    color 180ms ease;
 }
 .patientIdentity {
   display: flex;
@@ -118,8 +122,19 @@
   position: sticky;
   top: var(--tesseract-patient-header-height);
   z-index: 0;
-  padding: 0 0 var(--tesseract-space-2);
+  padding: 0 0 var(--tesseract-space-4);
+  overflow: visible;
 }
+/* This single backdrop extends behind the transparent sticky greeting. */
+.homeHeroSurface {
+  position: absolute;
+  inset: calc(-1 * var(--tesseract-patient-header-height)) 0 0;
+  overflow: hidden;
+  border-radius: 0 0 32px 32px;
+  pointer-events: none;
+  background: var(--brand-banner-background);
+}
+
 .homeTop:not(:has(section)) {
   padding: 0;
 }
@@ -154,9 +169,7 @@
 .bannerTrack::-webkit-scrollbar {
   display: none;
 }
-/* One brand surface. Tesseract's --tesseract-gradient-primary-card is fixed
-   hex (not remapped by createTheme), so the same single layer is drawn from
-   the brand ramp to keep white-label hospitals on their own colour. */
+/* All care updates share one translucent material over the brand banner. */
 .careBanner {
   flex: 0 0 calc((100% - var(--tesseract-space-5)) / 1.18);
   min-width: 0;
@@ -167,34 +180,22 @@
   padding: var(--tesseract-space-3-5) var(--tesseract-space-4);
   scroll-snap-align: center;
   scroll-snap-stop: always;
-  border: 0;
-  border-radius: var(--tesseract-home-card-radius);
-  /* Light-to-dark depth with a soft glow in the top-right corner. */
-  --tesseract-care-from: var(--tesseract-blue-500);
-  --tesseract-care-to: var(--tesseract-blue-900);
-  background:
-    radial-gradient(
-      120% 90% at 100% 0%,
-      color-mix(in srgb, var(--tesseract-slate-0) 16%, transparent),
-      transparent 55%
-    ),
-    linear-gradient(
-      150deg,
-      var(--tesseract-care-from),
-      var(--tesseract-care-to) 75%
-    );
+  border: 1px solid rgb(255 255 255 / 32%);
+  border-radius: var(--tesseract-radius-20, 20px);
+  background: linear-gradient(
+    140deg,
+    rgb(255 255 255 / 17%),
+    rgb(255 255 255 / 6%)
+  );
+  backdrop-filter: blur(20px) saturate(135%);
+  -webkit-backdrop-filter: blur(20px) saturate(135%);
   color: var(--tesseract-on-dark);
-  box-shadow: none;
-  --tesseract-spotlight-color: color-mix(
-    in srgb,
-    var(--tesseract-on-dark) 16%,
-    transparent
-  );
-  --tesseract-grid-color: color-mix(
-    in srgb,
-    var(--tesseract-on-dark) 25%,
-    transparent
-  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 22%),
+    0 10px 24px rgb(0 0 0 / 14%);
+  --tesseract-care-accent: var(--tesseract-blue-800);
+  --tesseract-spotlight-color: rgb(255 255 255 / 18%);
+  --tesseract-grid-color: rgb(255 255 255 / 12%);
   --tesseract-care-pattern: var(--tesseract-on-dark);
   transition:
     transform 240ms ease,
@@ -212,42 +213,6 @@
   transform: perspective(700px) rotateY(-16deg) scale(0.95);
   transform-origin: left center;
   opacity: 0.8;
-}
-/* ABHA is always a green card, whatever its link state. */
-.careBanner[data-category="abha"] {
-  --tesseract-care-from: var(--tesseract-success-500);
-  --tesseract-care-to: var(--tesseract-success-900);
-  --tesseract-care-accent: var(--tesseract-success-800);
-  --tesseract-spotlight-color: color-mix(
-    in srgb,
-    var(--tesseract-slate-0) 18%,
-    transparent
-  );
-}
-.careBanner[data-category="abha"] .bannerBottom > button {
-  color: var(--tesseract-success-800) !important;
-}
-.careBanner[data-category="abha"] .bannerBottom > button [data-tp-icon] {
-  color: inherit;
-}
-/* Records: a deeper navy so it reads apart from the Appointments blue. */
-.careBanner[data-tone="neutral"] {
-  --tesseract-care-from: var(--tesseract-blue-700);
-  --tesseract-care-to: var(--tesseract-blue-900);
-  --tesseract-care-accent: var(--tesseract-blue-800);
-}
-.careBanner[data-tone="neutral"] .bannerBottom > button {
-  color: var(--tesseract-blue-800) !important;
-}
-.careBanner[data-tone="success"] {
-  --tesseract-care-from: var(--tesseract-success-600);
-  --tesseract-care-to: var(--tesseract-success-900);
-  --tesseract-care-accent: var(--tesseract-success-800);
-}
-.careBanner[data-tone="warning"] {
-  --tesseract-care-from: var(--tesseract-warning-600);
-  --tesseract-care-to: var(--tesseract-warning-900);
-  --tesseract-care-accent: var(--tesseract-warning-800);
 }
 .bannerTop {
   display: flex;
@@ -412,17 +377,6 @@
   padding-inline: var(--tesseract-space-2) !important;
   max-width: 100%;
 }
-.careBanner:is([data-tone="success"], [data-tone="warning"])
-  .bannerBottom
-  > button {
-  color: var(--tesseract-care-accent) !important;
-}
-.careBanner:is([data-tone="success"], [data-tone="warning"])
-  .bannerBottom
-  > button
-  [data-tp-icon] {
-  color: inherit;
-}
 .carouselControls {
   display: flex;
   justify-content: center;
@@ -449,20 +403,21 @@
   width: var(--tesseract-size-6);
   height: var(--tesseract-size-6);
   border-radius: var(--tesseract-radius-full);
-  background: var(--tesseract-slate-300);
+  background: rgb(255 255 255 / 38%);
   transition:
     width var(--tesseract-duration-150, 150ms),
     background var(--tesseract-duration-150, 150ms);
 }
 .bannerDots button[aria-pressed="true"] > span {
   width: var(--tesseract-size-18);
-  background: var(--tesseract-blue-500);
+  background: var(--tesseract-on-dark);
 }
 
 /* Foreground sheet -------------------------------------------------------- */
 .homePanel {
   position: relative;
   z-index: 2;
+  margin-top: var(--tesseract-space-3);
   padding: var(--tesseract-space-6) var(--tesseract-home-inset)
     var(--tesseract-patient-bottom-space);
   background: var(--tesseract-bg-surface);
@@ -1030,4 +985,59 @@
 
 .familyMini > button.addFamily strong {
   color: var(--tesseract-blue-700);
+}
+
+/* One continuous greeting banner, with readable controls on its dark surface. */
+.home .headerPatient,
+.home .headerPatient > span:last-child,
+.home .headerLocation,
+.home .headerLocation > span:first-child {
+  color: var(--tesseract-on-dark);
+}
+.home .headerLocation > span:nth-child(2) {
+  text-decoration-color: rgb(255 255 255 / 45%);
+}
+.home .headerActions > .headerBell {
+  background: rgb(255 255 255 / 94%) !important;
+}
+.home .headerBell [data-tp-icon] {
+  color: var(--tesseract-blue-800) !important;
+  background-color: var(--tesseract-blue-800) !important;
+}
+/* When the foreground sheet reaches the greeting, switch to a white glass bar. */
+.home[data-header-glass="true"] .patientHeader {
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 6%);
+}
+.home[data-header-glass="true"]
+  :is(
+    .headerPatient,
+    .headerPatient > span:last-child,
+    .headerLocation,
+    .headerLocation > span:first-child
+  ) {
+  color: var(--tesseract-fg-heading);
+}
+.home[data-header-glass="true"] .headerLocation > span:nth-child(2) {
+  text-decoration-color: currentColor;
+}
+.home[data-header-glass="true"] .headerActions > .headerBell {
+  background: var(--tesseract-bg-subtle) !important;
+}
+.home[data-header-glass="true"] .headerBell [data-tp-icon] {
+  color: var(--tesseract-fg-secondary) !important;
+  background-color: var(--tesseract-fg-secondary) !important;
+}
+.careCarousel {
+  position: relative;
+}
+.bannerTrack {
+  padding-block: 2px 12px;
+}
+@supports not (backdrop-filter: blur(20px)) {
+  .careBanner {
+    background: color-mix(in srgb, var(--tesseract-blue-500) 86%, white);
+  }
 }

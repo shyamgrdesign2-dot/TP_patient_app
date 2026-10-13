@@ -1,0 +1,209 @@
+/* The shared Tatva mobile banner. Brand colours remain live theme tokens. */
+.banner,
+.band,
+.group {
+  background: var(--brand-banner-background);
+  color: var(--brand-on-banner, white);
+  border-bottom: 0;
+}
+.banner.banner h1 {
+  color: var(--brand-on-banner, white);
+}
+.banner.banner button {
+  color: var(--brand-on-banner, white);
+}
+.banner.banner > button {
+  background: transparent;
+}
+.banner.banner > button:hover {
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 10%,
+    transparent
+  );
+}
+.banner.banner [data-tp-icon] {
+  color: var(--brand-on-banner, white) !important;
+  background-color: var(--brand-on-banner, white) !important;
+}
+.banner.banner button[aria-haspopup="dialog"] {
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 12%,
+    transparent
+  );
+  color: var(--brand-on-banner, white);
+  border: 1px solid
+    color-mix(in srgb, var(--brand-on-banner, white) 20%, transparent);
+  box-shadow: none;
+}
+.banner.banner button[aria-haspopup="dialog"]:hover {
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 18%,
+    transparent
+  );
+}
+.banner.banner :is(button, a):focus-visible {
+  outline: 2px solid var(--brand-on-banner, white);
+  outline-offset: -3px;
+}
+.banner.banner [data-brand-logo] {
+  background: #fff;
+}
+.banner.banner .manualAction {
+  color: var(--brand-on-banner, white);
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 12%,
+    transparent
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 20%,
+    transparent
+  );
+}
+
+.banner.banner {
+  min-height: 84px;
+  isolation: isolate;
+}
+.banner.banner > :not(.pattern) {
+  position: relative;
+  z-index: 1;
+}
+.pattern {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.grid {
+  position: absolute;
+  top: 50%;
+  width: 46%;
+  height: 260%;
+  transform: translateY(-50%);
+  opacity: 0.6;
+}
+.gridLeft {
+  left: -10%;
+  mask-image: linear-gradient(to right, #000, transparent 100%);
+}
+.gridRight {
+  right: -10%;
+  mask-image: linear-gradient(to left, #000, transparent 100%);
+}
+
+.visitBand.visitBand {
+  padding-top: 6px;
+  padding-bottom: 12px;
+}
+.visitBand [role="radiogroup"] {
+  background: rgb(255 255 255 / 8%);
+  border-color: transparent;
+}
+.visitBand [role="radio"] {
+  color: color-mix(in srgb, var(--brand-on-banner, white) 85%, transparent);
+}
+.visitBand [role="radio"][aria-checked="true"] {
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 16%,
+    transparent
+  );
+  color: var(--brand-on-banner, white);
+  box-shadow: none;
+}
+.visitBand [role="radio"]:focus-visible {
+  outline: 2px solid white;
+  outline-offset: -3px;
+}
+.visitBand.visitBand [role="radiogroup"] {
+  background: rgb(255 255 255 / 8%);
+}
+.visitBand.visitBand [role="radiogroup"] > [aria-hidden="true"] {
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 16%,
+    transparent
+  );
+  box-shadow: none;
+}
+.visitBand.visitBand [role="radio"],
+.visitBand.visitBand [role="radio"] > span {
+  color: color-mix(in srgb, var(--brand-on-banner, white) 85%, transparent);
+  background: transparent;
+}
+.visitBand.visitBand [role="radio"][aria-checked="true"],
+.visitBand.visitBand [role="radio"][aria-checked="true"] > span {
+  color: var(--brand-on-banner, white);
+  background: transparent;
+}
+
+/* Round only the lower edge of the complete sticky banner. */
+.banner:not(:has(+ .band)),
+.band {
+  border-radius: 0 0 20px 20px;
+}
+.banner:has(+ .band) {
+  border-radius: 0;
+}
+
+.group {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  isolation: isolate;
+  margin-inline: calc(-1 * var(--tesseract-page-inset, 24px));
+  border-radius: 0 0 20px 20px;
+}
+.group > .banner.banner {
+  position: relative;
+  top: auto;
+  margin: 0;
+  background: transparent;
+  border: 0;
+}
+.group > .banner > .pattern {
+  display: none;
+}
+.group > .band.band {
+  position: relative;
+  top: auto;
+  margin: 0;
+  background: transparent;
+}
+.group > .pattern {
+  border-radius: inherit;
+}
+.topLeft,
+.topRight,
+.bottomLeft,
+.bottomRight {
+  width: 65%;
+  height: 75%;
+  opacity: 0.7;
+  transform: none;
+}
+.topLeft,
+.bottomLeft {
+  left: -28%;
+  mask-image: linear-gradient(to right, black, transparent);
+}
+.topRight,
+.bottomRight {
+  right: -28%;
+  mask-image: linear-gradient(to left, black, transparent);
+}
+.topLeft,
+.topRight {
+  top: -25%;
+}
+.bottomLeft,
+.bottomRight {
+  top: auto;
+  bottom: -25%;
+}

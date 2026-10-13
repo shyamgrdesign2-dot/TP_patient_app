@@ -26,7 +26,7 @@ test("appointment PDFs stack over details without changing route", async ({
 test("records show prescription documents, limited report summaries and history pointers", async ({
   page,
 }) => {
-  await page.goto("/records");
+  await page.goto("/records?tab=visits");
   await expect(
     page.getByRole("region", { name: "Your prescription" }).locator("canvas"),
   ).toBeVisible();
@@ -57,7 +57,7 @@ test("records show prescription documents, limited report summaries and history 
     ).toBeVisible();
   await page.goto("/records?tab=records");
   await page.getByRole("button", { name: /Radiology \(/ }).click();
-  await expect(page.getByText("AI analysis", { exact: true })).toBeVisible();
+  await expect(page.getByText("Intelligence", { exact: true })).toBeVisible();
 });
 
 test("mobile confirmation actions share a sticky row", async ({ page }) => {
@@ -82,7 +82,7 @@ test("mobile confirmation actions share a sticky row", async ({ page }) => {
 test("PDF viewer scrolls internally with floating share, download and print actions", async ({
   page,
 }) => {
-  await page.goto("/records");
+  await page.goto("/records?tab=visits");
   const toolbar = page.getByRole("toolbar", {
     name: "Prescription PDF controls",
   });
@@ -143,7 +143,7 @@ test("new booking always offers the mode sheet and visit filters stay pinned", a
     sheet.getByRole("button", { name: /Book with AI assistant/ }),
   ).toBeVisible();
   await page.goto("/appointments?tab=past");
-  const tabs = page.getByRole("radiogroup", { name: "Appointment status" });
+  const tabs = page.getByRole("tablist", { name: "Appointment status" });
   const before = await tabs.boundingBox();
   await page.locator("#app-content").evaluate((n) => (n.scrollTop = 400));
   const after = await tabs.boundingBox();
@@ -155,21 +155,21 @@ test("new booking always offers the mode sheet and visit filters stay pinned", a
   ).toHaveCount(0);
 });
 
-test("segmented controls keep selection inside the track and support radio keys", async ({
+test("appointment tabs keep selection inside the band and support arrow keys", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto("/appointments");
-  const group = page.getByRole("radiogroup", { name: "Appointment status" });
-  const options = group.getByRole("radio");
+  const group = page.getByRole("tablist", { name: "Appointment status" });
+  const options = group.getByRole("tab");
   await options.first().focus();
   await page.keyboard.press("ArrowRight");
-  await expect(options.nth(1)).toHaveAttribute("aria-checked", "true");
+  await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
   await expect(options.nth(1)).toBeFocused();
   await page.keyboard.press("End");
-  await expect(options.last()).toHaveAttribute("aria-checked", "true");
+  await expect(options.last()).toHaveAttribute("aria-selected", "true");
   await page.keyboard.press("Home");
-  await expect(options.first()).toHaveAttribute("aria-checked", "true");
+  await expect(options.first()).toHaveAttribute("aria-selected", "true");
   for (const enlarged of [false, true]) {
     if (enlarged)
       await group.locator("button > span").evaluateAll((nodes) =>
@@ -180,6 +180,19 @@ test("segmented controls keep selection inside the track and support radio keys"
       );
     const bounds = await group.boundingBox();
     for (const option of await options.all()) {
+      // Enlarged labels keep their full text and scroll horizontally into view.
+      if (enlarged) {
+        await option.focus();
+        await expect
+          .poll(async () => {
+            const box = await option.boundingBox();
+            return (
+              box.x >= bounds.x - 1 &&
+              box.x + box.width <= bounds.x + bounds.width + 1
+            );
+          })
+          .toBe(true);
+      }
       const box = await option.boundingBox();
       expect(box.x).toBeGreaterThanOrEqual(bounds.x);
       expect(box.x + box.width).toBeLessThanOrEqual(
@@ -194,8 +207,8 @@ test("segmented controls keep selection inside the track and support radio keys"
     expect(
       await options
         .first()
-        .evaluate((n) => getComputedStyle(n).backgroundColor),
-    ).toBe("rgb(255, 255, 255)");
+        .evaluate((n) => getComputedStyle(n, "::before").backgroundColor),
+    ).toMatch(/^(rgba\(255, 255, 255, 0\.1\)|color\(srgb 1 1 1 \/ 0\.1\))$/);
   }
 });
 
@@ -236,4 +249,32 @@ test("reports open a sheet with an internal viewer and floating document actions
   await expect(
     page.getByRole("button", { name: /^View Diabetes screening/ }),
   ).toBeVisible();
+});
+
+test("record sections keep their order, icons and keyboard selection on narrow screens", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto("/records?tab=records");
+  const tabs = page.getByRole("tablist", { name: "Record type" });
+  await expect(tabs.getByRole("tab")).toHaveText([
+    /Medical records/,
+    /Visits/,
+    /Lab results/,
+    /Medical history/,
+    /Discharge summary/,
+    /Certificates/,
+  ]);
+  await expect(tabs.locator("[data-tp-icon]")).toHaveCount(6);
+  const medical = tabs.getByRole("tab", { name: /Medical records/ });
+  await medical.focus();
+  await page.keyboard.press("End");
+  await expect(tabs.getByRole("tab", { name: /Certificates/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page).toHaveURL(/tab=certificates/);
+  await expect(
+    page.getByRole("button", { name: "Choose record section" }),
+  ).toHaveCount(0);
 });

@@ -1,3 +1,4 @@
+import BrandHeaderPattern from "../components/BrandHeaderPattern";
 import MedicalRecordTile from "../components/MedicalRecordTile";
 import { PrescriptionReader } from "../components/RecordDocuments";
 import { useEffect, useRef, useCallback, useState } from "react";
@@ -35,6 +36,7 @@ import { AbhaCardSheet, AbhaSyncSheet } from "../components/abha/Abha";
 import { ReportSheet } from "./LabReport";
 import s from "../App.module.css";
 import r from "./Records.module.css";
+import banner from "../components/BrandHeader.module.css";
 
 const TAB_ICONS = {
   visits: { name: "calendar-2", family: "time" },
@@ -68,18 +70,18 @@ const matches = (text, search) =>
   text.toLowerCase().includes(search.trim().toLowerCase());
 
 export default function Records() {
-  const { state, activeMember, dispatch, notify } = useApp();
+  const { state, activeMember, dispatch, notify, brand } = useApp();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const tab = RECORD_TABS.some((t) => t.id === params.get("tab"))
     ? params.get("tab")
-    : "visits";
+    : "records";
   const setTab = (next) => {
     setSearch("");
     setAbhaOnly(false);
     setTypeFilter("All");
     const p = new URLSearchParams(params);
-    if (next === "visits") p.delete("tab");
+    if (next === "records") p.delete("tab");
     else p.set("tab", next);
     p.delete("record");
     setParams(p, { replace: true });
@@ -103,7 +105,10 @@ export default function Records() {
     params.get("abha") === "card" ? "card" : null,
   );
   const [abhaOnly, setAbhaOnly] = useState(false);
-  const abhaLink = state.healthLinks?.[activeMember.id]?.abha;
+  const healthLinks = state.healthLinks?.[activeMember.id] || {};
+  const abhaLink = healthLinks.abha;
+  const hospitalLink =
+    healthLinks.uhid?.hospitalId === brand.id ? healthLinks.uhid : null;
   // Edge fades show only on the side that still has tabs to scroll to.
   const tabStrip = useRef(null);
   const [tabFade, setTabFade] = useState({ left: false, right: false });
@@ -321,7 +326,7 @@ export default function Records() {
       description:
         "Prescriptions from each completed visit appear here, with the doctor’s notes.",
       action: "Book appointment",
-      onAction: () => navigate("/doctors"),
+      onAction: () => navigate("/book"),
     },
     labs: {
       title: "No lab results yet",
@@ -354,62 +359,69 @@ export default function Records() {
       className={`${s.page} ${tab === "visits" ? r.prescriptionPage : ""}`}
       data-prescription-page={tab === "visits" || undefined}
     >
-      <PageHeader
-        title="Health records"
-        patientSelector
-        action={
-          tab === "records" && (
-            <Button
-              className={r.uploadFloat}
-              aria-label="Upload medical records"
-              title="Upload medical records"
-              onClick={() => setUpload(true)}
-            >
-              <Icon name="document-upload" size={20} />
-              Upload medical records
-            </Button>
-          )
-        }
-      />
-      <div className={`${s.recordsTop} ${r.recordsBand}`}>
-        <div
-          className={s.recordTabs}
-          ref={tabStrip}
-          onScroll={updateTabFade}
-          data-fade-left={tabFade.left || undefined}
-          data-fade-right={tabFade.right || undefined}
-        >
-          <Tabs
-            value={tab}
-            onValueChange={setTab}
-            size="sm"
-            variant="underline"
+      <div className={banner.group}>
+        <BrandHeaderPattern />
+        <PageHeader
+          title="Health records"
+          brandBanner
+          brandPattern={false}
+          patientSelector
+          action={
+            tab === "records" && (
+              <Button
+                className={r.uploadFloat}
+                aria-label="Upload medical records"
+                title="Upload medical records"
+                onClick={() => setUpload(true)}
+              >
+                <Icon name="document-upload" size={20} />
+                Upload medical records
+              </Button>
+            )
+          }
+        />
+        <div className={`${s.recordsTop} ${r.recordsBand} ${banner.band}`}>
+          <div
+            className={s.recordTabs}
+            ref={tabStrip}
+            onScroll={updateTabFade}
+            data-fade-left={tabFade.left || undefined}
+            data-fade-right={tabFade.right || undefined}
           >
-            <TabsList aria-label="Record type">
-              {RECORD_TABS.map((t) => (
-                <TabsTrigger
-                  key={t.id}
-                  id={`records-tab-${t.id}`}
-                  aria-controls="records-panel"
-                  value={t.id}
-                  leftIcon={
-                    <Icon
-                      name={TAB_ICONS[t.id].name}
-                      family={TAB_ICONS[t.id].family}
-                      corner="rounded"
-                      bulk={tab === t.id}
-                      size={16}
-                    />
-                  }
-                >
-                  {t.label}
-                  {t.id !== "history"
-                    ? ` (${records.filter((record) => tabFor(record) === t.id).length})`
-                    : ""}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+            <Tabs
+              value={tab}
+              onValueChange={setTab}
+              size="sm"
+              variant="underline"
+            >
+              <TabsList aria-label="Record type">
+                {RECORD_TABS.map((t) => (
+                  <TabsTrigger
+                    key={t.id}
+                    id={`records-tab-${t.id}`}
+                    aria-controls="records-panel"
+                    value={t.id}
+                    leftIcon={
+                      <Icon
+                        name={TAB_ICONS[t.id].name}
+                        family={TAB_ICONS[t.id].family}
+                        corner="rounded"
+                        bulk
+                        size={20}
+                      />
+                    }
+                  >
+                    <span className={r.tabLabel}>{t.label}</span>
+                    {t.id !== "history" && (
+                      <span className={r.tabCount}>
+                        {` (${records.filter((record) => tabFor(record) === t.id).length})`}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
       </div>
       <div
@@ -418,6 +430,73 @@ export default function Records() {
         aria-labelledby={`records-tab-${tab}`}
         className={r.recordsPanel}
       >
+        {tab === "records" &&
+          (abhaLink ? (
+            <div className={s.abhaRow}>
+              <button
+                className={s.abhaRowMain}
+                onClick={() => setAbhaSheet("card")}
+                aria-label={`ABHA ${abhaLink.address || ""}. View ABHA card`}
+              >
+                <AbhaLogo linked />
+                <span className={s.grow}>
+                  <strong>{abhaLink.address || "ABHA linked"}</strong>
+                  <small>
+                    {hospitalLink && "UHID linked · "}
+                    {abhaLink.autoSync
+                      ? "Auto-sync on"
+                      : abhaLink.lastSyncAt
+                        ? `Last synced ${formatDate(abhaLink.lastSyncAt.slice(0, 10))}`
+                        : "Not synced yet"}
+                  </small>
+                </span>
+              </button>
+              <button
+                className={s.abhaRowSync}
+                onClick={() => setAbhaSheet("sync")}
+              >
+                <Icon name="rotate-right" family="arrow" size={16} />
+                Sync
+              </button>
+            </div>
+          ) : hospitalLink ? (
+            <div className={s.abhaRow}>
+              <button
+                className={s.abhaRowMain}
+                onClick={() => navigate("/link-records")}
+                aria-label={`Hospital UHID ${hospitalLink.identifier}. Manage linked records`}
+              >
+                <span className={s.rowIcon}>
+                  <Icon name="hospital" family="building" bulk size={22} />
+                </span>
+                <span className={s.grow}>
+                  <strong>UHID {hospitalLink.identifier}</strong>
+                  <small>{brand.hospitalName} · Linked</small>
+                </span>
+              </button>
+              <button
+                className={s.abhaRowSync}
+                onClick={() => navigate("/link-records")}
+                aria-label="Manage linked hospital records"
+              >
+                Manage
+              </button>
+            </div>
+          ) : (
+            <button
+              className={s.linkRecordsBanner}
+              onClick={() => navigate("/link-records")}
+            >
+              <span className={s.rowIcon}>
+                <AbhaLogo />
+              </span>
+              <span className={s.grow}>
+                <strong>Link your health records</strong>
+                <small>Connect with your UHID or ABHA</small>
+              </span>
+              <Icon name="chevron-right" size={18} />
+            </button>
+          ))}
         {tab !== "history" && tab !== "visits" && (
           <Field
             aria-label={`Search ${RECORD_TABS.find((t) => t.id === tab).label.toLowerCase()}`}
@@ -501,49 +580,6 @@ export default function Records() {
             </div>
           </>
         )}
-        {tab === "records" &&
-          (abhaLink ? (
-            <div className={s.abhaRow}>
-              <button
-                className={s.abhaRowMain}
-                onClick={() => setAbhaSheet("card")}
-                aria-label={`ABHA ${abhaLink.address || ""}. View ABHA card`}
-              >
-                <AbhaLogo linked />
-                <span className={s.grow}>
-                  <strong>{abhaLink.address || "ABHA linked"}</strong>
-                  <small>
-                    {abhaLink.autoSync
-                      ? "Auto-sync on"
-                      : abhaLink.lastSyncAt
-                        ? `Last synced ${formatDate(abhaLink.lastSyncAt.slice(0, 10))}`
-                        : "Not synced yet"}
-                  </small>
-                </span>
-              </button>
-              <button
-                className={s.abhaRowSync}
-                onClick={() => setAbhaSheet("sync")}
-              >
-                <Icon name="rotate-right" family="arrow" size={16} />
-                Sync
-              </button>
-            </div>
-          ) : (
-            <button
-              className={s.linkRecordsBanner}
-              onClick={() => navigate("/link-records")}
-            >
-              <span className={s.rowIcon}>
-                <AbhaLogo />
-              </span>
-              <span className={s.grow}>
-                <strong>Link your health records</strong>
-                <small>Connect with your UHID or ABHA</small>
-              </span>
-              <Icon name="chevron-right" size={18} />
-            </button>
-          ))}
         {tab === "discharge" && (
           <div className={r.documentGrid}>
             {discharges.map((record) => (
@@ -828,7 +864,7 @@ export default function Records() {
 
 // Lab result status under the title: what needs attention, if anything.
 function LabLine({ record }) {
-  if (!record.params?.length) return null;
+  if (!record.intelligenceGeneratedAt || !record.params?.length) return null;
   const { concerning } = analyzeReport(record);
   return (
     <span className={r.line} data-tone={concerning.length ? "alert" : "ok"}>

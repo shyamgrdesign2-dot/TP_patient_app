@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DocumentViewer from "../components/DocumentViewer";
 import { useRecordFile } from "../components/RecordDocuments";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../state/AppContext";
 import { packagesEnabled } from "../../shared/catalog";
@@ -32,7 +32,7 @@ import shared from "../App.module.css";
 import s from "./LabReport.module.css";
 
 const DISCLAIMER =
-  "This analysis is generated automatically from the report values. It is not a diagnosis. Please discuss your results with your doctor.";
+  "This analysis is generated from the report values. It is not a diagnosis. Please discuss your results with your doctor.";
 
 // The current patient's lab report for the route, with its analysis.
 function useLabReport() {
@@ -42,7 +42,12 @@ function useLabReport() {
     (r) =>
       r.id === id && r.memberId === activeMember.id && r.released !== false,
   );
-  return { record, analysis: analyzeReport(record) };
+  return {
+    record,
+    analysis: analyzeReport(
+      record?.intelligenceGeneratedAt ? record : undefined,
+    ),
+  };
 }
 
 function Unavailable() {
@@ -69,10 +74,15 @@ export default function LabReport({
 }) {
   const navigate = useNavigate();
   const routeReport = useLabReport();
-  const record = suppliedRecord || routeReport.record;
-  const analysis = suppliedRecord
-    ? analyzeReport(suppliedRecord)
-    : routeReport.analysis;
+  const { state, dispatch } = useApp();
+  const candidate = suppliedRecord || routeReport.record;
+  const record =
+    state.records.find((item) => item.id === candidate?.id) || candidate;
+  const [generation, setGeneration] = useState("idle");
+  const generationTimer = useRef(null);
+  const analysis = analyzeReport(
+    record?.intelligenceGeneratedAt ? record : undefined,
+  );
   const [tab, setTab] = useState("original");
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -89,14 +99,33 @@ export default function LabReport({
           preparedSummary?.points?.length ||
           preparedSummary?.next
         );
-  const hasAnalysis = analysis.params.length > 0 || hasPreparedSummary;
-  const selectedTab = hasAnalysis ? tab : "original";
+  const hasAnalysis = record?.params?.length > 0 || hasPreparedSummary;
+  const supportsIntelligence =
+    hasAnalysis || ["Pathology", "Radiology"].includes(record?.type);
+  const selectedTab = supportsIntelligence ? tab : "original";
+  function generateIntelligence() {
+    setGeneration("generating");
+    generationTimer.current = setTimeout(() => {
+      if (!hasAnalysis) {
+        setGeneration("unavailable");
+        return;
+      }
+      dispatch({
+        type: "GENERATE_INTELLIGENCE",
+        id: record.id,
+        memberId: record.memberId,
+      });
+      setGeneration("ready");
+    }, 1000);
+  }
   useEffect(() => {
     setTab("original");
     setFilter("all");
     setSearch("");
     setExplain(null);
     setConcerningOnly(false);
+    setGeneration("idle");
+    return () => clearTimeout(generationTimer.current);
   }, [record?.id]);
   if (!record) return <Unavailable />;
   const shown = filterParams(
@@ -111,7 +140,7 @@ export default function LabReport({
       data-report-page={selectedTab === "original" || undefined}
     >
       {!embedded && <PageHeader title="Report" />}
-      {hasAnalysis && (
+      {supportsIntelligence && (
         <Tabs
           value={selectedTab}
           onValueChange={setTab}
@@ -126,11 +155,11 @@ export default function LabReport({
             >
               Original Report
             </TabsTrigger>
-            {hasAnalysis && (
+            {supportsIntelligence && (
               <TabsTrigger
                 value="analysis"
                 className={s.intelligenceTab}
-                disabled={!hasAnalysis}
+                disabled={!supportsIntelligence}
                 id="lab-analysis-tab"
                 aria-controls="lab-report-panel"
               >
@@ -142,13 +171,51 @@ export default function LabReport({
         </Tabs>
       )}
       <div
-        role={hasAnalysis ? "tabpanel" : "region"}
+        role={supportsIntelligence ? "tabpanel" : "region"}
         id="lab-report-panel"
-        aria-labelledby={hasAnalysis ? `lab-${selectedTab}-tab` : undefined}
-        aria-label={!hasAnalysis ? "Original Report" : undefined}
+        aria-labelledby={
+          supportsIntelligence ? `lab-${selectedTab}-tab` : undefined
+        }
+        aria-label={!supportsIntelligence ? "Original Report" : undefined}
         className={s.reportPanel}
       >
-        {selectedTab === "analysis" && hasPreparedSummary ? (
+        {selectedTab === "analysis" && !record.intelligenceGeneratedAt ? (
+          <section
+            className={s.generateCard}
+            aria-busy={generation === "generating"}
+          >
+            <AiSpark size={32} />
+            <h2>Understand your report</h2>
+            <p>
+              Generate a summary when you’re ready. Your original report stays
+              available in the other tab.
+            </p>
+            <Button
+              fullWidth
+              disabled={generation === "generating"}
+              onClick={generateIntelligence}
+            >
+              <AiSpark size={18} />{" "}
+              {generation === "generating"
+                ? "Generating intelligence…"
+                : "Generate Intelligence Report"}
+            </Button>
+            {generation === "generating" && (
+              <p role="status">Preparing your report summary…</p>
+            )}
+            {generation === "unavailable" && (
+              <p role="alert">
+                We couldn’t read the clinical values in this upload.
+                Intelligence extraction for uploaded files isn’t connected in
+                this preview. You can still view and share the original report.
+              </p>
+            )}
+            <small>
+              Preview: summaries use available report data, not a live AI
+              service.
+            </small>
+          </section>
+        ) : selectedTab === "analysis" && hasPreparedSummary ? (
           <PreparedReportSummary summary={preparedSummary} />
         ) : selectedTab === "analysis" ? (
           <>
@@ -407,7 +474,9 @@ export function ReportSheet({ record, onClose }) {
 export function ConcerningParameters() {
   const navigate = useNavigate();
   const { record, analysis } = useLabReport();
-  if (!record || !analysis.params.length) return <Unavailable />;
+  if (!record || !record.params?.length) return <Unavailable />;
+  if (!record.intelligenceGeneratedAt)
+    return <Navigate to={`/records/${record.id}`} replace />;
   const list = analysis.concerning;
   return (
     <div className={`${shared.page} ${s.page}`}>

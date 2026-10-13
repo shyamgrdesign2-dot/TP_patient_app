@@ -1,3 +1,4 @@
+import { normalizeCtaGradient } from "./brandGradient.js";
 // One tenant configuration is the source for UI, assets and native packaging.
 export const defaultBrand = {
   id: "tatva-demo",
@@ -6,6 +7,8 @@ export const defaultBrand = {
   tagline: "Your health, connected.",
   primary: "#4b4ad5",
   accent: "#a461d8",
+  ctaGradient: "",
+  textHeading: "",
   fontBody: "Inter, system-ui, sans-serif",
   fontHeading: "Mulish, system-ui, sans-serif",
   // Hospital logos, cropped in the admin console: a square mark (512 × 512
@@ -13,6 +16,8 @@ export const defaultBrand = {
   // `logo`, so square spots read `logoMark || logo`.
   logo: "",
   logoMark: "",
+  logoDark: "",
+  logoMarkDark: "",
   emergencyPhone: "",
   ambulancePhone: "",
   // Contact desk numbers shown in the app's hospital contacts.
@@ -107,11 +112,11 @@ export const locations = [
   },
 ];
 
-
 // Open-source Google Fonts offered for headings and body text. Inter and
 // Mulish are bundled with the app; the rest load from Google Fonts.
 export const googleFonts = [
   ["Inter", "400;500;600;700"],
+  ["Montserrat", "400;500;600;700"],
   ["Mulish", "400;500;600;700;800"],
   ["Poppins", "400;500;600;700"],
   ["Nunito Sans", "400;600;700;800"],
@@ -192,13 +197,14 @@ export function brandMonogram(name = "") {
 }
 
 export const LOGO_MAX_MB = 5;
-export const LOGO_TYPE_ERROR = "Upload a PNG with a transparent background.";
-// Admins upload logos as PNG only, so transparency survives cropping.
+export const LOGO_TYPE_ERROR = "Upload an SVG, PNG or JPG. SVG is recommended.";
+// SVG is decoded as an image, never injected into the page as markup.
 export function logoFileError(file) {
   if (!file) return "";
-  if (file.type !== "image/png") return LOGO_TYPE_ERROR;
+  if (!["image/png", "image/svg+xml", "image/jpeg"].includes(file.type))
+    return LOGO_TYPE_ERROR;
   if (file.size > LOGO_MAX_MB * 1024 * 1024)
-    return `Choose a PNG under ${LOGO_MAX_MB} MB.`;
+    return `Choose an SVG, PNG or JPG under ${LOGO_MAX_MB} MB.`;
   return "";
 }
 
@@ -208,7 +214,17 @@ export function validBrand(value) {
     typeof value.name === "string" &&
     value.name.trim().length > 0 &&
     /^#[0-9a-f]{6}$/i.test(value.primary) &&
-    /^#[0-9a-f]{6}$/i.test(value.accent)
+    /^#[0-9a-f]{6}$/i.test(value.accent) &&
+    (!value.ctaGradient || !!normalizeCtaGradient(value.ctaGradient)) &&
+    (value.radius == null ||
+      (Number.isFinite(value.radius) &&
+        value.radius >= 0 &&
+        value.radius <= 24)) &&
+    (value.shadowStyle == null ||
+      ["none", "soft", "defined"].includes(value.shadowStyle)) &&
+    [value.textHeading, value.textBody].every(
+      (color) => !color || /^#[0-9a-f]{6}$/i.test(color),
+    )
   );
 }
 export function whiteTextContrast(hex) {

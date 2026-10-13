@@ -232,6 +232,20 @@ export function updateState(state, action) {
           : [...state.members, action.member],
       };
     }
+    case "GENERATE_INTELLIGENCE": {
+      memberExists(state, action.memberId);
+      return {
+        ...state,
+        records: state.records.map((record) =>
+          record.id === action.id &&
+          record.memberId === action.memberId &&
+          record.released !== false &&
+          (record.params?.length || record.summary)
+            ? { ...record, intelligenceGeneratedAt: new Date().toISOString() }
+            : record,
+        ),
+      };
+    }
     case "RECORD":
       memberExists(state, action.record.memberId);
       return { ...state, records: [action.record, ...state.records] };
@@ -302,7 +316,9 @@ export function updateState(state, action) {
         (r) => r.id === action.id,
       );
       if (!request || request.status !== "Requested")
-        throw new Error("Only bookings awaiting confirmation can be cancelled.");
+        throw new Error(
+          "Only bookings awaiting confirmation can be cancelled.",
+        );
       memberExists(state, request.memberId);
       return {
         ...state,
@@ -314,12 +330,16 @@ export function updateState(state, action) {
     // Patient asks the hospital's front desk to call them back.
     case "CALLBACK_REQUEST": {
       memberExists(state, action.request.memberId);
-      const member = state.members.find((m) => m.id === action.request.memberId);
+      const member = state.members.find(
+        (m) => m.id === action.request.memberId,
+      );
       const pending = (state.callbackRequests || []).find(
         (r) => r.memberId === member.id && r.status === "Requested",
       );
       if (pending)
-        throw new Error("You already asked for a callback. We'll call you shortly.");
+        throw new Error(
+          "You already asked for a callback. We'll call you shortly.",
+        );
       const request = {
         id: crypto.randomUUID(),
         memberId: member.id,

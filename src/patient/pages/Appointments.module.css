@@ -118,3 +118,59 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+/* Fill the banner while reserving the natural width of each icon and label. */
+.appointmentTabs.appointmentTabs {
+  padding: 8px 0 0;
+}
+.appointmentTabs.appointmentTabs [role="tablist"] {
+  display: flex;
+  width: 100%;
+  padding-inline: 8px;
+  gap: 2px;
+  overflow-x: auto;
+}
+.appointmentTabs.appointmentTabs [role="tablist"] [role="tab"] {
+  flex: 1 0 auto;
+  min-width: max-content;
+  padding-inline: 8px;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+}
+.appointmentTabs.appointmentTabs [role="tab"] > span {
+  justify-content: center;
+  gap: 5px;
+  white-space: nowrap;
+  text-align: center;
+}
+.appointmentTabs.appointmentTabs [role="tab"] > span > span:last-child {
+  white-space: nowrap;
+}
+.appointmentTabs.appointmentTabs
+  [role="tab"][data-state="inactive"]
+  [data-tp-icon] {
+  color: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 82%,
+    transparent
+  ) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 82%,
+    transparent
+  ) !important;
+}
+@media (max-width: 360px) {
+  .appointmentTabs.appointmentTabs [role="tablist"] {
+    padding-inline: 4px;
+  }
+  .appointmentTabs.appointmentTabs [role="tablist"] [role="tab"] {
+    padding-inline: 4px;
+    font-size: 12px;
+    gap: 4px;
+  }
+  .appointmentTabs.appointmentTabs [role="tab"] > span {
+    gap: 4px;
+  }
+}

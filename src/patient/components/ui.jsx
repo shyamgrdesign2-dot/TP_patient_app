@@ -17,10 +17,13 @@ import {
   InputBox as TesseractInputBox,
 } from "@dhspl-tatvacare/tesseract-ui";
 import { brandMarkSrc, brandMonogram } from "../../shared/brand";
+import { accessibleBrandRamp } from "../../shared/brandContrast";
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../state/AppContext";
 import s from "../App.module.css";
+import banner from "./BrandHeader.module.css";
+import BrandHeaderPattern from "./BrandHeaderPattern";
 import { describeNotice, noticeTime } from "../services/notices";
 import { Badge, Icon, Status } from "../../shared/ui";
 import { MemberForm } from "./MemberForm";
@@ -73,7 +76,7 @@ export function Tag({ children, color = "neutral" }) {
   );
 }
 export function InputBox(props) {
-  return <TesseractInputBox radius={12} {...props} />;
+  return <TesseractInputBox {...props} />;
 }
 // Keep icons in the library's dedicated slots, out of its clipped text label.
 export function Button({
@@ -101,7 +104,6 @@ export function Button({
     content[content.length - 1] = content.at(-1).trimEnd();
   return (
     <TesseractButton
-      radius={12}
       className={`${s.button} ${className}`}
       leftIcon={leftIcon}
       rightIcon={rightIcon}
@@ -111,7 +113,15 @@ export function Button({
     </TesseractButton>
   );
 }
-export function AbhaLogo({ linked = false }) {
+export function AbhaLogo({ linked = false, monochrome = false }) {
+  if (monochrome)
+    return (
+      <span
+        className={s.abhaMonochrome}
+        role="img"
+        aria-label={linked ? "ABHA linked" : "ABHA"}
+      />
+    );
   return (
     <img
       className={s.abhaLogo}
@@ -160,7 +170,7 @@ export function BrandMark({ size = 32, className = "", brand: draft }) {
       className={`${s.brandMark} ${className}`}
       style={{
         "--brand-mark-size": `${size}px`,
-        "--brand-mark-bg": brand.primary,
+        "--brand-mark-bg": accessibleBrandRamp(brand.primary)[500],
       }}
       data-monogram={!mark || undefined}
       role="img"
@@ -252,6 +262,8 @@ export function SectionTitle({ children, action, onAction, className = "" }) {
 }
 export function PageHeader({
   title,
+  brandBanner = false,
+  brandPattern = true,
   patientSelector,
   action,
   trailing,
@@ -290,9 +302,10 @@ export function PageHeader({
   return (
     <>
       <header
-        className={`${s.pageHeader} ${patientSelector ? s.patientPageHeader : ""}`}
+        className={`${s.pageHeader} ${patientSelector ? s.patientPageHeader : ""} ${brandBanner ? banner.banner : ""}`}
         ref={header}
       >
+        {brandBanner && brandPattern && <BrandHeaderPattern />}
         <Button
           variant="ghost"
           theme="neutral"
@@ -640,7 +653,7 @@ export function Row({
   return (
     <Tag className={s.row} onClick={onClick}>
       <span className={s.rowIcon} data-color={color}>
-        <Icon name={icon} bulk size={22} />
+        {isValidElement(icon) ? icon : <Icon name={icon} bulk size={22} />}
       </span>
       <span className={s.grow}>
         <strong>{title}</strong>

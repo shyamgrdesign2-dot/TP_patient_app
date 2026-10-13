@@ -1,4 +1,11 @@
-import { createContext, useContext, useRef, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { normalizeRecord } from "../services/records.js";
 import { clearFiles } from "../services/files";
 import { initialState } from "../../shared/data";
@@ -10,6 +17,7 @@ import {
   loadBrandFonts,
   brandMarkSrc,
 } from "../../shared/brand";
+import { setAdminConfigPreview } from "../../shared/hospitalConfig";
 const Context = createContext(null);
 const KEY = "tatva-patient-demo-v1";
 const ACCOUNTS = "tatva-demo-accounts";
@@ -215,10 +223,63 @@ export function AppProvider({ children }) {
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
-  const [brand, setBrand] = useState(() => {
+  const [savedBrand, setBrand] = useState(() => {
     const saved = read(BRAND, defaultBrand);
     return validBrand(saved) ? { ...defaultBrand, ...saved } : defaultBrand;
   });
+  const [brandDraft, setBrandDraft] = useState(null);
+  const [, refreshConfig] = useState(0);
+  const previewChannel = useRef(null);
+  const ownedPreview = useRef(null);
+  const brand = brandDraft || savedBrand;
+  const applyPreview = useCallback((payload) => {
+    setBrandDraft(payload?.brand || null);
+    setAdminConfigPreview(payload?.config || null);
+    refreshConfig((version) => version + 1);
+  }, []);
+  const previewConfiguration = useCallback(
+    (nextBrand, nextConfig) => {
+      if (!validBrand(nextBrand)) return;
+      const payload = { brand: nextBrand, config: nextConfig };
+      ownedPreview.current = payload;
+      applyPreview(payload);
+      previewChannel.current?.postMessage({ type: "preview", payload });
+    },
+    [applyPreview],
+  );
+  const clearConfigurationPreview = useCallback(() => {
+    if (!ownedPreview.current) return;
+    ownedPreview.current = null;
+    applyPreview(null);
+    previewChannel.current?.postMessage({ type: "preview", payload: null });
+  }, [applyPreview]);
+  useEffect(() => {
+    if (!window.BroadcastChannel) return;
+    const channel = new BroadcastChannel("tatva-configuration-live-preview");
+    previewChannel.current = channel;
+    channel.onmessage = ({ data }) => {
+      if (data?.type === "request" && ownedPreview.current)
+        channel.postMessage({ type: "preview", payload: ownedPreview.current });
+      if (
+        data?.type === "preview" &&
+        (!data.payload || validBrand(data.payload.brand))
+      )
+        applyPreview(data.payload);
+    };
+    channel.postMessage({ type: "request" });
+    const clearOnExit = () => {
+      if (ownedPreview.current)
+        channel.postMessage({ type: "preview", payload: null });
+    };
+    window.addEventListener("pagehide", clearOnExit);
+    return () => {
+      clearOnExit();
+      window.removeEventListener("pagehide", clearOnExit);
+      channel.close();
+      previewChannel.current = null;
+      setAdminConfigPreview(null);
+    };
+  }, [applyPreview]);
   // The admin console saved a new brand (logo, colours, fonts) in another
   // tab or in this tab's preview frame: apply it here without a reload.
   useEffect(() => {
@@ -243,6 +304,7 @@ export function AppProvider({ children }) {
       return false;
     }
     setBrand(next);
+    clearConfigurationPreview();
     return true;
   }
   const [toast, setToast] = useState(null);
@@ -266,10 +328,12 @@ export function AppProvider({ children }) {
   }, [state, accountDeleted]);
   useEffect(() => {
     try {
-      localStorage.setItem(BRAND, JSON.stringify(brand));
+      localStorage.setItem(BRAND, JSON.stringify(savedBrand));
     } catch {
       /* preview remains usable in memory */
     }
+  }, [savedBrand]);
+  useEffect(() => {
     loadBrandFonts(brand);
     document.title = `${brand.name} · Your health, connected`;
     document.querySelector('meta[name="theme-color"]').content = brand.primary;
@@ -389,6 +453,8 @@ export function AppProvider({ children }) {
         brand,
         setBrand,
         saveBrand,
+        previewConfiguration,
+        clearConfigurationPreview,
         toast,
         notify,
         activeMember,

@@ -1,48 +1,91 @@
 import { useEffect, useRef, useState } from "react";
-import { Toggle } from "@dhspl-tatvacare/tesseract-ui";
+import { createPortal } from "react-dom";
+import { Toggle, SectionCard } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../patient/state/AppContext";
 import {
   brandMarkSrc,
+  defaultBrand,
   customFontName,
   fontFamily,
   fontStack,
   googleFonts,
   hospitalCallHref,
-  loadBrandFonts,
   logoFileError,
   validBrand,
   whiteTextContrast,
 } from "../shared/brand";
 import { Icon } from "../shared/ui";
 import { Button } from "../patient/components/ui";
-import { Field, InfoNote, PageTitle, readFileAsDataUrl } from "./AdminParts";
+import { Field, InfoNote, readFileAsDataUrl } from "./AdminParts";
 import LogoCropper, { loadLogoSource } from "./LogoCropper";
-import BrandPreviews, { LogoGuidance } from "./BrandPreviews";
+import BrandPreviews from "./BrandPreviews";
+import BrandWebsiteImport from "./BrandWebsiteImport";
+import CtaGradientEditor from "./CtaGradientEditor";
 import s from "./Admin.module.css";
 
 export const FEATURES = [
-  ["videoConsult", "Video consultations", "Patients can book and join video visits"],
-  ["symptomCollector", "Symptom collector", "Patients share symptoms before a visit"],
+  [
+    "videoConsult",
+    "Video consultations",
+    "Patients can book and join video visits",
+  ],
+  [
+    "symptomCollector",
+    "Symptom collector",
+    "Patients share symptoms before a visit",
+  ],
   ["abha", "ABHA linking", "Create or link ABHA and sync records"],
   ["bills", "Bills & receipts", "Show invoices and payment status"],
   ["familyProfiles", "Family profiles", "Manage care for family members"],
-  ["recordUploads", "Patient uploads", "Patients can upload their own documents"],
-  ["packages", "Health packages & vaccines", "Patients can browse packages and vaccines and request a booking"],
+  [
+    "recordUploads",
+    "Patient uploads",
+    "Patients can upload their own documents",
+  ],
+  [
+    "packages",
+    "Health packages & vaccines",
+    "Patients can browse packages and vaccines and request a booking",
+  ],
 ];
 const PHONES = [
-  ["emergencyPhone", "Emergency number", "Shown in the app's emergency sheet", "e.g. 080 4000 1000", "Emergency"],
+  [
+    "emergencyPhone",
+    "Emergency number",
+    "Shown in the app's emergency sheet",
+    "e.g. 080 4000 1000",
+    "Emergency",
+  ],
   ["ambulancePhone", "Ambulance number", "", "e.g. 108", "Ambulance"],
-  ["bookingPhone", "Appointment booking / front desk number", "", "e.g. 080 4718 2000", "Front desk"],
-  ["whatsappPhone", "WhatsApp number", "Patients can chat with the front desk", "e.g. 98450 12345", "WhatsApp"],
-  ["billingPhone", "Billing / insurance desk number", "Optional", "e.g. 080 4718 2010", "Billing / insurance"],
+  [
+    "bookingPhone",
+    "Appointment booking / front desk number",
+    "",
+    "e.g. 080 4718 2000",
+    "Front desk",
+  ],
+  [
+    "whatsappPhone",
+    "WhatsApp number",
+    "Patients can chat with the front desk",
+    "e.g. 98450 12345",
+    "WhatsApp",
+  ],
+  [
+    "billingPhone",
+    "Billing / insurance desk number",
+    "Optional",
+    "e.g. 080 4718 2010",
+    "Billing / insurance",
+  ],
 ];
 const SECTIONS = [
-  ["hospital", "Hospital"],
-  ["theme", "Theme"],
-  ["fonts", "Fonts"],
-  ["contacts", "Contacts"],
-  ["policies", "Appointments"],
-  ["features", "Features"],
+  ["hospital", "Hospital", "hospital"],
+  ["theme", "Theme", "color-swatch"],
+  ["fonts", "Fonts", "text"],
+  ["contacts", "Contacts", "call"],
+  ["policies", "Appointments", "calendar"],
+  ["features", "Features", "setting-2"],
 ];
 const hoursLabel = (n) => (n ? `${n} hours` : "Any time");
 const validPhone = (v) => !v || !!hospitalCallHref(v);
@@ -52,55 +95,89 @@ const validPhone = (v) => !v || !!hospitalCallHref(v);
 // summary; Edit opens the form in a panel beside the preview.
 export default function AppConfig({ config, setConfig, flash }) {
   const { brand, saveBrand, state } = useApp();
+  const [configured, setConfigured] = useState(
+    () =>
+      !!config.brandConfigured ||
+      !!brand.logo ||
+      !!brand.logoMark ||
+      (brand.hospitalName &&
+        ![defaultBrand.hospitalName, "Your hospital"].includes(
+          brand.hospitalName,
+        )),
+  );
   // The patient preview's "Customise" link lands on the theme section.
   const [editing, setEditing] = useState(() =>
     ["#theme", "#features"].includes(window.location.hash)
       ? window.location.hash.slice(1)
-      : null,
+      : configured
+        ? null
+        : "hospital",
   );
   const frame = useRef(null);
-  const waiting = (state.callbackRequests || []).filter((r) => r.status === "Requested").length;
+  const [actionHost, setActionHost] = useState(null);
+  const waiting = (state.callbackRequests || []).filter(
+    (r) => r.status === "Requested",
+  ).length;
   return (
     <>
-      <PageTitle
-        title="App configuration"
-        sub="Hospital details, theme and policies patients see across the app."
-        action={
-          !editing && (
+      <header className={s.configTopbar}>
+        <div>
+          <h1>App configuration</h1>
+          <p>Hospital identity and your patient experience</p>
+        </div>
+        <div ref={setActionHost} className={s.configTopActions}>
+          {!editing && (
             <Button onClick={() => setEditing("hospital")}>
               <Icon name="edit" size={18} /> Edit
             </Button>
-          )
-        }
-      />
-      <div className={s.appLayout}>
-        <div className={s.previewCol}>
-          <div className={s.device}>
-            <iframe ref={frame} title="Patient app preview" src="/" />
-          </div>
-          <small className={s.muted}>Live preview · updates when you save</small>
+          )}
         </div>
+      </header>
+      <div className={s.appLayout}>
         {editing ? (
           <ConfigEditor
             key="editor"
             brand={brand}
             config={config}
+            unconfigured={!configured}
             section={editing}
+            actionHost={actionHost}
             onCancel={() => setEditing(null)}
             onSave={(nextBrand, nextConfig) => {
               // The logo and fonts live in this browser's storage; say so
               // when they don't fit rather than losing them on reload.
               if (!saveBrand(nextBrand))
                 return "Couldn't save: this browser's storage is full. Remove a custom font or upload a smaller logo, then try again.";
-              setConfig(nextConfig);
+              setConfig({ ...nextConfig, brandConfigured: true });
+              setConfigured(true);
               setEditing(null);
               flash("App configuration saved");
-              setTimeout(() => frame.current?.contentWindow?.location.reload(), 150);
             }}
           />
+        ) : !configured ? (
+          <SectionCard
+            title="Set up your patient app"
+            subtitle="Add your hospital identity to get started."
+            tone="neutral"
+          >
+            <Button onClick={() => setEditing("hospital")}>
+              Start configuration
+            </Button>
+          </SectionCard>
         ) : (
-          <ConfigSummary brand={brand} config={config} waiting={waiting} onEdit={setEditing} />
+          <ConfigSummary
+            brand={brand}
+            config={config}
+            waiting={waiting}
+            onEdit={setEditing}
+          />
         )}
+        <div className={s.previewCol}>
+          <div className={s.device}>
+            <iframe ref={frame} title="Patient app preview" src="/" />
+          </div>
+          <small className={s.muted}>Live preview · updates as you edit</small>
+        </div>
       </div>
     </>
   );
@@ -108,10 +185,19 @@ export default function AppConfig({ config, setConfig, flash }) {
 
 function SummaryCard({ id, title, onEdit, children, wide }) {
   return (
-    <section className={s.summaryCard} data-wide={wide || undefined} aria-labelledby={`sum-${id}`}>
+    <section
+      className={s.summaryCard}
+      data-wide={wide || undefined}
+      aria-labelledby={`sum-${id}`}
+    >
       <header>
         <h2 id={`sum-${id}`}>{title}</h2>
-        <button type="button" className={s.linkBtn} onClick={() => onEdit(id)} aria-label={`Edit ${title.toLowerCase()}`}>
+        <button
+          type="button"
+          className={s.linkBtn}
+          onClick={() => onEdit(id)}
+          aria-label={`Edit ${title.toLowerCase()}`}
+        >
           Edit
         </button>
       </header>
@@ -145,9 +231,7 @@ function ConfigSummary({ brand, config, waiting, onEdit }) {
             </span>
             <div>
               <strong>{brand.hospitalName}</strong>
-              <small>
-                {brand.name} · {brand.tagline}
-              </small>
+              {brand.tagline && <small>{brand.tagline}</small>}
             </div>
           </div>
           <BrandPreviews brand={brand} />
@@ -161,22 +245,34 @@ function ConfigSummary({ brand, config, waiting, onEdit }) {
           ].map(([label, hex]) => (
             <Fact key={label} label={label}>
               <span className={s.swatchValue}>
-                <span style={{ background: hex }} aria-hidden="true" />
+                <span
+                  style={{
+                    background: hex,
+                    color: whiteTextContrast(hex) < 4.5 ? "#171725" : "#fff",
+                  }}
+                  aria-hidden="true"
+                />
                 {hex.toUpperCase()}
               </span>
             </Fact>
           ))}
           <Fact label="Headings">
-            <span style={{ fontFamily: brand.fontHeading, fontWeight: 700 }}>{fontFamily(brand.fontHeading)}</span>
+            <span style={{ fontFamily: brand.fontHeading, fontWeight: 700 }}>
+              {fontFamily(brand.fontHeading)}
+            </span>
           </Fact>
           <Fact label="Body">
-            <span style={{ fontFamily: brand.fontBody }}>{fontFamily(brand.fontBody)}</span>
+            <span style={{ fontFamily: brand.fontBody }}>
+              {fontFamily(brand.fontBody)}
+            </span>
           </Fact>
         </dl>
       </SummaryCard>
       <SummaryCard id="policies" title="Appointments" onEdit={onEdit}>
         <dl className={s.facts}>
-          <Fact label="Cancellation cutoff">{hoursLabel(booking.cancelCutoffHours)}</Fact>
+          <Fact label="Cancellation cutoff">
+            {hoursLabel(booking.cancelCutoffHours)}
+          </Fact>
           <Fact label="Booking window">{booking.windowDays} days ahead</Fact>
         </dl>
       </SummaryCard>
@@ -201,7 +297,10 @@ function ConfigSummary({ brand, config, waiting, onEdit }) {
         <ul className={s.featureList}>
           {FEATURES.map(([key, title]) => (
             <li key={key} data-on={!!features[key]}>
-              <Icon name={features[key] ? "tick-circle" : "close-circle"} size={16} />
+              <Icon
+                name={features[key] ? "tick-circle" : "close-circle"}
+                size={16}
+              />
               {title}
             </li>
           ))}
@@ -212,7 +311,7 @@ function ConfigSummary({ brand, config, waiting, onEdit }) {
 }
 
 function ColorField({ label, hint, value, onChange, warning }) {
-  const hex = /^#[0-9a-f]{6}$/i.test(value) ? value : "#000000";
+  const hex = /^#[0-9a-f]{6}$/i.test(value) ? value : "#e6e6eb";
   return (
     <fieldset className={s.fieldset}>
       <legend className={s.label}>{label}</legend>
@@ -232,10 +331,23 @@ function ColorField({ label, hint, value, onChange, warning }) {
           maxLength={7}
           spellCheck={false}
           aria-label={`${label} hex`}
-          onChange={(e) => onChange(e.target.value.startsWith("#") ? e.target.value : `#${e.target.value}`)}
+          placeholder="Choose a colour"
+          onChange={(e) =>
+            onChange(
+              e.target.value.startsWith("#")
+                ? e.target.value
+                : `#${e.target.value}`,
+            )
+          }
         />
-        <span className={s.contrastPreview} style={{ background: hex }}>
-          Aa
+        <span
+          className={s.contrastPreview}
+          style={{
+            background: hex,
+            color: whiteTextContrast(hex) < 4.5 ? "#171725" : "#fff",
+          }}
+        >
+          {value ? "Aa" : "—"}
         </span>
       </div>
       {warning ? (
@@ -249,8 +361,52 @@ function ColorField({ label, hint, value, onChange, warning }) {
   );
 }
 
-function ConfigEditor({ brand, config, section, onCancel, onSave }) {
-  const [form, setForm] = useState(() => ({ ...brand, customFonts: brand.customFonts || [] }));
+function ConfigurationSection({ id, children }) {
+  return (
+    <SectionCard
+      id={id}
+      className={s.editSection}
+      tone="neutral"
+      padding={20}
+      divided={false}
+      elevation={false}
+    >
+      <div className={s.sectionContents}>{children}</div>
+    </SectionCard>
+  );
+}
+
+function ConfigEditor({
+  brand,
+  config,
+  section,
+  onCancel,
+  onSave,
+  actionHost,
+  unconfigured,
+}) {
+  const { previewConfiguration, clearConfigurationPreview } = useApp();
+  const savedConfig = useRef(config);
+  const [form, setForm] = useState(() => ({
+    ...brand,
+    customFonts: brand.customFonts || [],
+    ...(unconfigured
+      ? {
+          name: "",
+          hospitalName: "",
+          tagline: "",
+          primary: "",
+          accent: "",
+          logo: "",
+          logoMark: "",
+          ctaGradient: "",
+          textHeading: "",
+          textBody: "",
+          fontHeading: "",
+          fontBody: "",
+        }
+      : {}),
+  }));
   const [support, setSupport] = useState(config.support);
   const [booking, setBooking] = useState(config.booking);
   const [features, setFeatures] = useState(config.features);
@@ -259,16 +415,31 @@ function ConfigEditor({ brand, config, section, onCancel, onSave }) {
   const [cropSource, setCropSource] = useState(null);
   const [saveError, setSaveError] = useState("");
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-  const logo = useRef(null);
+  const logoFiles = useRef({});
   const fontFile = useRef(null);
   const body = useRef(null);
-  const contrast = whiteTextContrast(form.primary);
-  const badPhones = PHONES.filter(([k]) => !validPhone(form[k])).map(([k]) => k);
+  const [activeSection, setActiveSection] = useState(section);
+  const badPhones = PHONES.filter(([k]) => !validPhone(form[k])).map(
+    ([k]) => k,
+  );
   const hexOk = /^#[0-9a-f]{6}$/i;
-  const ok = validBrand(form) && form.hospitalName.trim() && !badPhones.length && validPhone(support.phone);
+  const preparedBrand = {
+    ...form,
+    name: form.hospitalName.trim(),
+    accent: form.accent || form.primary,
+    fontHeading: form.fontHeading || defaultBrand.fontHeading,
+    fontBody: form.fontBody || defaultBrand.fontBody,
+  };
+  const ok =
+    validBrand(preparedBrand) &&
+    form.hospitalName.trim() &&
+    !badPhones.length &&
+    validPhone(support.phone);
   const fonts = [
     ...googleFonts.map(([name]) => name),
-    ...form.customFonts.map((f) => f.name).filter((n) => !googleFonts.some(([g]) => g === n)),
+    ...form.customFonts
+      .map((f) => f.name)
+      .filter((n) => !googleFonts.some(([g]) => g === n)),
   ];
 
   // Scroll the panel (not the page) to a section.
@@ -276,182 +447,364 @@ function ConfigEditor({ brand, config, section, onCancel, onSave }) {
     const el = document.getElementById(`edit-${id}`);
     const box = body.current;
     if (!el || !box) return;
-    const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+    setActiveSection(id);
+    if (id === "hospital") {
+      box.scrollTo({ top: 0, behavior });
+      return;
+    }
+    const top =
+      el.getBoundingClientRect().top -
+      box.getBoundingClientRect().top +
+      box.scrollTop;
     box.scrollTo({ top: top - 8, behavior });
   };
   useEffect(() => goTo(section, "instant"), [section]);
-  // Load the fonts being chosen so their samples render here; restore the
-  // saved brand's fonts on close.
   useEffect(() => {
-    loadBrandFonts(form);
-  }, [form]);
-  useEffect(() => () => loadBrandFonts(brand), [brand]);
+    const box = body.current;
+    if (!box) return;
+    const onScroll = () => {
+      const top = box.getBoundingClientRect().top + 80;
+      const sections = SECTIONS.map(([id]) =>
+        document.getElementById(`edit-${id}`),
+      );
+      const current = sections
+        .filter((node) => node && node.getBoundingClientRect().top <= top)
+        .at(-1);
+      if (current) setActiveSection(current.id.replace("edit-", ""));
+    };
+    box.addEventListener("scroll", onScroll, { passive: true });
+    return () => box.removeEventListener("scroll", onScroll);
+  }, []);
+  useEffect(() => {
+    // Incomplete fields stay blank in the editor. The preview remains readable
+    // without inventing hospital details or saving fallback values.
+    previewConfiguration(
+      {
+        ...form,
+        name: form.hospitalName.trim() || "Patient app",
+        hospitalName: form.hospitalName.trim() || "Your hospital",
+        fontHeading: form.fontHeading || defaultBrand.fontHeading,
+        fontBody: form.fontBody || defaultBrand.fontBody,
+        primary: /^#[0-9a-f]{6}$/i.test(form.primary)
+          ? form.primary
+          : defaultBrand.primary,
+        accent: /^#[0-9a-f]{6}$/i.test(form.accent)
+          ? form.accent
+          : defaultBrand.accent,
+      },
+      {
+        ...savedConfig.current,
+        support,
+        booking,
+        features,
+      },
+    );
+  }, [form, support, booking, features, previewConfiguration]);
+  useEffect(
+    () => () => clearConfigurationPreview(),
+    [clearConfigurationPreview],
+  );
 
   return (
     <section className={s.editPanel} aria-label="Edit app configuration">
+      {actionHost &&
+        createPortal(
+          <div className={s.editActions}>
+            {saveError && (
+              <small className={s.hint} data-error role="alert">
+                {saveError}
+              </small>
+            )}
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!ok}
+              onClick={() =>
+                setSaveError(
+                  onSave(
+                    { ...brand, ...preparedBrand },
+                    { ...config, support, booking, features },
+                  ) || "",
+                )
+              }
+            >
+              Save changes
+            </Button>
+          </div>,
+          actionHost,
+        )}
       <header className={s.editHead}>
-        <h2>Edit configuration</h2>
+        <div className={s.editorTopbar}>
+          <div>
+            <h2>Edit configuration</h2>
+            <p>Preview changes instantly</p>
+          </div>
+        </div>
         <nav className={s.editNav} aria-label="Sections">
-          {SECTIONS.map(([id, label]) => (
+          {SECTIONS.map(([id, label, icon]) => (
             <button
               key={id}
               type="button"
               onClick={() => goTo(id)}
+              aria-controls={`edit-${id}`}
+              aria-current={activeSection === id ? "location" : undefined}
             >
-              {label}
+              <span className={s.stepIcon}>
+                <Icon name={icon} size={18} />
+              </span>
+              <span>{label}</span>
             </button>
           ))}
         </nav>
       </header>
       <div className={s.editBody} ref={body}>
-        <div className={s.editSection} id="edit-hospital">
-          <h3>Hospital</h3>
+        <BrandWebsiteImport
+          colours={form}
+          onPreviewColours={(patch) =>
+            setForm((current) => ({ ...current, ...patch }))
+          }
+          onUploadMissing={(kind) => {
+            goTo("hospital");
+            logoFiles.current[kind]?.click();
+          }}
+          onApply={(patch) => setForm((current) => ({ ...current, ...patch }))}
+        />
+        <ConfigurationSection id="edit-hospital">
+          <div className={s.sectionHeading}>
+            <h3>Hospital</h3>
+            <p>Your hospital name and brand assets.</p>
+          </div>
           <div className={s.grid2}>
             <Field label="Hospital name">
-              <input className={s.input} value={form.hospitalName} onChange={set("hospitalName")} />
-            </Field>
-            <Field label="App name" hint="Shown on the home screen and app store">
-              <input className={s.input} value={form.name} onChange={set("name")} />
+              <input
+                className={s.input}
+                value={form.hospitalName}
+                onChange={set("hospitalName")}
+              />
             </Field>
             <Field label="Tagline">
-              <input className={s.input} value={form.tagline} onChange={set("tagline")} />
+              <input
+                className={s.input}
+                value={form.tagline}
+                onChange={set("tagline")}
+              />
             </Field>
           </div>
           <div className={s.field}>
-            <span className={s.label}>Logo</span>
-            <div className={s.logoBlock}>
-              <div>
-                <div className={s.logoThumbs}>
-                  <figure>
-                    <span className={`${s.logoThumb} ${s.checker}`} data-shape="square">
-                      {brandMarkSrc(form) ? (
-                        <img src={brandMarkSrc(form)} alt="Logo mark" />
-                      ) : (
-                        <Icon name="gallery" size={20} />
-                      )}
-                    </span>
-                    <figcaption>Mark · 1:1</figcaption>
-                  </figure>
-                  <figure>
-                    <span className={`${s.logoThumb} ${s.checker}`} data-shape="wide">
-                      {form.logo ? (
-                        <img src={form.logo} alt="Horizontal logo" />
-                      ) : (
-                        <small>{brandMarkSrc(form) ? "Not set · the mark and hospital name are used" : "Not set"}</small>
-                      )}
-                    </span>
-                    <figcaption>Horizontal · 4:1</figcaption>
-                  </figure>
-                </div>
-                <div className={s.logoRow}>
-                  <Button variant="outline" size="sm" onClick={() => logo.current?.click()}>
-                    <Icon name="gallery-add" size={16} /> {brandMarkSrc(form) ? "Replace logo" : "Upload logo"}
-                  </Button>
-                  {brandMarkSrc(form) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      theme="neutral"
-                      onClick={() => setForm({ ...form, logo: "", logoMark: "" })}
-                    >
-                      Remove
-                    </Button>
-                  )}
+            <span className={s.label}>Brand assets</span>
+            <small className={s.hint}>
+              Upload each asset separately. SVG recommended. PNG and JPG also
+              supported.
+            </small>
+            <div className={s.brandAssets}>
+              {[
+                {
+                  key: "logoMark",
+                  kind: "mark",
+                  title: "App icon",
+                  shape: "square",
+                  hint: "Square · 1:1 · App icon, splash and favicon",
+                },
+                {
+                  key: "logo",
+                  kind: "horizontal",
+                  title: "Horizontal logo",
+                  shape: "wide",
+                  hint: "Wide · 4:1 · Headers and sign-in screens",
+                },
+              ].map((asset) => {
+                const uploadAsset =
+                  (key, dark = false) =>
+                  async (event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    if (!file) return;
+                    const error = logoFileError(file);
+                    setLogoError(error);
+                    if (error) return;
+                    try {
+                      setCropSource({
+                        source: await loadLogoSource(file),
+                        key,
+                        kind: asset.kind,
+                        surface: dark ? "dark" : "light",
+                      });
+                    } catch {
+                      setLogoError(
+                        "That image could not be read. Choose another SVG, PNG or JPG.",
+                      );
+                    }
+                  };
+                const picker = (key, dark = false) => (
                   <input
-                    ref={logo}
-                    type="file"
-                    accept="image/png"
-                    aria-label="Logo file"
-                    data-testid="logo-file"
-                    hidden
-                    onChange={async (e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      if (!f) return;
-                      const error = logoFileError(f);
-                      setLogoError(error);
-                      if (error) return;
-                      try {
-                        setCropSource(await loadLogoSource(f));
-                      } catch (err) {
-                        setLogoError(err.message);
-                      }
+                    key={key}
+                    ref={(input) => {
+                      logoFiles.current[key] = input;
                     }}
+                    type="file"
+                    accept="image/svg+xml,image/png,image/jpeg"
+                    aria-label={`${asset.title}${dark ? " dark" : ""} file`}
+                    data-testid={`${key}-file`}
+                    hidden
+                    onChange={uploadAsset(key, dark)}
                   />
-                </div>
-                {logoError && (
-                  <small className={s.hint} data-error role="alert">
-                    {logoError}
-                  </small>
-                )}
-              </div>
-              <LogoGuidance />
+                );
+                return (
+                  <section
+                    className={s.brandAsset}
+                    key={asset.key}
+                    aria-label={asset.title}
+                  >
+                    <div className={s.brandAssetHead}>
+                      <strong>{asset.title}</strong>
+                      <small>{asset.hint}</small>
+                      {form[asset.key] && (
+                        <small>
+                          {form[asset.key].startsWith("data:image/svg+xml")
+                            ? "SVG vector"
+                            : form[asset.key].startsWith("data:image/jpeg")
+                              ? "JPG image"
+                              : "PNG image"}
+                        </small>
+                      )}
+                    </div>
+                    <div className={s.brandAssetPreview}>
+                      <span className={s.logoThumb} data-shape={asset.shape}>
+                        {form[asset.key] ? (
+                          <img src={form[asset.key]} alt={asset.title} />
+                        ) : (
+                          <Icon name="gallery" size={24} />
+                        )}
+                      </span>
+                    </div>
+                    <div className={s.logoRow}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => logoFiles.current[asset.key]?.click()}
+                      >
+                        <Icon name="gallery-add" size={16} />
+                        {form[asset.key] ? "Replace" : "Upload"}{" "}
+                        {asset.title.toLowerCase()}
+                      </Button>
+                      {form[asset.key] && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          theme="error"
+                          className={s.removeAsset}
+                          aria-label={`Remove ${asset.title.toLowerCase()}`}
+                          onClick={() =>
+                            setForm((current) => ({
+                              ...current,
+                              [asset.key]: "",
+                            }))
+                          }
+                        >
+                          <Icon name="trash" size={16} /> Remove
+                        </Button>
+                      )}
+                      {picker(asset.key)}
+                    </div>
+                  </section>
+                );
+              })}
             </div>
+            <small className={s.hint}>
+              Adjust zoom, crop, rotation and background before applying.
+              Unedited SVGs stay vector; edited images save as PNG. Maximum 5 MB
+              per file.
+            </small>
+            {logoError && (
+              <small className={s.hint} data-error role="alert">
+                {logoError}
+              </small>
+            )}
           </div>
           <div className={s.field}>
-            <span className={s.label}>Preview</span>
+            <span className={s.label}>Patient previews · display only</span>
             <BrandPreviews brand={form} />
-            <small className={s.hint}>How patients see your logo. Updates as you edit; applies when you save.</small>
+            <small className={s.hint}>
+              How patients see your logo. Updates as you edit; save to keep your
+              changes.
+            </small>
           </div>
           {cropSource && (
             <LogoCropper
-              source={cropSource}
+              source={cropSource.source}
+              kind={cropSource.kind}
+              surface={cropSource.surface}
               onCancel={() => setCropSource(null)}
-              onApply={({ mark, horizontal }) => {
-                setForm((f) => ({ ...f, logoMark: mark, logo: horizontal }));
+              onApply={(image) => {
+                setForm((f) => ({ ...f, [cropSource.key]: image }));
                 setCropSource(null);
               }}
             />
           )}
-        </div>
+        </ConfigurationSection>
 
-        <div className={s.editSection} id="edit-theme">
-          <h3>Theme</h3>
+        <ConfigurationSection id="edit-theme">
+          <div className={s.sectionHeading}>
+            <h3>Theme</h3>
+            <p>Colours, buttons and surfaces that feel like your brand.</p>
+          </div>
           <div className={s.grid2}>
             <ColorField
-              label="Primary colour"
-              hint="Buttons, links and highlights"
-              value={form.primary}
-              onChange={(primary) => setForm({ ...form, primary })}
-              warning={
-                !hexOk.test(form.primary)
-                  ? "Enter a 6-digit hex colour, e.g. #4B4AD5."
-                  : contrast < 4.5
-                    ? `Too light for white button text (${contrast.toFixed(1)}:1, needs 4.5:1). Choose a darker shade.`
-                    : ""
-              }
-            />
-            <ColorField
-              label="Accent colour"
+              label="Secondary colour"
               hint="Secondary highlights"
               value={form.accent}
               onChange={(accent) => setForm({ ...form, accent })}
-              warning={hexOk.test(form.accent) ? "" : "Enter a 6-digit hex colour, e.g. #A461D8."}
+              warning={
+                !form.accent || hexOk.test(form.accent)
+                  ? ""
+                  : "Enter a 6-digit hex colour, e.g. #A461D8."
+              }
             />
           </div>
-        </div>
+          <CtaGradientEditor form={form} onChange={setForm} />
+        </ConfigurationSection>
 
-        <div className={s.editSection} id="edit-fonts">
-          <h3>Fonts</h3>
+        <ConfigurationSection id="edit-fonts">
+          <div className={s.sectionHeading}>
+            <h3>Fonts</h3>
+            <p>A clear hierarchy for headings and everyday reading.</p>
+          </div>
           <div className={s.grid2}>
             {[
               ["fontHeading", "Heading font", "Book a visit", 700],
-              ["fontBody", "Body font", "Your lab report is ready to view.", 400],
+              [
+                "fontBody",
+                "Body font",
+                "Your lab report is ready to view.",
+                400,
+              ],
             ].map(([k, label, sample, weight]) => (
               <Field key={k} label={label}>
                 <select
                   className={s.input}
-                  value={fontFamily(form[k])}
-                  onChange={(e) => setForm({ ...form, [k]: fontStack(e.target.value) })}
+                  value={form[k] ? fontFamily(form[k]) : ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      [k]: e.target.value ? fontStack(e.target.value) : "",
+                    })
+                  }
                 >
+                  <option value="">Use default</option>
                   {fonts.map((f) => (
                     <option key={f} value={f}>
                       {f}
-                      {form.customFonts.some((c) => c.name === f) ? " (uploaded)" : ""}
+                      {form.customFonts.some((c) => c.name === f)
+                        ? " (uploaded)"
+                        : ""}
                     </option>
                   ))}
                 </select>
-                <span className={s.fontSample} style={{ fontFamily: form[k], fontWeight: weight }}>
+                <span
+                  className={s.fontSample}
+                  style={{ fontFamily: form[k], fontWeight: weight }}
+                >
                   {sample}
                 </span>
               </Field>
@@ -467,9 +820,17 @@ function ConfigEditor({ brand, config, section, onCancel, onSave }) {
                   onClick={() =>
                     setForm({
                       ...form,
-                      customFonts: form.customFonts.filter((c) => c.name !== f.name),
-                      fontHeading: fontFamily(form.fontHeading) === f.name ? brandDefault("heading") : form.fontHeading,
-                      fontBody: fontFamily(form.fontBody) === f.name ? brandDefault("body") : form.fontBody,
+                      customFonts: form.customFonts.filter(
+                        (c) => c.name !== f.name,
+                      ),
+                      fontHeading:
+                        fontFamily(form.fontHeading) === f.name
+                          ? brandDefault("heading")
+                          : form.fontHeading,
+                      fontBody:
+                        fontFamily(form.fontBody) === f.name
+                          ? brandDefault("body")
+                          : form.fontBody,
                     })
                   }
                 >
@@ -477,7 +838,11 @@ function ConfigEditor({ brand, config, section, onCancel, onSave }) {
                 </button>
               </span>
             ))}
-            <Button variant="outline" size="sm" onClick={() => fontFile.current?.click()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fontFile.current?.click()}
+            >
               <Icon name="add" size={16} /> Upload custom font
             </Button>
             <input
@@ -489,8 +854,12 @@ function ConfigEditor({ brand, config, section, onCancel, onSave }) {
                 const f = e.target.files?.[0];
                 e.target.value = "";
                 if (!f) return;
-                const ext = (/\.(woff2?|ttf|otf)$/i.exec(f.name) || [])[1]?.toLowerCase();
-                if (!ext) return setFontError("Choose a .woff2, .woff, .ttf or .otf file.");
+                const ext = (/\.(woff2?|ttf|otf)$/i.exec(f.name) ||
+                  [])[1]?.toLowerCase();
+                if (!ext)
+                  return setFontError(
+                    "Choose a .woff2, .woff, .ttf or .otf file.",
+                  );
                 try {
                   const data = await readFileAsDataUrl(f, 1.5);
                   const src = `data:font/${ext};base64,${data.split(",")[1]}`;
@@ -498,7 +867,10 @@ function ConfigEditor({ brand, config, section, onCancel, onSave }) {
                   setFontError("");
                   setForm({
                     ...form,
-                    customFonts: [...form.customFonts.filter((c) => c.name !== name), { name, src }],
+                    customFonts: [
+                      ...form.customFonts.filter((c) => c.name !== name),
+                      { name, src },
+                    ],
                   });
                 } catch (err) {
                   setFontError(err.message);
@@ -507,19 +879,31 @@ function ConfigEditor({ brand, config, section, onCancel, onSave }) {
             />
           </div>
           {fontError ? (
-            <small className={s.hint} data-error>{fontError}</small>
+            <small className={s.hint} data-error>
+              {fontError}
+            </small>
           ) : (
             <small className={s.hint}>
-              Upload your brand font (.woff2, .woff, .ttf or .otf, under 1.5 MB), then choose it above.
+              Upload your brand font (.woff2, .woff, .ttf or .otf, under 1.5
+              MB), then choose it above.
             </small>
           )}
-        </div>
+        </ConfigurationSection>
 
-        <div className={s.editSection} id="edit-contacts">
-          <h3>Contacts</h3>
+        <ConfigurationSection id="edit-contacts">
+          <div className={s.sectionHeading}>
+            <h3>Contacts</h3>
+            <p>Help patients reach the right team.</p>
+          </div>
           <div className={s.grid2}>
             {PHONES.map(([k, label, hint, placeholder]) => (
-              <Field key={k} label={label} hint={badPhones.includes(k) ? "Enter a valid phone number" : hint}>
+              <Field
+                key={k}
+                label={label}
+                hint={
+                  badPhones.includes(k) ? "Enter a valid phone number" : hint
+                }
+              >
                 <input
                   className={s.input}
                   inputMode="tel"
@@ -530,44 +914,99 @@ function ConfigEditor({ brand, config, section, onCancel, onSave }) {
                 />
               </Field>
             ))}
-            <Field label="Patient support phone" hint={validPhone(support.phone) ? "" : "Enter a valid phone number"}>
-              <input className={s.input} inputMode="tel" value={support.phone} onChange={(e) => setSupport({ ...support, phone: e.target.value })} />
+            <Field
+              label="Patient support phone"
+              hint={
+                validPhone(support.phone) ? "" : "Enter a valid phone number"
+              }
+            >
+              <input
+                className={s.input}
+                inputMode="tel"
+                value={support.phone}
+                onChange={(e) =>
+                  setSupport({ ...support, phone: e.target.value })
+                }
+              />
             </Field>
             <Field label="Patient support email">
-              <input className={s.input} type="email" value={support.email} onChange={(e) => setSupport({ ...support, email: e.target.value })} />
+              <input
+                className={s.input}
+                type="email"
+                value={support.email}
+                onChange={(e) =>
+                  setSupport({ ...support, email: e.target.value })
+                }
+              />
             </Field>
           </div>
           <div className={s.toggleRow}>
             <div>
               <strong>Request a callback</strong>
-              <small>Patients can ask the front desk to call them back from the app</small>
+              <small>
+                Patients can ask the front desk to call them back from the app
+              </small>
             </div>
             <Toggle
               ariaLabel="Request a callback"
               checked={!!form.callbackEnabled}
-              onCheckedChange={(on) => setForm({ ...form, callbackEnabled: on })}
+              onCheckedChange={(on) =>
+                setForm({ ...form, callbackEnabled: on })
+              }
             />
           </div>
-        </div>
+        </ConfigurationSection>
 
-        <div className={s.editSection} id="edit-policies">
+        <ConfigurationSection id="edit-policies">
           <h3>Appointments</h3>
           <div className={s.grid2}>
-            <Field label="Cancellation cutoff" hint="Patients can't cancel or reschedule within this many hours of the visit">
-              <select className={s.input} value={booking.cancelCutoffHours} onChange={(e) => setBooking({ ...booking, cancelCutoffHours: Number(e.target.value) })}>
-                {[0, 1, 2, 4, 12, 24].map((n) => <option key={n} value={n}>{hoursLabel(n)}</option>)}
+            <Field
+              label="Cancellation cutoff"
+              hint="Patients can't cancel or reschedule within this many hours of the visit"
+            >
+              <select
+                className={s.input}
+                value={booking.cancelCutoffHours}
+                onChange={(e) =>
+                  setBooking({
+                    ...booking,
+                    cancelCutoffHours: Number(e.target.value),
+                  })
+                }
+              >
+                {[0, 1, 2, 4, 12, 24].map((n) => (
+                  <option key={n} value={n}>
+                    {hoursLabel(n)}
+                  </option>
+                ))}
               </select>
             </Field>
-            <Field label="Booking window" hint="How far ahead patients can book">
-              <select className={s.input} value={booking.windowDays} onChange={(e) => setBooking({ ...booking, windowDays: Number(e.target.value) })}>
-                {[7, 14, 30, 60, 90].map((n) => <option key={n} value={n}>{n} days</option>)}
+            <Field
+              label="Booking window"
+              hint="How far ahead patients can book"
+            >
+              <select
+                className={s.input}
+                value={booking.windowDays}
+                onChange={(e) =>
+                  setBooking({ ...booking, windowDays: Number(e.target.value) })
+                }
+              >
+                {[7, 14, 30, 60, 90].map((n) => (
+                  <option key={n} value={n}>
+                    {n} days
+                  </option>
+                ))}
               </select>
             </Field>
           </div>
-        </div>
+        </ConfigurationSection>
 
-        <div className={s.editSection} id="edit-features">
-          <h3>Features</h3>
+        <ConfigurationSection id="edit-features">
+          <div className={s.sectionHeading}>
+            <h3>Features</h3>
+            <p>Choose the services patients can access.</p>
+          </div>
           <div className={s.toggles} data-single>
             {FEATURES.map(([key, title, sub]) => (
               <div className={s.toggleRow} key={key}>
@@ -578,33 +1017,24 @@ function ConfigEditor({ brand, config, section, onCancel, onSave }) {
                 <Toggle
                   ariaLabel={title}
                   checked={!!features[key]}
-                  onCheckedChange={(on) => setFeatures({ ...features, [key]: on })}
+                  onCheckedChange={(on) =>
+                    setFeatures({ ...features, [key]: on })
+                  }
                 />
               </div>
             ))}
           </div>
-        </div>
-        <InfoNote>Changes apply to the patient app when you save.</InfoNote>
+        </ConfigurationSection>
+        <InfoNote>
+          Changes preview instantly across open app tabs. Save to keep them;
+          Cancel restores the saved configuration.
+        </InfoNote>
       </div>
-      <footer className={s.editFoot}>
-        {saveError && (
-          <small className={s.hint} data-error role="alert">
-            {saveError}
-          </small>
-        )}
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button
-          disabled={!ok}
-          onClick={() =>
-            setSaveError(onSave({ ...brand, ...form }, { ...config, support, booking, features }) || "")
-          }
-        >
-          Save changes
-        </Button>
-      </footer>
     </section>
   );
 }
 
 const brandDefault = (kind) =>
-  kind === "heading" ? "Mulish, system-ui, sans-serif" : "Inter, system-ui, sans-serif";
+  kind === "heading"
+    ? "Mulish, system-ui, sans-serif"
+    : "Inter, system-ui, sans-serif";

@@ -102,22 +102,40 @@ export function PrescriptionReader({ records }) {
   );
 }
 export function RecordThumbnail({ record }) {
-  const { file } = useRecordFile(record);
+  const { file, error } = useRecordFile(record);
   const [url, setUrl] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   useEffect(() => {
+    setUrl(null);
+    setLoaded(false);
+    setImageError(false);
     if (!file || file.type === "application/pdf") return;
     const u = URL.createObjectURL(file);
     setUrl(u);
     return () => URL.revokeObjectURL(u);
   }, [file]);
   return (
-    <div className={r.thumbnail} aria-hidden="true">
+    <div
+      className={r.thumbnail}
+      aria-hidden="true"
+      data-loading={
+        !error &&
+        !imageError &&
+        (!file || (file.type !== "application/pdf" && !loaded))
+      }
+    >
       {file?.type === "application/pdf" ? (
-        <Suspense fallback={<Icon name="document-text" size={36} />}>
+        <Suspense fallback={<span data-loading="true" />}>
           <PdfViewer blob={file} title={record.title} />
         </Suspense>
-      ) : url ? (
-        <img src={url} alt="" />
+      ) : url && !imageError ? (
+        <img
+          src={url}
+          alt=""
+          onLoad={() => setLoaded(true)}
+          onError={() => setImageError(true)}
+        />
       ) : (
         <Icon name="document-text" size={36} />
       )}

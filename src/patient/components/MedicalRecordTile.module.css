@@ -1,7 +1,7 @@
 .tile {
   position: relative;
   min-width: 0;
-  height: 240px;
+  height: 204px;
   display: flex;
   flex-direction: column;
   border: 1px solid transparent;
@@ -71,7 +71,7 @@
   position: relative;
   display: block;
   height: 144px;
-  padding: var(--tesseract-space-2) var(--tesseract-space-3);
+  padding: 0;
   overflow: hidden;
   border-radius: inherit;
   background: var(--tesseract-bg-surface);
@@ -84,7 +84,8 @@
   display: none;
 }
 .preview img {
-  object-fit: contain;
+  object-fit: cover;
+  object-position: top center;
 }
 .title {
   display: block;
@@ -99,8 +100,8 @@
 .footer {
   flex: 1;
   min-height: 0;
-  padding: var(--tesseract-space-1-5) var(--tesseract-space-3)
-    var(--tesseract-space-2-5);
+  padding: var(--tesseract-space-1) var(--tesseract-space-3)
+    var(--tesseract-space-2);
 }
 .metadata {
   flex: 1;
@@ -194,7 +195,7 @@
 }
 .analysisTag {
   position: absolute;
-  top: var(--tesseract-space-1-5);
+  bottom: var(--tesseract-space-1-5);
   right: var(--tesseract-space-1-5);
   display: inline-flex;
   align-items: center;
@@ -230,25 +231,24 @@
   border: 0;
 }
 .category {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: block;
   width: fit-content;
-  max-width: 100%;
-  padding: 1px var(--tesseract-space-1-5);
-  border-radius: var(--tesseract-radius-4, 4px);
-  background: var(--tesseract-bg-surface);
-  border: 1px solid var(--tesseract-border-soft);
-  color: var(--tesseract-fg-secondary);
+  max-width: calc(100% - var(--tesseract-space-4));
+  padding: 3px var(--tesseract-space-2);
+  border-radius: 0 0 6px 0;
+  background: var(--tesseract-blue-50);
+  border: 1px solid var(--tesseract-blue-100);
+  color: var(--tesseract-blue-600);
   font-size: var(--tesseract-text-caption-sm);
+  font-weight: var(--tesseract-weight-medium);
+  line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .metadata time {
   white-space: nowrap;
-}
-
-.category[data-lab="true"] {
-  background: var(--tesseract-bg-brand-soft);
-  border-color: var(--tesseract-blue-100);
-  color: var(--tesseract-blue-600);
 }

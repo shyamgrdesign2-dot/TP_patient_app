@@ -1,3 +1,5 @@
+import BrandHeaderPattern from "../components/BrandHeaderPattern";
+import banner from "../components/BrandHeader.module.css";
 import SegmentedControl from "../components/SegmentedControl";
 import VisitDocumentSheet from "../components/VisitDocumentSheet";
 import { AiSpark } from "../components/AiNote";
@@ -9,7 +11,14 @@ import {
   useSearchParams,
   useParams,
 } from "react-router-dom";
-import { ConfirmDialog, Chip, Divider } from "@dhspl-tatvacare/tesseract-ui";
+import {
+  ConfirmDialog,
+  Chip,
+  Divider,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../state/AppContext";
 import {
   doctors,
@@ -45,6 +54,7 @@ import {
 } from "../components/ui";
 import s from "../App.module.css";
 import a from "./Appointments.module.css";
+import records from "./Records.module.css";
 import v from "../components/VisitExperience.module.css";
 import VisitType from "../components/VisitType";
 import { MemberForm } from "../components/MemberForm";
@@ -67,8 +77,27 @@ import {
   joinOpensAt,
   clockLabel,
 } from "../../shared/videoVisit";
+function VisitStatusIcon({ status, selected }) {
+  return (
+    <Icon
+      name={
+        {
+          Upcoming: "calendar-2",
+          Past: "calendar-tick",
+          Cancelled: "calendar-remove",
+        }[status]
+      }
+      size={16}
+      bulk={!selected}
+    />
+  );
+}
+
 export function Doctors() {
   const { state } = useApp();
+  const [bookingParams] = useSearchParams();
+  const bookingMode =
+    bookingParams.get("mode") === "manual" ? "?mode=manual" : "";
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [specialty, setSpecialty] = useState("All specialties");
@@ -83,8 +112,27 @@ export function Doctors() {
   );
   return (
     <div className={s.page}>
-      <PageHeader title="Find your doctor" trailing={<LocationChip />} />
+      <PageHeader
+        title="Find your doctor"
+        brandBanner
+        trailing={<LocationChip />}
+      />
       <MemberContext />
+      <button
+        type="button"
+        className={b.option}
+        data-ai
+        onClick={() => navigate("/book?mode=assistant")}
+      >
+        <span className={b.optionIcon}>
+          <AiSpark size={22} />
+        </span>
+        <span className={s.grow}>
+          <strong>Book with AI assistant</strong>
+          <small>Help finding a doctor and a time that suits you.</small>
+        </span>
+        <Icon name="chevron-right" size={16} />
+      </button>
       <Field
         aria-label="Search doctors"
         placeholder="Doctor, specialty or language"
@@ -148,7 +196,7 @@ export function Doctors() {
               <Button
                 size="sm"
                 leftIcon={<Icon name="add-plain" size={18} />}
-                onClick={() => navigate(`/book/${d.id}`)}
+                onClick={() => navigate(`/book/${d.id}${bookingMode}`)}
               >
                 Book a visit
               </Button>
@@ -178,7 +226,7 @@ export function Doctors() {
             leftIcon={<Icon name="add-plain" size={18} />}
             onClick={() => {
               setSelected(null);
-              navigate(`/book/${selected?.id}`);
+              navigate(`/book/${selected?.id}${bookingMode}`);
             }}
           >
             Book an appointment
@@ -982,59 +1030,94 @@ export function Appointments() {
   );
   return (
     <div className={s.page}>
-      <PageHeader
-        title="My visits"
-        patientSelector
-        action={
-          items.length > 0 && (
-            <Button size="sm" onClick={() => navigate("/doctors")}>
-              <Icon name="add" size={18} />
-              Book new appointment
-            </Button>
-          )
-        }
-      />
-      <div className={s.visitControls}>
-        <SegmentedControl
-          aria-label="Appointment status"
-          className={s.visitSegment}
-          variant="block"
-          radius={10}
-          fullWidth
-          options={["Upcoming", "Past", "Cancelled"].map((v) => ({
-            value: v,
-            label: `${v}${counts[v] ? ` (${counts[v]})` : ""}`,
-          }))}
-          value={tab}
-          onValueChange={setTab}
+      <div className={banner.group}>
+        <BrandHeaderPattern />
+        <PageHeader
+          title="My visits"
+          brandBanner
+          brandPattern={false}
+          patientSelector
+          action={
+            items.length > 0 && (
+              <Button size="sm" onClick={() => navigate("/book")}>
+                <Icon name="add" size={18} />
+                Book new appointment
+              </Button>
+            )
+          }
         />
+        <div
+          className={`${s.visitControls} ${banner.band} ${records.recordsBand} ${a.appointmentTabs}`}
+        >
+          <Tabs
+            value={tab}
+            onValueChange={setTab}
+            size="sm"
+            variant="underline"
+          >
+            <TabsList aria-label="Appointment status">
+              {["Upcoming", "Past", "Cancelled"].map((status) => (
+                <TabsTrigger
+                  key={status}
+                  value={status}
+                  onFocus={(event) =>
+                    event.currentTarget.scrollIntoView({
+                      block: "nearest",
+                      inline: "nearest",
+                      behavior: "instant",
+                    })
+                  }
+                  leftIcon={
+                    <VisitStatusIcon
+                      status={status}
+                      selected={tab === status}
+                    />
+                  }
+                  id={`appointments-tab-${status}`}
+                  aria-controls="appointments-panel"
+                >
+                  <span>
+                    {status}
+                    {counts[status] ? ` (${counts[status]})` : ""}
+                  </span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
       <div
-        className={`${s.stack} ${a.visitList}`}
-        aria-label={`${tab} appointments`}
+        role="tabpanel"
+        id="appointments-panel"
+        aria-labelledby={`appointments-tab-${tab}`}
       >
-        {items.map((a) => (
-          <AppointmentCard
-            key={a.id}
-            visit={a}
-            upcoming={tab === "Upcoming"}
-            onDetails={() => setSelected(a)}
-            onJoin={() => setJoining(a)}
+        <div
+          className={`${s.stack} ${a.visitList}`}
+          aria-label={`${tab} appointments`}
+        >
+          {items.map((a) => (
+            <AppointmentCard
+              key={a.id}
+              visit={a}
+              upcoming={tab === "Upcoming"}
+              onDetails={() => setSelected(a)}
+              onJoin={() => setJoining(a)}
+            />
+          ))}
+        </div>
+        {!items.length && (
+          <Empty
+            icon="calendar-2"
+            title={`No ${tab.toLowerCase()} appointments`}
+            description={`Your ${tab.toLowerCase()} visits for ${activeMember.name.split(" ")[0]} will appear here.`}
+            action={[
+              <Icon key="add" name="add-plain" size={18} />,
+              "Book new appointment",
+            ]}
+            onAction={() => navigate("/book")}
           />
-        ))}
+        )}
       </div>
-      {!items.length && (
-        <Empty
-          icon="calendar-2"
-          title={`No ${tab.toLowerCase()} appointments`}
-          description={`Your ${tab.toLowerCase()} visits for ${activeMember.name.split(" ")[0]} will appear here.`}
-          action={[
-            <Icon key="add" name="add-plain" size={18} />,
-            "Book new appointment",
-          ]}
-          onAction={() => navigate("/doctors")}
-        />
-      )}
       <Sheet
         open={!!selected}
         onClose={() => {

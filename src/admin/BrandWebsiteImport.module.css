@@ -1,0 +1,305 @@
+.card {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: var(--tesseract-radius-16);
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--tesseract-slate-0) 92%, transparent),
+      color-mix(in srgb, var(--tesseract-slate-0) 92%, transparent)
+    ),
+    var(--tesseract-gradient-ai-card);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  min-width: 0;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--tesseract-gradient-ai-card);
+  opacity: 0.55;
+  background-size: 220% 220%;
+  animation: smartBorder 8s ease-in-out infinite;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.headingCopy {
+  min-width: 0;
+}
+.smartLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  margin-bottom: var(--tesseract-space-2);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
+  font-weight: var(--tesseract-weight-semibold);
+}
+.smartLabel > span:last-child {
+  background: var(--tesseract-gradient-ai-hero);
+  background-clip: text;
+  color: transparent;
+}
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.heading h2 {
+  font-size: 16px;
+  line-height: 1.4;
+  margin: 0 0 6px;
+  color: var(--tesseract-fg-heading);
+}
+.heading p,
+.source {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--tesseract-fg-secondary);
+  margin: 0;
+}
+.optional {
+  font-size: 12px;
+  border-radius: 6px;
+  padding: 3px 8px;
+  background: color-mix(in srgb, var(--tesseract-slate-0) 72%, transparent);
+  color: var(--tesseract-fg-secondary);
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.form > label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.inputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.inputRow > input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid var(--tesseract-border-neutral);
+  border-radius: 10px;
+  background: var(--tesseract-bg-surface);
+  color: var(--tesseract-fg-heading);
+}
+.inputRow > input:focus-visible {
+  outline: 2px solid var(--tesseract-border-focus);
+  outline-offset: 2px;
+}
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid var(--tesseract-border-soft);
+  padding-top: 16px;
+}
+.results h3 {
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+.options {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--tesseract-slate-0);
+  min-width: 0;
+}
+.option:has(input:checked) {
+  border-color: var(--tesseract-border-focus);
+  background: color-mix(in srgb, var(--tesseract-fg-link) 3%, white);
+}
+.option > input {
+  margin: 3px 0 0;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--tesseract-fg-link);
+}
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.detail strong {
+  font-size: 13px;
+}
+.detail small {
+  font-size: 11px;
+  color: var(--tesseract-fg-secondary);
+  overflow-wrap: anywhere;
+}
+.logo {
+  max-width: 100%;
+  max-height: 70px;
+  object-fit: contain;
+  object-position: left;
+  background: white;
+  padding: 4px;
+}
+.value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #0002;
+  flex-shrink: 0;
+}
+.source {
+  overflow-wrap: anywhere;
+}
+.warnings {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tesseract-fg-secondary);
+}
+.error {
+  font-size: 13px;
+  color: var(--tesseract-error-700, #b42318);
+  margin: 0;
+}
+.status {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--tesseract-fg-secondary);
+  margin: 0;
+}
+.srOnly {
+  position: absolute;
+  clip: rect(0, 0, 0, 0);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+@media (max-width: 680px) {
+  .inputRow {
+    flex-wrap: wrap;
+  }
+  .inputRow > input {
+    flex-basis: 100%;
+  }
+  .options {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    padding: 16px;
+  }
+  .heading {
+    flex-wrap: wrap;
+  }
+}
+
+.gradientSwatch {
+  width: 64px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  border: 1px solid #0002;
+}
+
+@keyframes smartBorder {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+.analyzeButton {
+  background:
+    linear-gradient(#0004, #0004), var(--tesseract-gradient-ai-hero) !important;
+  color: var(--tesseract-slate-0) !important;
+  border-color: transparent !important;
+}
+.analyzeButton:disabled {
+  opacity: 0.5;
+}
+.detectionMode {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tesseract-fg-secondary);
+  margin: 4px 0 8px;
+}
+.missing {
+  background: color-mix(in srgb, white 72%, transparent);
+  border-style: dashed;
+  cursor: default;
+}
+.uploadMissing {
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  min-height: 32px;
+  text-align: left;
+  color: var(--tesseract-fg-link);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card::before {
+    animation: none;
+  }
+}
+
+.missingBadge {
+  align-self: flex-start;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  background: var(--tesseract-bg-page-subtle);
+  color: var(--tesseract-fg-secondary);
+  font-weight: 600;
+}
+/* Unavailable values remain legible; recovery uploads stay interactive. */
+.missing {
+  background: var(--tesseract-slate-50, #f8fafc);
+  border-color: var(--tesseract-slate-200, #e2e8f0);
+}
+.missing .detail strong {
+  color: var(--tesseract-fg-secondary);
+}
+.missingBadge {
+  color: #92400e;
+  background: #fff1d6;
+}

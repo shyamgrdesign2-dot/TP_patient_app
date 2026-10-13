@@ -533,7 +533,11 @@ textarea.input {
   min-height: 100vh;
   padding: var(--tesseract-space-6);
   background:
-    radial-gradient(60% 50% at 80% 0%, var(--tesseract-bg-brand-soft), transparent 70%),
+    radial-gradient(
+      60% 50% at 80% 0%,
+      var(--tesseract-bg-brand-soft),
+      transparent 70%
+    ),
     var(--tesseract-bg-page);
 }
 .signInCard {
@@ -798,7 +802,8 @@ textarea.input {
 }
 .notifPreview[data-channel="sms"],
 .notifPreview[data-channel="whatsapp"] {
-  border-radius: var(--tesseract-radius-14) var(--tesseract-radius-14) var(--tesseract-radius-14) 2px;
+  border-radius: var(--tesseract-radius-14) var(--tesseract-radius-14)
+    var(--tesseract-radius-14) 2px;
 }
 .notifPreview[data-channel="whatsapp"] {
   background: var(--tesseract-success-50);
@@ -1091,7 +1096,7 @@ textarea.input {
 /* App configuration: preview + summary, or preview + edit panel */
 .appLayout {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--tesseract-space-8);
   align-items: start;
 }
@@ -1163,7 +1168,8 @@ textarea.input {
   width: var(--tesseract-size-16);
   height: var(--tesseract-size-16);
   border-radius: var(--tesseract-radius-4);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tesseract-slate-900) 12%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--tesseract-slate-900) 12%, transparent);
 }
 .featureList {
   display: flex;
@@ -1191,47 +1197,93 @@ textarea.input {
   top: 0;
   display: flex;
   flex-direction: column;
-  /* Viewport minus the page padding and title row. */
   height: calc(100dvh - 156px);
   min-height: 420px;
+  min-width: 0;
   border: 1px solid var(--tesseract-border-soft);
   border-radius: var(--tesseract-radius-16);
-  background: var(--tesseract-bg-surface);
-  box-shadow: var(--tesseract-shadow-sm);
+  background: var(--tesseract-bg-page-subtle);
   overflow: hidden;
-  animation: fade 0.2s ease both;
 }
 .editHead {
   display: flex;
   flex-direction: column;
-  gap: var(--tesseract-space-2);
-  padding: var(--tesseract-space-4) var(--tesseract-space-5) 0;
+  gap: 16px;
+  padding: 20px 20px 0;
+  background: var(--tesseract-bg-surface);
   border-bottom: 1px solid var(--tesseract-border-soft);
 }
+.editorTopbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
 .editHead h2 {
-  font-size: var(--tesseract-text-h6);
-  font-weight: var(--tesseract-weight-semibold);
+  margin: 0;
+  font-family: var(--tesseract-font-heading);
+  font-size: 20px;
+  font-weight: 750;
   color: var(--tesseract-fg-heading);
+}
+.editorTopbar p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--tesseract-fg-secondary);
+}
+.editActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.editActions > small {
+  flex-basis: 100%;
 }
 .editNav {
   display: flex;
-  gap: var(--tesseract-space-1);
-  margin-left: calc(var(--tesseract-space-2-5) * -1);
+  gap: 4px;
   overflow-x: auto;
 }
 .editNav button {
-  padding: var(--tesseract-space-2) var(--tesseract-space-2-5);
+  position: relative;
+  flex: 1 0 auto;
+  min-height: 46px;
+  padding: 10px 12px;
   border: 0;
-  border-bottom: 2px solid transparent;
-  background: none;
-  font-size: var(--tesseract-text-body-xs);
-  font-weight: var(--tesseract-weight-semibold);
+  border-bottom: 3px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--tesseract-fg-secondary);
   white-space: nowrap;
+  cursor: pointer;
 }
 .editNav button:hover {
+  background: var(--tesseract-bg-page-subtle);
   color: var(--tesseract-fg-link);
-  border-bottom-color: var(--tesseract-blue-200);
+}
+.editNav button[aria-current="location"] {
+  color: var(--tesseract-fg-link);
+  border-bottom-color: var(--tesseract-blue-500);
+  background: var(--tesseract-blue-50);
+}
+.editNav button:focus-visible {
+  outline: 2px solid var(--tesseract-blue-500);
+  outline-offset: -3px;
+  border-radius: 8px;
+}
+.stepIcon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 .editBody {
   flex: 1;
@@ -1239,30 +1291,59 @@ textarea.input {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--tesseract-space-6);
-  padding: var(--tesseract-space-5);
+  gap: 16px;
+  padding: 20px;
+  scroll-behavior: smooth;
 }
-.editSection {
+.editSection.editSection {
+  flex-shrink: 0;
+  min-width: 0;
+  background: var(--tesseract-bg-surface);
+  border-color: var(--tesseract-border-soft);
+  box-shadow: none;
+}
+.sectionContents {
   display: flex;
   flex-direction: column;
-  gap: var(--tesseract-space-4);
+  gap: 16px;
 }
-.editSection + .editSection {
-  padding-top: var(--tesseract-space-5);
-  border-top: 1px solid var(--tesseract-border-soft);
+.sectionHeading {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--tesseract-border-soft);
 }
 .editSection h3 {
-  font-size: var(--tesseract-text-body-base);
-  font-weight: var(--tesseract-weight-semibold);
+  margin: 0;
+  font-family: var(--tesseract-font-heading);
+  font-size: 17px;
+  font-weight: 750;
   color: var(--tesseract-fg-heading);
 }
-.editFoot {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--tesseract-space-2);
-  padding: var(--tesseract-space-3) var(--tesseract-space-5);
-  border-top: 1px solid var(--tesseract-border-soft);
-  background: var(--tesseract-bg-surface);
+.sectionHeading p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tesseract-fg-secondary);
+}
+@media (max-width: 1100px) {
+  .appLayout {
+    gap: 20px;
+  }
+  .editorTopbar {
+    flex-wrap: wrap;
+  }
+  .editActions {
+    margin-left: auto;
+  }
+  .editHead,
+  .editBody {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .editBody {
+    scroll-behavior: auto;
+  }
 }
 .fieldset {
   display: flex;
@@ -1285,7 +1366,8 @@ textarea.input {
   padding: 0;
   border: 0;
   border-radius: var(--tesseract-radius-full);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tesseract-slate-900) 12%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--tesseract-slate-900) 12%, transparent);
 }
 .swatch[aria-checked="true"] {
   box-shadow:
@@ -1629,8 +1711,12 @@ textarea.input {
     height: auto;
     min-height: 0;
   }
+  .editPanel {
+    height: min(900px, calc(100dvh - 110px));
+    min-height: 500px;
+  }
   .editBody {
-    overflow: visible;
+    overflow-y: auto;
   }
   .editFoot {
     position: sticky;
@@ -1662,7 +1748,8 @@ textarea.input {
   position: relative;
   align-items: center;
   gap: var(--tesseract-space-3-5);
-  padding: var(--tesseract-space-4) var(--tesseract-space-5) var(--tesseract-space-4) var(--tesseract-space-4);
+  padding: var(--tesseract-space-4) var(--tesseract-space-5)
+    var(--tesseract-space-4) var(--tesseract-space-4);
   border: 1px solid var(--tesseract-border-neutral);
   box-shadow: var(--tesseract-shadow-xs);
   cursor: pointer;
@@ -1678,7 +1765,11 @@ textarea.input {
 }
 .clinicGrid .clinicCard[aria-selected="true"] {
   border-color: var(--tesseract-blue-500);
-  background: linear-gradient(135deg, var(--tesseract-blue-50), var(--tesseract-bg-surface) 70%);
+  background: linear-gradient(
+    135deg,
+    var(--tesseract-blue-50),
+    var(--tesseract-bg-surface) 70%
+  );
   box-shadow:
     0 0 0 3px var(--tesseract-blue-100),
     var(--tesseract-shadow-sm);
@@ -2036,4 +2127,234 @@ textarea.input {
 .editFoot > small {
   align-self: center;
   margin-right: auto;
+}
+
+/* Only the two implementation-ready sections are interactive. */
+.navReady {
+  background: transparent;
+}
+.navReadiness {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: var(--tesseract-weight-medium);
+}
+.navReady .navReadiness {
+  color: var(--tesseract-fg-link);
+}
+.navItem.navDisabled {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: not-allowed;
+  color: var(--tesseract-fg-tertiary);
+}
+.navItem {
+  padding-block: 10px;
+}
+.navItem.navActive {
+  background: var(--tesseract-bg-brand-soft);
+}
+.brandAssets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.brandAsset {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  border: 1px solid var(--tesseract-border-soft);
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--tesseract-bg-surface);
+}
+.brandAssetHead strong {
+  display: block;
+  font-size: var(--tesseract-text-body-sm);
+}
+.brandAssetHead small {
+  display: block;
+  margin-top: 5px;
+  color: var(--tesseract-fg-secondary);
+  line-height: 1.5;
+}
+.brandAssetPreview {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+}
+.brandAssetPreview .logoThumb {
+  height: 72px;
+}
+.brandAssetPreview .logoThumb[data-shape="square"] {
+  width: 72px;
+}
+.brandAssetPreview .logoThumb[data-shape="wide"] {
+  width: min(100%, 288px);
+  height: 72px;
+}
+@media (max-width: 900px) {
+  .brandAssets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.brandAssetPreview .logoThumb {
+  background: #fff;
+}
+.backgroundRemoval {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.backgroundRemoval label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  font-weight: 600;
+}
+
+.tesseractSidebar {
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border-right: 1px solid var(--tesseract-border-soft);
+}
+.tesseractSidebar nav button:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+  background: transparent;
+  box-shadow: none;
+}
+.tesseractSidebar .sideBrand {
+  padding: 0;
+}
+.brandMark:has(img),
+.pvSplash,
+.pvHome,
+.pvIcon {
+  background: #fff;
+  box-shadow: none;
+}
+.pvHome small {
+  color: var(--tesseract-fg-primary);
+}
+
+/* The configuration screen shares Tatva Practice's flat, full-width top bar. */
+.main:has(.configTopbar) {
+  padding: 0;
+}
+.content:has(.configTopbar) {
+  max-width: none;
+  gap: 0;
+}
+.configTopbar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  min-height: 88px;
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #fff;
+  border-bottom: 1px solid var(--tesseract-border-soft);
+}
+.configTopbar h1 {
+  margin: 0;
+  font-family: var(--tesseract-font-heading);
+  font-size: 23px;
+  font-weight: 750;
+  color: var(--tesseract-fg-heading);
+}
+.configTopbar p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--tesseract-fg-secondary);
+}
+.configTopActions {
+  flex-shrink: 0;
+}
+.configTopbar + .appLayout {
+  padding: 24px;
+  gap: 24px;
+}
+.configTopbar + .appLayout .editPanel {
+  height: calc(100dvh - 136px);
+}
+.configTopbar + .appLayout .previewCol {
+  top: 112px;
+}
+@media (max-width: 600px) {
+  .configTopbar {
+    flex-wrap: wrap;
+    padding: 16px;
+  }
+  .configTopActions {
+    margin-left: auto;
+  }
+  .configTopbar + .appLayout {
+    padding: 16px;
+  }
+}
+@media (max-width: 900px) {
+  .configTopbar + .appLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .configTopbar + .appLayout .previewCol {
+    min-width: 0;
+  }
+}
+@media (max-width: 380px) {
+  .configTopbar + .appLayout .device {
+    --device-scale: 0.68;
+  }
+}
+
+/* Editing assets and viewing placements are distinct surfaces. */
+.brandAssetPreview {
+  min-height: 124px;
+  justify-content: center;
+  border: 1px dashed var(--tesseract-border-neutral);
+  border-radius: 10px;
+  background-color: #f8f8fa;
+  background-image: radial-gradient(#d5d5df 1px, transparent 1px);
+  background-size: 10px 10px;
+  padding: 16px;
+}
+.brandAssetPreview .logoThumb {
+  background: transparent;
+  border: 0;
+}
+.brandAsset .logoRow {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.brandAsset .removeAsset {
+  color: #b42318 !important;
+}
+.brandAsset .removeAsset:hover {
+  background: #fff1f0 !important;
+}
+.brandPreviews {
+  background: #f0f1f4;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e6e7eb;
+}
+.brandPreviews figcaption {
+  color: var(--tesseract-fg-secondary);
+}
+.editPanel:has(.modalScrim) {
+  z-index: 60;
+}
+.brandAssetHead {
+  min-height: 76px;
 }

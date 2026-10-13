@@ -9,59 +9,24 @@
   padding: 0 24px max(24px, env(safe-area-inset-bottom));
   color: var(--tesseract-slate-900);
   overflow: hidden;
-  background: var(--tesseract-slate-50);
+  background: #fff;
 }
 .background {
   position: absolute;
-  inset: 0;
+  inset: 65% 0 0;
   z-index: -1;
-  overflow: hidden;
   pointer-events: none;
-  background: linear-gradient(158deg, white, var(--tesseract-blue-50));
-}
-.aurora {
-  position: absolute;
-  inset: -20%;
-  background:
-    radial-gradient(
-      ellipse at 15% 10%,
-      color-mix(in srgb, var(--tesseract-blue-300) 34%, transparent),
-      transparent 45%
-    ),
-    radial-gradient(
-      ellipse at 90% 65%,
-      color-mix(in srgb, var(--tesseract-blue-200) 22%, transparent),
-      transparent 45%
-    );
-  filter: blur(24px);
-  animation: aurora 16s ease-in-out infinite alternate;
-}
-.waves {
-  position: absolute;
-  inset: 0 0 25%;
-  opacity: 0.34;
-}
-.grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(
-      color-mix(in srgb, var(--tesseract-blue-500) 5%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--tesseract-blue-500) 5%, transparent) 1px,
-      transparent 1px
-    );
-  background-size: 42px 42px;
-  mask-image: radial-gradient(100% 65% at 50% 15%, black, transparent 85%);
+  background: radial-gradient(
+    ellipse at 100% 100%,
+    var(--tesseract-blue-50),
+    transparent 70%
+  );
 }
 .brandRow {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 64px;
+  min-height: 88px;
   flex-shrink: 0;
 }
 .brandRow > button:first-child {
@@ -553,4 +518,9 @@
     animation: none !important;
     transition: none !important;
   }
+}
+
+.brandRow [data-brand-logo] {
+  max-width: min(260px, 85%);
+  object-position: left center;
 }

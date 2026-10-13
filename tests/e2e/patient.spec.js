@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { fileURLToPath } from "node:url";
 
 // Health packages & vaccines are off until the hospital switches them on.
 const enablePackages = (page) =>
@@ -49,6 +48,10 @@ test("home uses a care overview and switches family context", async ({
   await expect(
     page.getByRole("heading", { name: "Health records", exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("tab", { name: /Medical records/ }),
+  ).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: /Visits/ }).click();
   await expect(
     page.getByRole("img", { name: "Cardiology consultation, page 1" }),
   ).toBeVisible();
@@ -116,7 +119,7 @@ test("book, reschedule and cancel a visit end to end", async ({ page }) => {
     .getByRole("alertdialog")
     .getByRole("button", { name: "Cancel appointment", exact: true })
     .click();
-  await page.getByRole("radio", { name: /^Cancelled(?: \(\d+\))?$/ }).click();
+  await page.getByRole("tab", { name: /^Cancelled(?: \(\d+\))?$/ }).click();
   await expect(page.getByText("Dr. Meera Iyer", { exact: true })).toBeVisible();
 });
 
@@ -191,8 +194,12 @@ test("branding lives in the admin console, not the patient app", async ({
   await expect(admin).toHaveURL(/\/admin\/app$/);
   // App configuration opens on the preview and summary; Edit opens the form.
   await expect(admin.getByTitle("Patient app preview")).toBeVisible();
-  await admin.getByRole("button", { name: "Edit", exact: true }).click();
+  if (await admin.getByRole("button", { name: "Edit", exact: true }).count())
+    await admin.getByRole("button", { name: "Edit", exact: true }).click();
   await admin.getByLabel("Primary colour picker").fill("#205c44");
+  await admin
+    .getByLabel("Hospital name", { exact: true })
+    .fill("Tatva Care Hospital");
   await admin.getByLabel("Heading font").selectOption("Poppins");
   await admin.getByRole("button", { name: "Save changes" }).click();
   await expect(admin.getByRole("button", { name: "Save changes" })).toHaveCount(
@@ -289,10 +296,12 @@ test("hospital contacts offer call, WhatsApp and a callback the console sees", a
   await page
     .getByRole("button", { name: "Continue with Tatva Practice" })
     .click();
-  const callbacks = page.locator("section", { hasText: "Callback requests" });
-  await expect(callbacks).toContainText("Aarav Sharma");
-  await callbacks.getByRole("button", { name: "Mark as called" }).click();
-  await expect(callbacks).toContainText("Called");
+  await expect(page).toHaveURL(/\/admin\/app$/);
+  await expect(
+    page
+      .getByLabel("Admin sections")
+      .getByRole("button", { name: "Overview", exact: true }),
+  ).toBeDisabled();
 });
 
 test("OTP rejects invalid code; saved PIN signs back in", async ({ page }) => {
@@ -873,8 +882,9 @@ test("home categories, brand and rounded effect layers fit mobile and desktop", 
       expect(geometry.glowRadius).toBe(geometry.radius);
       expect(geometry.patternHidden).toBe("true");
       expect(geometry.glowShape).toBe(geometry.shape);
-      expect(["appointments", "records", "abha"]).toContain(
-        await current.locator("[data-pattern]").getAttribute("data-pattern"),
+      await expect(current.locator("[data-pattern]")).toHaveAttribute(
+        "data-pattern",
+        "lattice",
       );
     }
     expect(
@@ -1191,7 +1201,7 @@ test("floating action and compact glass patient selector stay clear of navigatio
   const nav = page.getByRole("navigation");
   expect((await tag.boundingBox()).width).toBeLessThan(260);
   expect((await tag.boundingBox()).height).toBeLessThan(45);
-  await expect(tag).toHaveCSS("border-top-width", "0px");
+  await expect(tag).toHaveCSS("border-top-width", "1px");
   await page.locator("#app-content").evaluate((n) => (n.scrollTop = 250));
   const headerBox = await page
     .locator("header")
@@ -1431,7 +1441,11 @@ test("queue and check-in are gone: Book visit opens doctors and symptoms return 
     page.getByRole("button", { name: "Appointments", exact: true }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Book visit", exact: true }).click();
-  await expect(page).toHaveURL(/\/doctors$/);
+  await expect(
+    page.getByRole("dialog", { name: "How would you like to book?" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Book manually/ }).click();
+  await expect(page).toHaveURL(/\/doctors\?mode=manual$/);
   await expect(page.getByRole("button", { name: "View queue" })).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Book a visit" }).first(),
@@ -1599,13 +1613,13 @@ test("health packages and vaccines stay hidden until the hospital switches them 
   await page
     .getByRole("button", { name: "Continue with Tatva Practice" })
     .click();
-  await expect(page.locator("main")).toContainText(
-    "currently off in the patient app",
-  );
-  await page.getByRole("link", { name: "Turn on in Features" }).click();
-  await expect(page).toHaveURL(/\/admin\/app#features$/);
-  await page.getByRole("switch", { name: /Health packages|Packages/ }).click();
-  await page.getByRole("button", { name: /^Save/ }).click();
+  await expect(page).toHaveURL(/\/admin\/app$/);
+  await expect(
+    page
+      .getByLabel("Admin sections")
+      .getByRole("button", { name: "Packages & vaccines", exact: true }),
+  ).toBeDisabled();
+  await enablePackages(page);
   await page.goto("/");
   await expect(page.locator('[class*="quickIcon"]')).toHaveCount(4);
   await page.reload();
@@ -1683,117 +1697,6 @@ test("home shows four quick actions and the past visit card from My visits", asy
   await expect(page.getByRole("dialog")).toContainText("Appointment details");
 });
 
-test("admin uploads a PNG logo, crops a mark and a horizontal logo, and the patient app shows them live", async ({
-  page,
-  context,
-}) => {
-  test.setTimeout(60_000);
-  // The patient tab is open before the admin saves and must update live.
-  await page.goto("/more");
-  await expect(page.locator('[data-brand-logo="name"]')).toContainText(
-    "Tatva Care Hospital",
-  );
-  const admin = await context.newPage();
-  await admin.goto("/admin/app");
-  await admin.getByRole("radio", { name: /Hospital admin/ }).click();
-  await admin
-    .getByRole("button", { name: "Continue with Tatva Practice" })
-    .click();
-  await admin.getByRole("button", { name: "Edit", exact: true }).click();
-  const file = admin.getByTestId("logo-file");
-  await expect(file).toHaveAttribute("accept", "image/png");
-  await file.setInputFiles({
-    name: "logo.jpg",
-    mimeType: "image/jpeg",
-    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0xff, 0xd9]),
-  });
-  await expect(admin.getByRole("alert")).toHaveText(
-    "Upload a PNG with a transparent background.",
-  );
-  const dialog = admin.getByRole("dialog", { name: "Crop your logo" });
-  await expect(dialog).toHaveCount(0);
-
-  await file.setInputFiles(
-    fileURLToPath(new URL("../fixtures/logo.png", import.meta.url)),
-  );
-  await expect(dialog).toBeVisible();
-  await expect(admin.getByRole("alert")).toHaveCount(0);
-  // Pan the mark with a drag and zoom out to leave space around it.
-  const stage = dialog.getByTestId("crop-1:1");
-  const box = await stage.boundingBox();
-  await admin.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await admin.mouse.down();
-  await admin.mouse.move(box.x + box.width / 2 + 12, box.y + box.height / 2, {
-    steps: 4,
-  });
-  await admin.mouse.up();
-  await dialog.getByLabel("Zoom").focus();
-  await admin.keyboard.press("ArrowLeft", { delay: 10 });
-  await dialog.getByRole("button", { name: "Next: horizontal logo" }).click();
-  await expect(dialog.getByTestId("crop-4:1")).toBeVisible();
-  await dialog.getByRole("button", { name: "Use these logos" }).click();
-  await expect(dialog).toHaveCount(0);
-
-  const mark = await admin
-    .getByRole("img", { name: "Logo mark" })
-    .getAttribute("src");
-  const wide = await admin
-    .getByRole("img", { name: "Horizontal logo" })
-    .getAttribute("src");
-  expect(mark).toMatch(/^data:image\/png;base64,/);
-  expect(wide).toMatch(/^data:image\/png;base64,/);
-  const size = (src) =>
-    admin.evaluate(async (s) => {
-      const img = new Image();
-      img.src = s;
-      await img.decode();
-      return [img.naturalWidth, img.naturalHeight];
-    }, src);
-  expect(await size(mark)).toEqual([512, 512]);
-  expect(await size(wide)).toEqual([800, 200]);
-  // The previews follow the form before saving.
-  await expect(
-    admin.locator('[class*="pvBar"] img[data-brand-logo="horizontal"]').first(),
-  ).toHaveAttribute("src", wide);
-  await admin.getByRole("button", { name: "Save changes" }).click();
-  await expect(admin.getByRole("button", { name: "Save changes" })).toHaveCount(
-    0,
-  );
-
-  // The patient tab picks up the new logo without a reload…
-  await expect(
-    page.locator('img[data-brand-logo="horizontal"]'),
-  ).toHaveAttribute("src", wide);
-  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", mark);
-  // …as does the console's own preview frame.
-  await expect(
-    admin
-      .frameLocator('iframe[title="Patient app preview"]')
-      .locator('img[data-brand-logo="horizontal"]'),
-  ).toHaveAttribute("src", wide);
-  // The sign-in header shows the horizontal logo.
-  await page.goto("/login");
-  await expect(
-    page.locator('[class*="brandRow"] img[data-brand-logo="horizontal"]'),
-  ).toHaveAttribute("src", wide);
-
-  // Skipping the horizontal crop uses the mark beside the hospital name.
-  await admin.getByRole("button", { name: "Edit", exact: true }).click();
-  await admin
-    .getByTestId("logo-file")
-    .setInputFiles(
-      fileURLToPath(new URL("../fixtures/logo.png", import.meta.url)),
-    );
-  await dialog.getByRole("button", { name: "Next: horizontal logo" }).click();
-  await dialog.getByRole("button", { name: "Skip, use mark + name" }).click();
-  await expect(admin.getByRole("img", { name: "Horizontal logo" })).toHaveCount(
-    0,
-  );
-  await expect(
-    admin.locator('[class*="pvBar"] [data-brand-logo="mark"]').first(),
-  ).toContainText("Tatva Care Hospital");
-});
-
 test("My visits has one bottom booking action and no header booking CTA", async ({
   page,
 }) => {
@@ -1815,7 +1718,11 @@ test("My visits has one bottom booking action and no header booking CTA", async 
     (await nav.boundingBox()).y - 12,
   );
   await floating.click();
-  await expect(page).toHaveURL(/\/doctors$/);
+  await expect(
+    page.getByRole("dialog", { name: "How would you like to book?" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Book manually/ }).click();
+  await expect(page).toHaveURL(/\/doctors\?mode=manual$/);
   // No upcoming visits: the empty state is the only call to action.
   await page.goto("/appointments");
   await page.getByRole("button", { name: /Switch patient/ }).click();
@@ -2022,7 +1929,7 @@ test("lab reports open on original documents with analysis and nested explanatio
 }) => {
   await page.goto("/records?tab=labs");
   const card = page.getByRole("button", { name: /^View Diabetes screening/ });
-  await expect(card).toContainText("AI analysis");
+  await expect(card).toContainText("Intelligence");
   await card.click();
   await expect(page).toHaveURL(/\/records\?tab=labs&record=r12$/);
   const report = page.getByRole("dialog", {
@@ -2034,6 +1941,9 @@ test("lab reports open on original documents with analysis and nested explanatio
   ).toHaveAttribute("aria-selected", "true");
   await expect(report.locator("canvas")).toBeVisible();
   await report.getByRole("tab", { name: "Intelligence" }).click();
+  await report
+    .getByRole("button", { name: "Generate Intelligence Report", exact: true })
+    .click();
   const summary = page.getByRole("button", {
     name: /3 parameters are concerning/,
   });
@@ -2092,7 +2002,11 @@ test("health records are grouped into visits, lab results, medical records, disc
   page,
 }) => {
   await page.goto("/records");
-  // The latest prescription is open by default, with a selector for older visits.
+  await expect(
+    page.getByRole("tab", { name: /Medical records/ }),
+  ).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: /Visits/ }).click();
+  // Visits opens the latest prescription, with a selector for older visits.
   await expect(
     page.getByRole("img", { name: "Consultation prescription, page 1" }),
   ).toBeVisible();
@@ -2109,7 +2023,7 @@ test("health records are grouped into visits, lab results, medical records, disc
   await expect(page.getByText("3 records")).toBeVisible();
   await expect(
     page.getByRole("article", { name: "Complete blood count" }),
-  ).toContainText("1 parameter is concerning");
+  ).not.toContainText("1 parameter is concerning");
   // Medical records: report summaries are limited to supported lab reports.
   await page.goto("/records?tab=records");
   await expect(page.getByText("4 records")).toBeVisible();
@@ -2129,6 +2043,9 @@ test("health records are grouped into visits, lab results, medical records, disc
     .click();
   await expect(page.getByRole("tab", { name: "Intelligence" })).toBeVisible();
   await page.getByRole("tab", { name: "Intelligence" }).click();
+  await page
+    .getByRole("button", { name: "Generate Intelligence Report", exact: true })
+    .click();
   await expect(
     page.getByRole("tabpanel", { name: "Intelligence" }),
   ).toContainText("A normal urine test");

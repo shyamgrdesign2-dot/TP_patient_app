@@ -163,7 +163,7 @@ export function selectCareUpdates(
             : "Let’s plan your first visit.",
           description: "Choose your doctor and a time that suits you.",
           detail: "In clinic or by video",
-          action: { label: "Find a doctor", path: "/doctors" },
+          action: { label: "Find a doctor", path: "/book" },
         };
   }
   if (!record) {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import BrandHeaderPattern from "../components/BrandHeaderPattern";
 import { recordPath } from "../services/records.js";
 import CareCarousel from "../components/CareCarousel";
 import PatientHeader from "../components/PatientHeader";
@@ -42,6 +43,11 @@ export default function Home() {
         banner.current.getBoundingClientRect().bottom - 8;
       banner.current.inert = covered;
       panel.current.dataset.scrolled = String(scroller.scrollTop > 8);
+      const header = panel.current.parentElement.querySelector("header");
+      panel.current.parentElement.dataset.headerGlass = String(
+        panel.current.getBoundingClientRect().top <=
+          header.getBoundingClientRect().bottom + 1,
+      );
     };
     scroller.addEventListener("scroll", update, { passive: true });
     update();
@@ -67,7 +73,7 @@ export default function Home() {
     ...healthPackages.map((p) => Number(p.price) || Infinity),
   );
   const quick = [
-    ["calendar-2", "Book visit", "/doctors"],
+    ["calendar-2", "Book visit", "/book"],
     ["document-text", "My records", "/records"],
     ["bill", "My bills", "/billing"],
     ...(showPackages ? [["health", "Packages", "/packages"]] : []),
@@ -76,6 +82,9 @@ export default function Home() {
     <div className={s.home}>
       <PatientHeader />
       <div className={s.homeTop} ref={banner}>
+        <div className={s.homeHeroSurface} aria-hidden="true">
+          <BrandHeaderPattern corners />
+        </div>
         <CareCarousel key={activeMember.id} />
       </div>
       <div className={s.homePanel} ref={panel}>

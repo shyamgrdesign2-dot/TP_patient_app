@@ -493,3 +493,26 @@
   margin: 0;
   overflow: hidden;
 }
+
+.generateCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 16px;
+  padding: 24px 20px;
+  background: var(--tesseract-gradient-ai-card);
+  border: 1px solid var(--tesseract-violet-200);
+  border-radius: 16px;
+}
+.generateCard h2 {
+  font-size: 19px;
+}
+.generateCard p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.generateCard small {
+  color: var(--tesseract-fg-secondary);
+  font-size: 12px;
+}

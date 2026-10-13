@@ -767,10 +767,10 @@
 .recordsBand.recordsBand {
   flex-direction: row;
   align-items: center;
-  gap: 4px;
-  padding: 0;
-  background: var(--tesseract-bg-surface);
-  border-bottom: 1px solid var(--tesseract-border-soft);
+  gap: 0;
+  padding: 8px 0 0;
+
+  border-bottom: 0;
   box-shadow: none;
 }
 .recordsBand.recordsBand > div {
@@ -779,28 +779,65 @@
   margin: 0;
   border-radius: 0;
   background: transparent;
-  --fade: var(--tesseract-space-4);
-}
-.recordsBand > button {
-  flex-shrink: 0;
+  --fade: 12px;
 }
 .recordsBand [role="tablist"] {
-  padding: 0 var(--tesseract-space-3);
-  gap: var(--tesseract-space-2);
+  padding: 0 12px;
+  gap: 4px;
   border: 0;
   background: transparent;
+  border-radius: 0;
 }
 .recordsBand [role="tablist"] [role="tab"] {
-  min-height: 44px;
-  padding-inline: var(--tesseract-space-2);
-  border-radius: 0;
-  color: var(--tesseract-fg-secondary);
+  min-height: 48px;
+  padding: 10px 12px 14px;
+  gap: 8px;
+  font-size: 13px;
+  border-radius: 24px;
+  color: color-mix(in srgb, var(--brand-on-banner, white) 82%, transparent);
 }
 .recordsBand [role="tablist"] [role="tab"][data-state="active"] {
   font-weight: 800;
-  color: var(--tesseract-fg-link);
+  color: var(--brand-on-banner, white);
   background: transparent;
   box-shadow: none;
+}
+.recordsBand [role="tablist"] [role="tab"]::after {
+  height: 4px;
+  left: 10px;
+  right: 10px;
+  border-radius: 999px;
+}
+.recordsBand [role="tablist"] [role="tab"][data-state="active"]::before {
+  content: "";
+  position: absolute;
+  inset: 2px 0 10px;
+  border-radius: 24px;
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 10%,
+    transparent
+  );
+  pointer-events: none;
+}
+.recordsBand [role="tablist"] [role="tab"][data-state="active"]::after {
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 70%,
+    transparent
+  );
+}
+.recordsBand [role="tablist"] [role="tab"]:hover:not([data-state="active"]) {
+  color: var(--brand-on-banner, white);
+  background: color-mix(in srgb, var(--brand-on-banner, white) 6%, transparent);
+}
+.recordsBand [role="tablist"] [role="tab"]:focus-visible {
+  outline: 2px solid white;
+  outline-offset: -3px;
+}
+.recordsBand [data-tp-icon] {
+  color: var(--brand-on-banner, white) !important;
+  background-color: var(--brand-on-banner, white) !important;
 }
 
 .visitDateNav > button[data-variant] {
@@ -1048,4 +1085,50 @@
 .uploadNotes textarea,
 .uploadType select {
   border-color: var(--tesseract-border-strong, #d6d6e2);
+}
+
+.tabLabel {
+  white-space: nowrap;
+}
+.tabCount {
+  margin-left: 4px;
+  color: rgb(255 255 255 / 75%);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.recordsBand [role="tab"][data-state="active"] .tabCount {
+  margin-left: 4px;
+  color: var(--brand-on-banner, white);
+  font-weight: 600;
+}
+
+.thumbnail {
+  position: relative;
+}
+.thumbnail[data-loading="true"]::after,
+.thumbnail:has([data-loading="true"])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, #eeeef3 20%, #fafafd 45%, #eeeef3 70%);
+  background-size: 240% 100%;
+  animation: thumbnailShimmer 1.4s ease-in-out infinite;
+}
+.thumbnail canvas {
+  display: block;
+  width: 100% !important;
+}
+@keyframes thumbnailShimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .thumbnail::after {
+    animation: none !important;
+  }
 }

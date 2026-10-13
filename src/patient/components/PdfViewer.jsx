@@ -120,7 +120,7 @@ export default function PdfViewer({
     };
   }, [pdf, pageNumber, width, zoom]);
   return (
-    <div className={s.pdfViewer}>
+    <div className={s.pdfViewer} data-loading={loading && !error}>
       <ErrorText>{error}</ErrorText>
       {loading && !error && <p role="status">Loading document…</p>}
       <div className={s.pdfCanvasFrame} ref={frame}>

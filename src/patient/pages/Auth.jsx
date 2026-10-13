@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../state/AppContext";
 import { getCredentialType, verifyDemoCredential } from "../services/demoAuth";
@@ -21,11 +21,6 @@ import {
 } from "../components/MemberForm";
 import { GENDERS } from "../../shared/age";
 import s from "../Auth.module.css";
-const Waves = lazy(() =>
-  import("../components/effects/GradientWaves").then((module) => ({
-    default: module.GradientWaves,
-  })),
-);
 function useReducedMotion() {
   const [reduce, setReduce] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -38,36 +33,8 @@ function useReducedMotion() {
   }, []);
   return reduce;
 }
-function AuthBackground({ waves = false, paused = false }) {
-  const { brand } = useApp();
-  const reduce = useReducedMotion();
-  return (
-    <div
-      className={s.background}
-      aria-hidden="true"
-      data-paused={paused || reduce}
-    >
-      <div className={s.aurora} />
-      {waves && !reduce && !paused && (
-        <div className={s.waves}>
-          <Suspense fallback={null}>
-            <Waves
-              horizonColor="#f7f8fc"
-              waveColor={brand.primary}
-              crestColor="#ffffff"
-              brightness={1.05}
-              opacity={0.6}
-              speed={0.3}
-              detail="low"
-              mouseInteraction={false}
-              grain={false}
-            />
-          </Suspense>
-        </div>
-      )}
-      <div className={s.grid} />
-    </div>
-  );
+function AuthBackground() {
+  return <div className={s.background} aria-hidden="true" />;
 }
 const slides = [
   {
@@ -113,10 +80,7 @@ function StoryHero({ kind }) {
               </div>
             </div>
             <div className={s.miniFooter}>
-              <Meta>
-                Tomorrow
-                10:30 AM
-              </Meta>
+              <Meta>Tomorrow 10:30 AM</Meta>
               <Icon name="tick-circle" bulk />
             </div>
           </div>
@@ -258,7 +222,7 @@ export function Welcome() {
         ))}
       </div>
       <div className={s.brandRow}>
-        <BrandLogo />
+        <BrandLogo height={48} />
       </div>
       <section
         className={s.story}
@@ -349,9 +313,7 @@ export function Login() {
       if (setup) {
         const born = resolveBirth(birth);
         if (!name.trim() || !born.dob || born.dob > dateKey())
-          throw new Error(
-            "Enter your name and a valid date of birth or age.",
-          );
+          throw new Error("Enter your name and a valid date of birth or age.");
         if (!GENDERS.includes(gender)) throw new Error("Please select gender");
         signIn(phone, { name, gender, ...born });
         navigate("/", { replace: true });
@@ -395,7 +357,7 @@ export function Login() {
         >
           <Icon name="arrow-left3" size={22} />
         </Button>
-        <BrandLogo />
+        <BrandLogo height={48} />
       </div>
       <form className={s.loginForm} onSubmit={submit}>
         <div className={s.loginBody} key={`${method}-${sent}-${verified}`}>

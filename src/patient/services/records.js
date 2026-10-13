@@ -3,12 +3,12 @@
 
 // Tabs on the Health records page, in order.
 export const RECORD_TABS = [
-  { id: "visits", label: "Your visits" },
   { id: "records", label: "Medical records" },
+  { id: "visits", label: "Visits" },
   { id: "labs", label: "Lab results" },
-  { id: "discharge", label: "Discharge summaries" },
-  { id: "certificates", label: "Certificates" },
   { id: "history", label: "Medical history" },
+  { id: "discharge", label: "Discharge summary" },
+  { id: "certificates", label: "Certificates" },
 ];
 
 // Record categories, as stored on each record.
@@ -29,6 +29,27 @@ export const MEDICAL_RECORD_TYPES = [
 ];
 
 export const CERTIFICATE_TYPES = ["Medical fitness", "Medical leave", "Travel"];
+
+// Use a document subtype rather than repeating the section the patient is in.
+export function recordTag(record) {
+  if (record.category === CATEGORY.discharge) {
+    const careType = record.discharge?.careType || record.careType;
+    const labels = {
+      daycare: "Daycare",
+      "day care": "Daycare",
+      ipd: "IPD",
+      inpatient: "IPD",
+      emergency: "Emergency",
+    };
+    return labels[careType?.trim().toLowerCase()] || null;
+  }
+  if (record.category === CATEGORY.lab) {
+    if (["Pathology", "Radiology"].includes(record.type)) return record.type;
+    // Structured laboratory measurements identify pathology in older records.
+    return record.params?.length ? "Pathology" : null;
+  }
+  return record.type || record.category || null;
+}
 
 // Which tab a record lives on.
 export function tabFor(record) {

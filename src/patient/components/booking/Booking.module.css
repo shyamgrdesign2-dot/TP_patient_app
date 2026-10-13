@@ -382,3 +382,19 @@
     font-size: var(--tesseract-text-body-sm);
   }
 }
+
+.startMessage {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 20px;
+  background: var(--tesseract-gradient-ai-card);
+  border: 1px solid var(--tesseract-violet-200);
+  border-radius: 16px;
+}
+.startMessage p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-top: 8px;
+  color: var(--tesseract-fg-secondary);
+}

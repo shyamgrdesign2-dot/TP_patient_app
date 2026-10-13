@@ -121,7 +121,7 @@ function CareBanners({ slides }) {
             as="div"
             key={`${slide.id}-${index}`}
             className={s.careBanner}
-            pattern={slide.id}
+            pattern="lattice"
             data-category={slide.id}
             data-tone={slide.tone}
             onClick={(event) => {

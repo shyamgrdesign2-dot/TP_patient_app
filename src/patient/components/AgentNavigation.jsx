@@ -14,7 +14,7 @@ export default function AgentNavigation() {
           ? `/assistant?appointment=${encodeURIComponent(agentRequest.appointmentId)}`
           : agentRequest.doctorId
             ? `/book/${agentRequest.doctorId}`
-            : "/doctors",
+            : "/book",
       );
     }
     closeAgent();

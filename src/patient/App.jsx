@@ -7,15 +7,13 @@ import { AppProvider, useApp } from "./state/AppContext";
 import Shell from "./components/Shell";
 import Home from "./pages/Home";
 import { Doctors, Booking, Appointments } from "./pages/Appointments";
+import BookingStart from "./components/booking/BookingStart";
 import BookingSuccess from "./pages/BookingSuccess";
 import LinkRecords from "./pages/LinkRecords";
 import Records from "./pages/Records";
 import LabReport, { ConcerningParameters } from "./pages/LabReport";
 import Family, { Profile } from "./pages/Family";
-import {
-  Billing,
-  Hospital,
-} from "./pages/Services";
+import { Billing, Hospital } from "./pages/Services";
 import {
   More,
   Notifications,
@@ -45,6 +43,7 @@ function ThemedApp() {
             <Route element={<Protected />}>
               <Route index element={<Home />} />
               <Route path="doctors" element={<Doctors />} />
+              <Route path="book" element={<BookingStart />} />
               <Route path="book/:doctorId" element={<Booking />} />
               <Route path="appointments" element={<Appointments />} />
               <Route
@@ -65,10 +64,7 @@ function ThemedApp() {
               <Route path="notifications" element={<Notifications />} />
               <Route path="settings" element={<Settings />} />
               <Route path="emergency" element={<Emergency />} />
-              <Route
-                path="abha"
-                element={<AbhaFlow />}
-              />
+              <Route path="abha" element={<AbhaFlow />} />
               <Route path="link-records" element={<LinkRecords />} />
               <Route path="feedback" element={<Feedback />} />
               <Route path="assistant" element={<Assistant />} />

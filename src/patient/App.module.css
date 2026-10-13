@@ -2941,6 +2941,11 @@
 .button {
   min-height: var(--tesseract-patient-touch);
 }
+.button[data-variant="solid"][data-theme="primary"]:not(:disabled) {
+  background-color: var(--tesseract-blue-500);
+  background-image: var(--brand-cta-background, none);
+  color: var(--brand-cta-foreground, white);
+}
 /* The icon slot inherits the label's line-height, which makes it taller than
    the icon and shifts it off the text's centre. Size it to the icon. */
 .button [class*="_icon_"] {
@@ -3067,7 +3072,7 @@
   align-items: center;
   gap: var(--tesseract-space-3);
   width: 100%;
-  padding: var(--tesseract-space-4);
+  padding: 10px 14px;
   border: 1px solid var(--tesseract-blue-100);
   border-radius: 14px;
   background: linear-gradient(
@@ -3085,7 +3090,7 @@
 }
 .linkRecordsBanner small {
   display: block;
-  margin-top: var(--tesseract-space-1);
+  margin-top: 2px;
 }
 .linkIntro,
 .linkSuccess {
@@ -3907,4 +3912,76 @@
   .patientPageHeader h1 {
     font-size: 16px;
   }
+}
+
+/* Uploaded artwork always has a white surface, independent of brand colors. */
+.brandImage,
+.brandMark:not([data-monogram]),
+.brandLockup:has(img) {
+  background: white;
+}
+
+.button[data-variant="solid"][data-theme="primary"]:not(:disabled) > span {
+  background-color: var(--brand-cta-label-background, transparent);
+  border-radius: 4px;
+}
+
+.button[data-variant="solid"][data-theme="primary"]:is(:hover, :active):not(
+    :disabled
+  ):not([data-loading]) {
+  background-color: var(--tesseract-blue-500);
+  box-shadow: inset 0 0 0 1px var(--brand-cta-foreground);
+}
+.button[data-theme="primary"]:is(
+    [data-variant="outline"],
+    [data-variant="tonal"],
+    [data-variant="ghost"],
+    [data-variant="link"]
+  ):not([data-surface="dark"]):not(:disabled) {
+  color: var(--tesseract-blue-600);
+}
+
+/* Stable destinations: each icon keeps its label, whether selected or not. */
+.navbar {
+  bottom: 0;
+  left: 0;
+  transform: none;
+  width: 100%;
+  padding: 6px 12px max(8px, env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 -4px 20px rgb(20 20 40 / 7%);
+}
+.navbar .navItem,
+.navbar .navItem[data-active="true"] {
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0 !important;
+  height: 56px !important;
+  gap: 3px !important;
+  padding: 4px !important;
+  border-radius: 12px !important;
+  box-shadow: none;
+}
+.navbar .navLabel {
+  display: block;
+  font-size: 11px;
+  line-height: 16px;
+}
+.navbar .navItem[data-active="true"] {
+  background: var(--tesseract-blue-50) !important;
+}
+:global(body[data-sheet-open="true"]) .navbar {
+  transform: translateY(120%);
+}
+.abhaMonochrome {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background: var(--tesseract-blue-500);
+  mask: url("/brand/abha.svg") center / contain no-repeat;
+}
+.rowIcon > .abhaMonochrome {
+  width: 30px;
+  height: 30px;
 }

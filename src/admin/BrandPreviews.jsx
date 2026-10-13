@@ -4,10 +4,10 @@ import { BrandLogo, BrandMark } from "../patient/components/ui";
 import s from "./Admin.module.css";
 
 export const LOGO_TIPS = [
-  "PNG with a transparent background",
+  "SVG recommended. PNG and JPG also supported.",
   "Square mark: at least 512×512 px (1024×1024 ideal), keep ~10% empty space around it",
   "Horizontal logo: 4:1, e.g. 1200×300 px",
-  "Use a version that reads on white; avoid thin text",
+  "Logos appear on white backgrounds; avoid thin text",
   "Max 5 MB",
 ];
 

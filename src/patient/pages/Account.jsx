@@ -12,6 +12,7 @@ import { getCredentialType, saveDemoCredential } from "../services/demoAuth";
 import { packagesEnabled } from "../../shared/catalog";
 import {
   Button,
+  AbhaLogo,
   PatientName,
   Badge,
   Avatar,
@@ -41,6 +42,7 @@ export function More() {
       "Your account",
       [
         ["people", "Manage family", "/family"],
+        [<AbhaLogo key="abha" monochrome />, "Link UHID / ABHA", "/link-records"],
         ["bill", "Bills & receipts", "/billing"],
         ...(packagesEnabled()
           ? [
@@ -48,7 +50,6 @@ export function More() {
               ["calendar-tick", "My bookings", "/packages?tab=bookings"],
             ]
           : []),
-        ["link", "Link UHID / ABHA", "/link-records"],
         ["location", "Hospital & directions", "/hospital"],
       ],
     ],

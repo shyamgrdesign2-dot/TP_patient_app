@@ -1,6 +1,11 @@
 // Admin portal configuration, kept locally for this preview. In Tatva
 // Practice this is served to the patient app by the hospital's config API.
 const KEY = "tatva-admin-config";
+let livePreview = null;
+export function setAdminConfigPreview(config) {
+  livePreview = config;
+}
+
 // Bumped when a default changes for hospitals that already saved a config.
 // 2: health packages & vaccines are off until the hospital switches them on.
 const CONFIG_VERSION = 2;
@@ -51,6 +56,7 @@ function mergeDoctors(saved = {}) {
 }
 
 export function readAdminConfig() {
+  if (livePreview) return livePreview;
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) || "null");
     // One-time: configs saved before version 2 had packages on by default.

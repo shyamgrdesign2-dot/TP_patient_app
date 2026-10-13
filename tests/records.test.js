@@ -4,6 +4,7 @@ import {
   CATEGORY,
   MEDICAL_RECORD_TYPES,
   normalizeRecord,
+  recordTag,
 } from "../src/patient/services/records.js";
 import { initialState } from "../src/shared/data.js";
 
@@ -85,4 +86,39 @@ test("initial records use supported types and preserve rehabilitation and proced
     assert.ok(record.originalType);
     assert.ok(record.note.length > 80);
   }
+});
+
+test("record tags describe lab subtypes and omit unknown discharge care types", () => {
+  assert.equal(
+    recordTag({ category: CATEGORY.lab, type: "Radiology" }),
+    "Radiology",
+  );
+  assert.equal(
+    recordTag({ category: CATEGORY.lab, params: [{ name: "Haemoglobin" }] }),
+    "Pathology",
+  );
+  assert.equal(recordTag({ category: CATEGORY.lab }), null);
+  assert.equal(
+    recordTag({ category: CATEGORY.discharge, type: "Discharge summary" }),
+    null,
+  );
+  assert.equal(
+    recordTag({
+      category: CATEGORY.discharge,
+      discharge: { careType: "inpatient" },
+    }),
+    "IPD",
+  );
+  assert.equal(
+    recordTag({ category: CATEGORY.discharge, careType: "day care" }),
+    "Daycare",
+  );
+  assert.equal(
+    recordTag({ category: CATEGORY.discharge, careType: "Emergency" }),
+    "Emergency",
+  );
+  assert.equal(
+    recordTag({ category: CATEGORY.medical, type: "Other" }),
+    "Other",
+  );
 });

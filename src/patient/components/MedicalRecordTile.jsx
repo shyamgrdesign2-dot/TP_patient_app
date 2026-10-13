@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useApp } from "../state/AppContext";
 import { getFile, download } from "../services/files";
 import { makeSamplePdf } from "../services/recordPdf";
+import { recordTag } from "../services/records";
 import { formatDate } from "../../shared/data";
 import { RecordThumbnail } from "./RecordDocuments";
 import { AiSpark } from "./AiNote";
@@ -13,7 +14,7 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
   const disclosure = useRef(null);
   const analysisId = useId();
   const statusId = useId();
-  const category = record.type || record.category || "Document";
+  const category = recordTag(record);
   const hasAnalysis = !!(
     record.params?.length ||
     (record.summary && ["Radiology", "Pathology"].includes(record.type))
@@ -104,9 +105,14 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
       >
         <span className={s.preview}>
           <RecordThumbnail record={record} />
+          {category && (
+            <span className={s.category} title={category}>
+              {category}
+            </span>
+          )}
           {hasAnalysis && (
             <span className={s.analysisTag} id={analysisId}>
-              <AiSpark size={14} /> AI analysis
+              <AiSpark size={14} /> {record.intelligenceGeneratedAt ? "AI analysis" : "Intelligence"}
             </span>
           )}
         </span>
@@ -116,17 +122,6 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
       </button>
       <div className={s.footer}>
         <div className={s.metadata}>
-          <span
-            className={s.category}
-            data-lab={
-              record.category === "Lab results" ||
-              ["Radiology", "Pathology"].includes(record.type) ||
-              undefined
-            }
-            title={category}
-          >
-            {category}
-          </span>
           <time dateTime={record.date}>{formatDate(record.date)}</time>
         </div>
         <details
