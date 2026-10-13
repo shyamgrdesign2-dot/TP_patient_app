@@ -1,21 +1,25 @@
+import { logoForWhiteBackground } from "./logoContrast.js";
 import { normalizeCtaGradient } from "./brandGradient.js";
 // One tenant configuration is the source for UI, assets and native packaging.
 export const defaultBrand = {
   id: "tatva-demo",
   name: "Tatva Practice",
-  hospitalName: "Tatva Care Hospital",
+  hospitalName: "Tatva Practice",
   tagline: "Your health, connected.",
   primary: "#4b4ad5",
   accent: "#a461d8",
   ctaGradient: "",
+  ctaTextColor: "",
+  ctaColor: "",
   textHeading: "",
+  textBody: "",
   fontBody: "Inter, system-ui, sans-serif",
   fontHeading: "Mulish, system-ui, sans-serif",
   // Hospital logos, cropped in the admin console: a square mark (512 × 512
   // PNG) and a 4:1 horizontal logo (800 × 200 PNG). Older saves only have
   // `logo`, so square spots read `logoMark || logo`.
-  logo: "",
-  logoMark: "",
+  logo: "/brand/tatvapractice-wordmark.svg",
+  logoMark: "/brand/tatvapractice-app-icon.png",
   logoDark: "",
   logoMarkDark: "",
   emergencyPhone: "",
@@ -36,6 +40,8 @@ export const brandPresets = [
     label: "Coastal Health",
     name: "Coastal Health",
     hospitalName: "Coastal Health Hospital",
+    logo: "",
+    logoMark: "",
     primary: "#006b68",
     accent: "#388b87",
     fontHeading: "Inter, system-ui, sans-serif",
@@ -45,6 +51,8 @@ export const brandPresets = [
     label: "Bloom Hospital",
     name: "Bloom Hospital",
     hospitalName: "Bloom Multispeciality Hospital",
+    logo: "",
+    logoMark: "",
     primary: "#9b385d",
     accent: "#af6280",
     fontHeading: "Mulish, system-ui, sans-serif",
@@ -181,7 +189,8 @@ export function loadBrandFonts(brand, doc = globalThis.document) {
     .join("\n");
 }
 // The square mark for icons, splash and avatar spots.
-export const brandMarkSrc = (brand) => brand?.logoMark || brand?.logo || "";
+export const brandMarkSrc = (brand) =>
+  logoForWhiteBackground(brand?.logoMark || brand?.logo || "");
 
 // "Tatva Care Hospital" -> "TC": the fallback mark when no logo is uploaded.
 export function brandMonogram(name = "") {
@@ -215,6 +224,8 @@ export function validBrand(value) {
     value.name.trim().length > 0 &&
     /^#[0-9a-f]{6}$/i.test(value.primary) &&
     /^#[0-9a-f]{6}$/i.test(value.accent) &&
+    (!value.ctaColor || /^#[0-9a-f]{6}$/i.test(value.ctaColor)) &&
+    (!value.ctaTextColor || /^#[0-9a-f]{6}$/i.test(value.ctaTextColor)) &&
     (!value.ctaGradient || !!normalizeCtaGradient(value.ctaGradient)) &&
     (value.radius == null ||
       (Number.isFinite(value.radius) &&

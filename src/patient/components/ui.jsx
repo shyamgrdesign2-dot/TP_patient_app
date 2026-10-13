@@ -1,3 +1,4 @@
+import { logoForWhiteBackground } from "../../shared/logoContrast";
 import {
   Children,
   Fragment,
@@ -191,7 +192,7 @@ export function BrandLogo({ symbol = false, height, brand: draft }) {
   if (brand.logo)
     return (
       <img
-        src={brand.logo}
+        src={logoForWhiteBackground(brand.logo)}
         className={s.brandImage}
         style={style}
         alt={brand.hospitalName}

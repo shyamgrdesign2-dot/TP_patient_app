@@ -1043,6 +1043,7 @@ export function Appointments() {
                 <TabsTrigger
                   key={status}
                   value={status}
+                  tag={counts[status]}
                   onFocus={(event) =>
                     event.currentTarget.scrollIntoView({
                       block: "nearest",
@@ -1059,10 +1060,7 @@ export function Appointments() {
                   id={`appointments-tab-${status}`}
                   aria-controls="appointments-panel"
                 >
-                  <span>
-                    {status}
-                    {counts[status] ? ` (${counts[status]})` : ""}
-                  </span>
+                  {status}
                 </TabsTrigger>
               ))}
             </TabsList>

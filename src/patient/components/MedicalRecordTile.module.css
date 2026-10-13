@@ -202,7 +202,7 @@
   gap: var(--tesseract-space-1);
   padding: var(--tesseract-space-1) var(--tesseract-space-1-5);
   max-width: calc(100% - var(--tesseract-space-3));
-  border: 1px solid var(--tesseract-violet-200);
+  border: 1px solid transparent;
   border-radius: var(--tesseract-radius-full);
   background:
     linear-gradient(
@@ -274,4 +274,18 @@ button.actions {
   background: transparent;
   cursor: pointer;
   color: var(--tesseract-fg-secondary);
+}
+
+.analysisTag::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--tesseract-gradient-ai-hero);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }

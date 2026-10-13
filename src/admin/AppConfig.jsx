@@ -1,3 +1,4 @@
+import { logoForWhiteBackground } from "../shared/logoContrast";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Toggle, SectionCard } from "@dhspl-tatvacare/tesseract-ui";
@@ -94,7 +95,7 @@ const validPhone = (v) => !v || !!hospitalCallHref(v);
 // features. Shows a live preview of the patient app with a read-only
 // summary; Edit opens the form in a panel beside the preview.
 export default function AppConfig({ config, setConfig, flash }) {
-  const { brand, saveBrand, state } = useApp();
+  const { brand, saveBrand, configurationPreviewId } = useApp();
   const [configured, setConfigured] = useState(
     () =>
       !!config.brandConfigured ||
@@ -105,19 +106,16 @@ export default function AppConfig({ config, setConfig, flash }) {
           brand.hospitalName,
         )),
   );
-  // The patient preview's "Customise" link lands on the theme section.
+  // Opening configuration starts with hospital identity and AI setup.
   const [editing, setEditing] = useState(() =>
-    ["#theme", "#features"].includes(window.location.hash)
-      ? window.location.hash.slice(1)
+    ["#hospital", "#theme", "#features"].includes(window.location.hash)
+      ? "hospital"
       : configured
         ? null
         : "hospital",
   );
   const frame = useRef(null);
   const [actionHost, setActionHost] = useState(null);
-  const waiting = (state.callbackRequests || []).filter(
-    (r) => r.status === "Requested",
-  ).length;
   return (
     <>
       <header className={s.configTopbar}>
@@ -165,16 +163,15 @@ export default function AppConfig({ config, setConfig, flash }) {
             </Button>
           </SectionCard>
         ) : (
-          <ConfigSummary
-            brand={brand}
-            config={config}
-            waiting={waiting}
-            onEdit={setEditing}
-          />
+          <ConfigSummary brand={brand} config={config} onEdit={setEditing} />
         )}
         <div className={s.previewCol}>
           <div className={s.device}>
-            <iframe ref={frame} title="Patient app preview" src="/" />
+            <iframe
+              ref={frame}
+              title="Patient app preview"
+              src={`/?configurationPreview=${configurationPreviewId}`}
+            />
           </div>
           <small className={s.muted}>Live preview · updates as you edit</small>
         </div>
@@ -215,7 +212,7 @@ function Fact({ label, children }) {
   );
 }
 
-function ConfigSummary({ brand, config, waiting, onEdit }) {
+function ConfigSummary({ brand, config, onEdit }) {
   const { support, booking, features } = config;
   return (
     <div className={s.summary}>
@@ -241,7 +238,7 @@ function ConfigSummary({ brand, config, waiting, onEdit }) {
         <dl className={s.facts}>
           {[
             ["Primary", brand.primary],
-            ["Accent", brand.accent],
+            ["CTA", brand.ctaColor || brand.primary],
           ].map(([label, hex]) => (
             <Fact key={label} label={label}>
               <span className={s.swatchValue}>
@@ -286,11 +283,6 @@ function ConfigSummary({ brand, config, waiting, onEdit }) {
           <Fact label="Patient support">
             {[support.phone, support.email].filter(Boolean).join(" · ")}
           </Fact>
-          <Fact label="Request a callback">
-            {brand.callbackEnabled
-              ? `On${waiting ? ` · ${waiting} waiting` : ""}`
-              : "Off"}
-          </Fact>
         </dl>
       </SummaryCard>
       <SummaryCard id="features" title="Features" onEdit={onEdit}>
@@ -307,57 +299,6 @@ function ConfigSummary({ brand, config, waiting, onEdit }) {
         </ul>
       </SummaryCard>
     </div>
-  );
-}
-
-function ColorField({ label, hint, value, onChange, warning }) {
-  const hex = /^#[0-9a-f]{6}$/i.test(value) ? value : "#e6e6eb";
-  return (
-    <fieldset className={s.fieldset}>
-      <legend className={s.label}>{label}</legend>
-      <div className={s.colorRow}>
-        <input
-          type="color"
-          className={s.colorPicker}
-          value={hex}
-          onChange={(e) => onChange(e.target.value)}
-          aria-label={`${label} picker`}
-          title="Pick any colour"
-        />
-        <input
-          className={s.input}
-          data-narrow
-          value={value}
-          maxLength={7}
-          spellCheck={false}
-          aria-label={`${label} hex`}
-          placeholder="Choose a colour"
-          onChange={(e) =>
-            onChange(
-              e.target.value.startsWith("#")
-                ? e.target.value
-                : `#${e.target.value}`,
-            )
-          }
-        />
-        <span
-          className={s.contrastPreview}
-          style={{
-            background: hex,
-            color: whiteTextContrast(hex) < 4.5 ? "#171725" : "#fff",
-          }}
-        >
-          {value ? "Aa" : "—"}
-        </span>
-      </div>
-      {warning ? (
-        <small className={s.hint} data-warn role="status">
-          <Icon name="info-circle" size={14} /> {warning}
-        </small>
-      ) : (
-        hint && <small className={s.hint}>{hint}</small>
-      )}
-    </fieldset>
   );
 }
 
@@ -422,7 +363,6 @@ function ConfigEditor({
   const badPhones = PHONES.filter(([k]) => !validPhone(form[k])).map(
     ([k]) => k,
   );
-  const hexOk = /^#[0-9a-f]{6}$/i;
   const preparedBrand = {
     ...form,
     name: form.hospitalName.trim(),
@@ -661,7 +601,9 @@ function ConfigEditor({
                       <small>{asset.hint}</small>
                       {form[asset.key] && (
                         <small>
-                          {form[asset.key].startsWith("data:image/svg+xml")
+                          {/^(data:image\/svg\+xml)|\.svg(?:[?#]|$)/i.test(
+                            form[asset.key],
+                          )
                             ? "SVG vector"
                             : form[asset.key].startsWith("data:image/jpeg")
                               ? "JPG image"
@@ -672,7 +614,10 @@ function ConfigEditor({
                     <div className={s.brandAssetPreview}>
                       <span className={s.logoThumb} data-shape={asset.shape}>
                         {form[asset.key] ? (
-                          <img src={form[asset.key]} alt={asset.title} />
+                          <img
+                            src={logoForWhiteBackground(form[asset.key])}
+                            alt={asset.title}
+                          />
                         ) : (
                           <Icon name="gallery" size={24} />
                         )}
@@ -682,29 +627,38 @@ function ConfigEditor({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => logoFiles.current[asset.key]?.click()}
+                        onClick={async () => {
+                          if (!form[asset.key])
+                            return logoFiles.current[asset.key]?.click();
+                          setLogoError("");
+                          try {
+                            const response = await fetch(form[asset.key]);
+                            if (!response.ok)
+                              throw new Error("Logo unavailable");
+                            const blob = await response.blob();
+                            const source = await loadLogoSource(
+                              new File([blob], "current-logo", {
+                                type: blob.type,
+                              }),
+                            );
+                            setCropSource({
+                              source,
+                              key: asset.key,
+                              kind: asset.kind,
+                              surface: "light",
+                            });
+                          } catch {
+                            setLogoError(
+                              "This image could not be opened. Upload a replacement file.",
+                            );
+                            logoFiles.current[asset.key]?.click();
+                          }
+                        }}
                       >
                         <Icon name="gallery-add" size={16} />
-                        {form[asset.key] ? "Replace" : "Upload"}{" "}
+                        {form[asset.key] ? "Edit or replace" : "Upload"}{" "}
                         {asset.title.toLowerCase()}
                       </Button>
-                      {form[asset.key] && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          theme="error"
-                          className={s.removeAsset}
-                          aria-label={`Remove ${asset.title.toLowerCase()}`}
-                          onClick={() =>
-                            setForm((current) => ({
-                              ...current,
-                              [asset.key]: "",
-                            }))
-                          }
-                        >
-                          <Icon name="trash" size={16} /> Remove
-                        </Button>
-                      )}
                       {picker(asset.key)}
                     </div>
                   </section>
@@ -733,6 +687,18 @@ function ConfigEditor({
           {cropSource && (
             <LogoCropper
               source={cropSource.source}
+              onReplace={() => logoFiles.current[cropSource.key]?.click()}
+              onRemove={
+                form[cropSource.key]
+                  ? () => {
+                      setForm((current) => ({
+                        ...current,
+                        [cropSource.key]: "",
+                      }));
+                      setCropSource(null);
+                    }
+                  : undefined
+              }
               kind={cropSource.kind}
               surface={cropSource.surface}
               onCancel={() => setCropSource(null)}
@@ -748,19 +714,6 @@ function ConfigEditor({
           <div className={s.sectionHeading}>
             <h3>Theme</h3>
             <p>Colours, buttons and surfaces that feel like your brand.</p>
-          </div>
-          <div className={s.grid2}>
-            <ColorField
-              label="Secondary colour"
-              hint="Secondary highlights"
-              value={form.accent}
-              onChange={(accent) => setForm({ ...form, accent })}
-              warning={
-                !form.accent || hexOk.test(form.accent)
-                  ? ""
-                  : "Enter a 6-digit hex colour, e.g. #A461D8."
-              }
-            />
           </div>
           <CtaGradientEditor form={form} onChange={setForm} />
         </ConfigurationSection>
@@ -940,21 +893,6 @@ function ConfigEditor({
               />
             </Field>
           </div>
-          <div className={s.toggleRow}>
-            <div>
-              <strong>Request a callback</strong>
-              <small>
-                Patients can ask the front desk to call them back from the app
-              </small>
-            </div>
-            <Toggle
-              ariaLabel="Request a callback"
-              checked={!!form.callbackEnabled}
-              onCheckedChange={(on) =>
-                setForm({ ...form, callbackEnabled: on })
-              }
-            />
-          </div>
         </ConfigurationSection>
 
         <ConfigurationSection id="edit-policies">
@@ -1026,8 +964,8 @@ function ConfigEditor({
           </div>
         </ConfigurationSection>
         <InfoNote>
-          Changes preview instantly across open app tabs. Save to keep them;
-          Cancel restores the saved configuration.
+          Changes preview instantly here. Save to update the patient app; Cancel
+          restores the saved configuration.
         </InfoNote>
       </div>
     </section>

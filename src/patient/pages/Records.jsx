@@ -401,6 +401,12 @@ export default function Records() {
                     id={`records-tab-${t.id}`}
                     aria-controls="records-panel"
                     value={t.id}
+                    tag={
+                      t.id !== "history"
+                        ? records.filter((record) => tabFor(record) === t.id)
+                            .length
+                        : undefined
+                    }
                     leftIcon={
                       <Icon
                         name={TAB_ICONS[t.id].name}
@@ -412,11 +418,6 @@ export default function Records() {
                     }
                   >
                     <span className={r.tabLabel}>{t.label}</span>
-                    {t.id !== "history" && (
-                      <span className={r.tabCount}>
-                        {` (${records.filter((record) => tabFor(record) === t.id).length})`}
-                      </span>
-                    )}
                   </TabsTrigger>
                 ))}
               </TabsList>

@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { PassThrough } from "node:stream";
 import {
   safeSvg,
+  readWebsiteBody,
   normalizeCtaGradient,
   findLogoCandidates,
   foundationalStyles,
@@ -165,9 +167,11 @@ test("CTA gradients are normalized and decorative or unsafe gradients ignored", 
   const css =
     ".hero{background:linear-gradient(90deg,#123456,#654321)}.btn-primary{background:linear-gradient(135deg,#006b68,#388b87)}";
   assert.equal(
-    extractBrand("", css, "https://hospital.example").candidates.find(
-      (v) => v.key === "ctaGradient",
-    )?.value,
+    extractBrand(
+      '<button class="btn-primary">Book appointment</button>',
+      css,
+      "https://hospital.example",
+    ).candidates.find((v) => v.key === "ctaGradient")?.value,
     "linear-gradient(135deg, #006b68, #388b87)",
   );
   assert.equal(
@@ -253,4 +257,104 @@ test("CTA variables and inline link colours outrank headings and decorative grad
     ),
     undefined,
   );
+});
+
+test("large homepage responses keep branding instead of failing at the old 1 MB limit", async () => {
+  const html =
+    '<meta property="og:site_name" content="Large Hospital">' +
+    " ".repeat(3 * 1024 * 1024);
+  const response = new PassThrough();
+  response.headers = { "content-length": String(Buffer.byteLength(html)) };
+  const reading = readWebsiteBody(response, {
+    limit: 8 * 1024 * 1024,
+    allowPartial: true,
+  });
+  response.end(html);
+  const result = await reading;
+  assert.equal(result.truncated, false);
+  assert.equal(
+    extractBrand(result.body.toString(), "", "https://hospital.example")
+      .candidates[0].value,
+    "Large Hospital",
+  );
+});
+
+test("oversized text is sampled within its byte budget with or without content-length", async () => {
+  for (const headers of [{}, { "content-length": "10000" }]) {
+    const response = new PassThrough();
+    response.headers = headers;
+    const reading = readWebsiteBody(response, {
+      limit: 32,
+      allowPartial: true,
+    });
+    response.write(Buffer.alloc(20, "a"));
+    response.write(Buffer.alloc(20, "b"));
+    const result = await reading;
+    assert.equal(result.truncated, true);
+    assert.equal(result.body.length, 32);
+    assert.equal(result.body.toString(), "a".repeat(20) + "b".repeat(12));
+    assert.equal(response.destroyed, true);
+  }
+});
+
+test("binary assets still require complete responses and interrupted text cannot pass as complete", async () => {
+  for (const headers of [{}, { "content-length": "10000" }]) {
+    const response = new PassThrough();
+    response.headers = headers;
+    const reading = readWebsiteBody(response, { limit: 32 });
+    response.end(Buffer.alloc(64));
+    await assert.rejects(reading, /size limit/);
+  }
+  const response = new PassThrough();
+  response.headers = {};
+  const reading = readWebsiteBody(response, { limit: 32, allowPartial: true });
+  response.write("partial");
+  response.destroy();
+  await assert.rejects(reading, /connection closed/);
+});
+
+test("CTA colour detection respects actual DOM scope and repeated filled actions", () => {
+  const html =
+    '<header><a class="cta" href="/signup">Get started</a></header><main><h1>Care</h1><a class="cta" href="/book">Book appointment</a></main><footer><a href="/contact">Contact us</a></footer>';
+  const result = extractBrand(
+    html,
+    ":root{--primary:#ee0044} h1{color:#aa0055}.faq a{background:#ff8800}.cta{background:#176b55;color:white} footer a{color:#0099ff}",
+    "https://example.com",
+  );
+  assert.equal(
+    result.candidates.find((c) => c.key === "primary").value,
+    "#176b55",
+  );
+});
+
+test("brand colour tokens beat a neutral CTA fill", () => {
+  const result = extractBrand(
+    '<a class="signup" href="/signup">Sign up</a>',
+    ":root{--primary:#00bb66}.unused-button{background:#00bb66}.signup{background:black;color:white}",
+    "https://example.com",
+  );
+  assert.equal(
+    result.candidates.find((c) => c.key === "primary").value,
+    "#00bb66",
+  );
+});
+
+test("hospital controls outrank generic link colour and third-party footer logos", () => {
+  const html = `<html><body><header><img class="logo" src="/zydus-logo.svg"></header>
+    <a href="/contact">Contact us</a><button class="accordion-button">Contact us</button>
+    <button class="SubmitBtn">Search</button><h1>Hospital</h1>
+    <footer><a href="https://vendor.example"><img src="https://vendor.example/logo.svg"></a></footer></body></html>`;
+  const css = `:root{--body:#222222}[data-bs-theme=dark]{--body:#eeeeee}
+    body{color:var(--body)}a{color:#8bb9fe}.accordion-button{background:#000000}
+    .SubmitBtn{background:#00a5a5;color:#ffffff}.unrelated h1{color:#ff0000}`;
+  const result = extractBrand(html, css, "https://hospital.example/");
+  const fields = Object.fromEntries(
+    result.candidates.map((c) => [c.key, c.value]),
+  );
+  assert.equal(fields.primary, "#00a5a5");
+  assert.equal(fields.ctaColor, "#00a5a5");
+  assert.equal(fields.ctaTextColor, "#ffffff");
+  assert.equal(fields.textBody, "#222222");
+  assert.equal(fields.textHeading, undefined);
+  assert.deepEqual(result.logos, ["https://hospital.example/zydus-logo.svg"]);
 });

@@ -5,8 +5,8 @@ The desktop web console mounted by `src/main.jsx` for `/admin/*`
 (app configuration and theme), `/admin/doctors`, `/admin/packages`,
 `/admin/notifications`.
 
-Demo sign-in: pick "Hospital admin" or "Admin doctor" and continue; the
-session is kept in sessionStorage (`tatva-admin-session`). No credentials.
+The demo opens directly in the Hospital admin workspace, without a role picker.
+Production authentication remains gated by `DemoOnly`.
 
 It writes the hospital configuration defined in `src/shared` (brand/theme/
 logo, contacts, features, fees, clinic extras, packages/vaccines catalogue)

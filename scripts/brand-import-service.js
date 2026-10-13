@@ -1,3 +1,5 @@
+import { parseHTML } from "linkedom";
+import { svgForWhiteBackground } from "../src/shared/logoContrast.js";
 import { chooseBrandEvidence } from "./brand-import-ai.js";
 import { normalizeCtaGradient } from "../src/shared/brandGradient.js";
 export { normalizeCtaGradient } from "../src/shared/brandGradient.js";
@@ -6,7 +8,8 @@ import { isIP } from "node:net";
 import http from "node:http";
 import https from "node:https";
 
-const MAX_HTML = 1024 * 1024;
+const MAX_HTML = 8 * 1024 * 1024;
+const MAX_CSS = 2 * 1024 * 1024;
 const MAX_ASSET = 512 * 1024;
 const FONT_NAMES = [
   "Inter",
@@ -80,9 +83,55 @@ export function validateWebsiteUrl(value) {
   url.hash = "";
   return url;
 }
+// Keep text analysis bounded without rejecting a whole site for page-builder
+// payloads. Binary assets and manifests must remain complete.
+export function readWebsiteBody(response, { limit, allowPartial = false }) {
+  return new Promise((resolve, reject) => {
+    if (!allowPartial && Number(response.headers["content-length"]) > limit) {
+      response.destroy();
+      reject(new Error("This website asset exceeds the import size limit."));
+      return;
+    }
+    let size = 0;
+    const chunks = [];
+    let settled = false;
+    response.on("data", (chunk) => {
+      if (settled) return;
+      const remaining = limit - size;
+      if (chunk.length > remaining) {
+        settled = true;
+        if (allowPartial) {
+          chunks.push(chunk.subarray(0, remaining));
+          resolve({ body: Buffer.concat(chunks), truncated: true });
+        } else {
+          reject(
+            new Error("This website asset exceeds the import size limit."),
+          );
+        }
+        response.destroy();
+        return;
+      }
+      chunks.push(chunk);
+      size += chunk.length;
+    });
+    response.on("end", () => {
+      settled = true;
+      resolve({ body: Buffer.concat(chunks), truncated: false });
+    });
+    response.on("error", reject);
+    response.on("close", () => {
+      if (!settled)
+        reject(
+          new Error(
+            "The website connection closed before its response finished. Try again.",
+          ),
+        );
+    });
+  });
+}
 async function safeFetch(
   value,
-  { limit = MAX_HTML, signal, redirects = 0 } = {},
+  { limit = MAX_HTML, allowPartial = false, signal, redirects = 0 } = {},
 ) {
   const url = validateWebsiteUrl(value);
   const addresses = isIP(url.hostname)
@@ -139,28 +188,15 @@ async function safeFetch(
           );
           return;
         }
-        if (Number(res.headers["content-length"]) > limit) {
-          res.destroy();
-          reject(new Error("The website response is too large to analyze."));
-          return;
-        }
-        let size = 0;
-        const chunks = [];
-        res.on("data", (chunk) => {
-          size += chunk.length;
-          if (size > limit) {
-            res.destroy();
-            reject(new Error("The website response is too large to analyze."));
-          } else chunks.push(chunk);
-        });
-        res.on("end", () =>
-          resolve({
-            body: Buffer.concat(chunks),
-            type: String(res.headers["content-type"] || "").toLowerCase(),
-            url: url.href,
-          }),
+        readWebsiteBody(res, { limit, allowPartial }).then(
+          (result) =>
+            resolve({
+              ...result,
+              type: String(res.headers["content-type"] || "").toLowerCase(),
+              url: url.href,
+            }),
+          reject,
         );
-        res.on("error", reject);
       },
     );
     req.on("timeout", () =>
@@ -175,6 +211,7 @@ async function safeFetch(
       );
     return safeFetch(new URL(response.redirect, url).href, {
       limit,
+      allowPartial,
       signal,
       redirects: redirects + 1,
     });
@@ -216,6 +253,22 @@ function absolute(value, base) {
   }
 }
 function hexColor(value) {
+  const named = {
+    black: "#000000",
+    white: "#ffffff",
+    blue: "#0000ff",
+    red: "#ff0000",
+    green: "#008000",
+    navy: "#000080",
+    purple: "#800080",
+    teal: "#008080",
+    orange: "#ffa500",
+  };
+  const plain = String(value || "")
+    .trim()
+    .replace(/\s*!important$/, "")
+    .toLowerCase();
+  if (named[plain]) return named[plain];
   const rgb = String(value || "")
     .trim()
     .match(
@@ -245,40 +298,17 @@ function hexColor(value) {
     ).toLowerCase()
   );
 }
-function ctaGradient(css, html) {
-  const variables = new Map(
-    [...css.matchAll(/(--[\w-]+)\s*:\s*([^;{}]+)/g)].map((m) => [m[1], m[2]]),
-  );
-  const resolve = (value) =>
-    value?.replace(/var\((--[\w-]+)\)/g, (_, key) => variables.get(key) || "");
-  for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    if (
-      !/(?:\bbutton\b|\.(?:btn|button|cta)(?:[-_.:#\s[]|$)|call-to-action)/i.test(
-        rule[1],
-      ) ||
-      /secondary|disabled|hover|focus|before|after/i.test(rule[1])
-    )
-      continue;
-    const value = rule[2].match(
-      /(?:^|;)\s*background(?:-image)?\s*:\s*([^;]+)/i,
-    )?.[1];
-    const gradient = normalizeCtaGradient(
-      resolve(resolve(value))?.replace(/\s*!important\s*$/, ""),
-    );
-    if (gradient) return gradient;
-  }
-  for (const button of tags(html, "button")) {
-    const value = button.style?.match(
-      /(?:^|;)\s*background(?:-image)?\s*:\s*([^;]+)/i,
-    )?.[1];
-    const gradient = normalizeCtaGradient(resolve(value));
-    if (gradient) return gradient;
-  }
-  return null;
-}
 // Resolve public CSS tokens before comparing actual CTA backgrounds. Keep a
 // bounded depth so cycles and missing variables cannot become guessed colours.
 function resolvedCss(css) {
+  // Dark-theme overrides belong to another surface, not the light-page brand.
+  css = css.replace(/([^{}]+)\{([^{}]*)\}/g, (rule, selector) =>
+    /data-(?:bs-)?theme\s*=\s*["']?dark|\.dark(?:[\s:[.#]|$)|prefers-color-scheme\s*:\s*dark/i.test(
+      selector,
+    )
+      ? ""
+      : rule,
+  );
   const variables = new Map(
     [...css.matchAll(/(--[\w-]+)\s*:\s*([^;{}]+)/g)].map((m) => [
       m[1],
@@ -296,21 +326,90 @@ function resolvedCss(css) {
   }
   return result;
 }
+// Include actual link text and destinations: many sites do not name CTA
+// classes "button" (Framer, Webflow and utility CSS are common examples).
+function websiteActions(html) {
+  const clean = html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  const { document } = parseHTML(clean);
+  const actions = [];
+  const entry = (node, label, actionWeight) => ({
+    ...Object.fromEntries([...node.attributes].map((a) => [a.name, a.value])),
+    tag: node.localName,
+    label,
+    actionWeight,
+    matchesSelector(selector) {
+      try {
+        return node.matches(selector);
+      } catch {
+        return false;
+      }
+    },
+  });
+  for (const node of document.querySelectorAll('a, button, [role="button"]')) {
+    if (actions.length >= 300) break;
+    if (node.closest('[hidden], [aria-hidden="true"]')) continue;
+    const label = decode(node.textContent).replace(/\s+/g, " ").trim();
+    if (label.length > 160) continue;
+    const marker = `${label} ${node.getAttribute("aria-label") || ""} ${node.getAttribute("href") || ""}`;
+    const strong =
+      /book|appointment|sign[ -]?up|register|get started|start (?:now|free)|free trial|request.*demo|contact (?:us|sales)|talk to|schedule/i.test(
+        marker,
+      );
+    const classMarker = `${node.className || ""} ${node.id || ""}`;
+    if (
+      /accordion|nav-toggler|navbar-toggler|carousel-control|language-selector/i.test(
+        classMarker,
+      ) ||
+      ["tab", "switch"].includes(node.getAttribute("role"))
+    )
+      continue;
+    if (
+      /cookie|dismiss|reject|accept all|consent|unsubscribe/i.test(
+        marker + classMarker,
+      )
+    )
+      continue;
+    if (
+      node.localName !== "button" &&
+      !strong &&
+      !/button|btn|cta/i.test(classMarker) &&
+      node.getAttribute("role") !== "button"
+    )
+      continue;
+    actions.push(
+      entry(
+        node,
+        label,
+        strong ? 130 : /primary|cta/i.test(classMarker) ? 90 : 45,
+      ),
+    );
+    for (const child of [...node.querySelectorAll(".btn, .button, .cta")].slice(
+      0,
+      2,
+    ))
+      actions.push(entry(child, label, strong ? 130 : 60));
+  }
+  return actions;
+}
 function matchedStyles(html, css, tagName) {
   const isCta = tagName === "button";
-  const elements = tags(html, tagName).map((a) => ({ ...a, tag: tagName }));
-  if (isCta) {
-    elements.push(
-      ...tags(html, "a")
-        .filter(
-          (a) =>
-            /button|btn|cta|book|appointment|trial|signup/i.test(
-              `${a.class || ""} ${a.id || ""}`,
-            ) || a.role === "button",
-        )
-        .map((a) => ({ ...a, tag: "a" })),
-    );
-  }
+  const elements = isCta
+    ? websiteActions(html)
+    : Array.from(parseHTML(html).document.querySelectorAll(tagName)).map(
+        (node) => ({
+          ...Object.fromEntries(
+            Array.from(node.attributes).map((a) => [a.name, a.value]),
+          ),
+          tag: tagName,
+          matchesSelector: (selector) => {
+            try {
+              return node.matches(selector);
+            } catch {
+              return false;
+            }
+          },
+        }),
+      );
   const rows = [];
   for (const [index, m] of [
     ...css.matchAll(/([^{}]+)\{([^{}]*)\}/g),
@@ -322,27 +421,29 @@ function matchedStyles(html, css, tagName) {
         )
       )
         continue;
-      const target = selector.split(/[\s>+~]+/).at(-1);
-      if (!target || /[:[\]\\]/.test(target)) continue;
+      const target = selector
+        .replace(/\[[^\]]*\]/g, "")
+        .split(/[\s>+~]+/)
+        .at(-1);
+      if (!target) continue;
       const names = [...target.matchAll(/\.([\w-]+)/g)].map((x) => x[1]);
       const id = target.match(/#([\w-]+)/)?.[1];
       const tag = target.match(/^[a-z][\w-]*/i)?.[0];
-      if (!names.length && !id && !tag) continue;
-      if (
-        !elements.some(
+      const matches = elements
+        .map((a, i) => ({ ...a, index: i }))
+        .filter(
           (a) =>
             (!tag || tag === a.tag) &&
-            (!id || id === a.id) &&
-            names.every((n) => (a.class || "").split(/\s+/).includes(n)),
-        )
-      )
-        continue;
+            (!names[0] || (a.class || "").split(/\s+/).includes(names[0])) &&
+            a.matchesSelector(selector),
+        );
+      if (!matches.length) continue;
       const score =
         (/(?:primary|book|trial|signup)/i.test(selector) ? 100 : 0) +
         (id ? 50 : 0) +
         names.length * 10 +
         index / 100000;
-      rows.push({ selector, body: m[2], score, source: tagName });
+      rows.push({ selector, body: m[2], score, source: tagName, matches });
     }
   }
   for (const [index, a] of elements.entries()) {
@@ -361,8 +462,30 @@ function matchedStyles(html, css, tagName) {
           : 0) -
         index,
       source: tagName,
+      matches: [{ ...a, index }],
     });
   }
+  if (isCta)
+    for (const [index, a] of elements.entries()) {
+      const utilities = [
+        ...(a.class || "").matchAll(
+          /(?:^|\s)(bg|text|border)-\[(#[\da-f]{3,8})\]/gi,
+        ),
+      ];
+      if (utilities.length)
+        rows.push({
+          selector: `${a.tag} utility colours`,
+          body: utilities
+            .map(
+              (m) =>
+                `${m[1] === "bg" ? "background-color" : m[1] === "text" ? "color" : "border-color"}:${m[2]}`,
+            )
+            .join(";"),
+          score: 500,
+          source: tagName,
+          matches: [{ ...a, index }],
+        });
+    }
   return rows.sort((a, b) => b.score - a.score);
 }
 function declaration(rows, property) {
@@ -486,6 +609,20 @@ export function findLogoCandidates(html, base) {
     const place = regionAt(match.index);
     const branded = /logo|wordmark|brand/i.test(marker);
     const context = html.slice(Math.max(0, match.index - 600), match.index);
+    const enclosingLink = context.match(
+      /<a\b[^>]*href=["']([^"']+)["'][^>]*>(?:(?!<\/a>)[\s\S])*$/i,
+    )?.[1];
+    if (enclosingLink) {
+      try {
+        if (
+          new URL(enclosingLink, base).hostname.replace(/^www\./, "") !==
+          new URL(base).hostname.replace(/^www\./, "")
+        )
+          continue;
+      } catch {
+        continue;
+      }
+    }
     const homeLink =
       /<a\b[^>]*href=["'](?:\/|https?:\/\/[^/"']+\/?)["'][^>]*>[^<]*$/i.test(
         context,
@@ -569,73 +706,138 @@ export function extractBrand(html, css, base) {
   const ctaRules = matchedStyles(html, css, "button");
   const bodyRules = matchedStyles(html, css, "body");
   const headingRules = matchedStyles(html, css, "h1");
-  const ctaBackground = ctaRules
-    .map((row) => declaration([row], "background(?:-color)?"))
-    .find((background) => colour(background?.value));
-  const ctaOutline = ctaRules
-    .map((row) => {
+  const primaryEvidence = new Map();
+  const vote = (value, score, evidence, identity) => {
+    const hex = hexColor(value);
+    if (!hex) return;
+    const entry = primaryEvidence.get(hex) || {
+      value: hex,
+      score: 0,
+      evidence,
+      identities: new Set(),
+    };
+    if (entry.identities.has(identity)) return;
+    entry.identities.add(identity);
+    if (score > entry.score) entry.evidence = evidence;
+    entry.score =
+      Math.max(entry.score, score) +
+      (entry.identities.size > 1 &&
+      identity.startsWith("action-") &&
+      colour(hex)
+        ? 8
+        : 0);
+    primaryEvidence.set(hex, entry);
+  };
+  // Resolve the strongest matching declaration per action before comparing
+  // colours across actions. Repeated CTAs reinforce each other.
+  const painted = new Set();
+  const buttonEvidence = [];
+  for (const row of ctaRules) {
+    for (const action of row.matches || []) {
+      if (
+        painted.has(action.index) ||
+        /secondary|disabled|cookie|dismiss/.test(action.class || "")
+      )
+        continue;
+      const background = declaration(
+        [row],
+        "background(?:-color|-image)?",
+      )?.value;
+      const solid = hexColor(background);
+      const gradient = /^linear-gradient\(/i.test(background || "")
+        ? background.match(/#[\da-f]{6}\b|#[\da-f]{3}\b|rgba?\([^)]*\)/i)?.[0]
+        : null;
+      const value = solid || colour(gradient);
+      // White surfaces aren't a useful primary. Black CTAs are valid when
+      // backed by an explicit action, instead of treating all neutrals as branding.
+      if (
+        !value ||
+        (!colour(value) &&
+          (action.actionWeight < 100 || parseInt(value.slice(1, 3), 16) > 100))
+      )
+        continue;
+      painted.add(action.index);
+      const matching = ctaRules.filter((rule) =>
+        rule.matches?.some((match) => match.index === action.index),
+      );
+      const foreground = hexColor(declaration(matching, "color")?.value);
+      buttonEvidence.push({
+        value,
+        foreground,
+        gradient: normalizeCtaGradient(background),
+        score: action.actionWeight + (solid ? 40 : 30),
+        evidence: `${action.label || "Website action"}: ${row.selector.slice(0, 90)}`,
+      });
+      vote(
+        value,
+        colour(value) ? action.actionWeight + (solid ? 40 : 30) : 10,
+        `${action.label || "Website action"}: ${solid ? "button background" : "CTA gradient base"} (${row.selector.slice(0, 90)})`,
+        `action-${action.index}`,
+      );
+    }
+  }
+  for (const row of ctaRules)
+    for (const action of row.matches || []) {
+      if (painted.has(action.index) || action.actionWeight < 100) continue;
       const border = row.body.match(
         /(?:^|;)\s*border(?:-color)?\s*:[^;]*?(#[\da-f]{3,6})\b/i,
       )?.[1];
-      return colour(border)
-        ? {
-            value: border,
-            evidence: `${row.selector.slice(0, 100)} outline colour`,
-          }
-        : null;
-    })
-    .find(Boolean);
-  const ctaAnchor = ctaRules
-    .map((row) => {
-      const background = declaration([row], "background(?:-image)?");
-      if (!/^linear-gradient\(/i.test(background?.value || "")) return null;
-      const anchor = background.value.match(
-        /#[\da-f]{6}\b|#[\da-f]{3}\b|rgba?\([^)]*\)/i,
-      )?.[0];
-      return colour(anchor)
-        ? {
-            value: colour(anchor),
-            evidence: `${row.selector.slice(0, 100)} CTA gradient base colour`,
-          }
-        : null;
-    })
-    .find(Boolean);
-  const ctaColour = ctaBackground || ctaOutline || ctaAnchor;
-  const theme = colour(meta.find((m) => m.name === "theme-color")?.content);
-  const primary = [
-    ...css.matchAll(
-      /--([\w-]*(?:primary|brand)[\w-]*)\s*:\s*(#[\da-f]{3,6})\b/gi,
-    ),
-  ]
-    .filter(
-      (m) => !/foreground|text|heading|title|contrast|light|muted/.test(m[1]),
+      const text = declaration([row], "color")?.value;
+      const value = colour(border) || colour(text);
+      if (value)
+        vote(
+          value,
+          /^(?:a|button)$/.test(row.selector) ? 15 : action.actionWeight - 10,
+          `${action.label}: ${border ? "outline" : "link"} colour (${row.selector.slice(0, 90)})`,
+          `action-${action.index}`,
+        );
+    }
+  for (const match of css.matchAll(
+    /--([\w-]*(?:primary|brand)[\w-]*)\s*:\s*([^;{}]+)/gi,
+  )) {
+    if (
+      /foreground|text|heading|title|contrast|light|muted|secondary|hover|disabled/i.test(
+        match[1],
+      )
     )
-    .map((m) => colour(m[2]))
-    .find(Boolean);
-  const button = [
-    ...css.matchAll(
-      /[^{}]*(?:\.btn-primary|\.button-primary|button)[^{}]*\{[^}]*?background(?:-color)?\s*:\s*(#[\da-f]{3,6})\b/gi,
-    ),
-  ]
-    .map((m) => colour(m[1]))
-    .find(Boolean);
+      continue;
+    const value = colour(match[2]);
+    if (value)
+      vote(
+        value,
+        /^(?:brand|color-brand|brand-color|primary|primary-color|color-primary)$/.test(
+          match[1],
+        )
+          ? 75
+          : 45,
+        `Brand CSS token --${match[1]}`,
+        `token-${match[1]}`,
+      );
+  }
+  const theme = colour(meta.find((m) => m.name === "theme-color")?.content);
+  if (theme) vote(theme, 55, "Website theme colour", "theme");
+  const winner = [...primaryEvidence.values()].sort(
+    (a, b) => b.score - a.score,
+  )[0];
+  add("primary", "Primary colour", winner?.value, winner?.evidence);
+  const chosenButton = buttonEvidence.sort((a, b) => b.score - a.score)[0];
   add(
-    "primary",
-    "Primary colour",
-    colour(ctaColour?.value) || primary || theme || button,
-    colour(ctaColour?.value)
-      ? ctaColour.evidence
-      : primary
-        ? "Primary/brand CSS variable"
-        : theme
-          ? "Website theme colour"
-          : "Button CSS colour",
+    "ctaColor",
+    "CTA background colour",
+    chosenButton?.value,
+    chosenButton?.evidence,
+  );
+  add(
+    "ctaTextColor",
+    "CTA text colour",
+    chosenButton?.foreground,
+    chosenButton?.evidence,
   );
   add(
     "ctaGradient",
-    "Primary button gradient",
-    ctaGradient(css, html),
-    "Button / call-to-action stylesheet",
+    "CTA background gradient",
+    chosenButton?.gradient,
+    chosenButton?.evidence,
   );
   const secondary = [
     ...css.matchAll(
@@ -801,7 +1003,7 @@ function rasterType(bytes) {
 }
 export async function analyzeWebsite(value) {
   const signal = AbortSignal.timeout(25000);
-  const page = await safeFetch(value, { signal });
+  const page = await safeFetch(value, { signal, allowPartial: true });
   if (!page.type.includes("text/html"))
     throw new Error("This URL is not a web page. Enter the hospital homepage.");
   const html = page.body.toString("utf8");
@@ -811,7 +1013,7 @@ export async function analyzeWebsite(value) {
   const initial = extractBrand(html, css, page.url);
   const styles = await Promise.allSettled(
     initial.stylesheets.map((url) =>
-      safeFetch(url, { limit: MAX_HTML, signal }),
+      safeFetch(url, { limit: MAX_CSS, signal, allowPartial: true }),
     ),
   );
   for (const result of styles)
@@ -819,6 +1021,15 @@ export async function analyzeWebsite(value) {
       css += "\n" + result.value.body.toString("utf8");
   const extracted = extractBrand(html, css, page.url);
   const warnings = [];
+  if (
+    page.truncated ||
+    styles.some(
+      (result) => result.status === "fulfilled" && result.value.truncated,
+    )
+  )
+    warnings.push(
+      "This is a large website, so part of its page or styles was analyzed. Review the detected branding before applying it.",
+    );
   if (extracted.manifest) {
     try {
       const manifestFile = await safeFetch(extracted.manifest, {
@@ -846,7 +1057,10 @@ export async function analyzeWebsite(value) {
     for (const url of urls) {
       try {
         const asset = await safeFetch(url, { limit: MAX_ASSET, signal });
-        const svg = safeSvg(asset.body);
+        const safeVector = safeSvg(asset.body);
+        const svg = safeVector
+          ? Buffer.from(svgForWhiteBackground(safeVector.toString()))
+          : null;
         const mime = rasterType(asset.body) || (svg ? "image/svg+xml" : null);
         if (!mime || (svg && whiteOnlySvg(svg))) continue;
         const bytes = svg || asset.body;
@@ -874,12 +1088,23 @@ export async function analyzeWebsite(value) {
           const asset = candidate.svg
             ? { body: Buffer.from(candidate.svg) }
             : await safeFetch(candidate.url, { limit: MAX_ASSET, signal });
-          const svg = safeSvg(asset.body);
+          const safeVector = safeSvg(asset.body);
+          const svg = safeVector
+            ? Buffer.from(svgForWhiteBackground(safeVector.toString()))
+            : null;
           const mime = rasterType(asset.body) || (svg ? "image/svg+xml" : null);
           if (!mime || (svg && whiteOnlySvg(svg))) continue;
           const dimensions = imageDimensions(asset.body, svg, candidate);
           const ratio = dimensions.width / dimensions.height;
-          if (Number.isFinite(ratio) && (ratio < 1.45 || ratio > 12)) continue;
+          if (
+            Number.isFinite(ratio) &&
+            (ratio <
+              (candidate.place === "header" || candidate.place === "nav"
+                ? 0.65
+                : 1.45) ||
+              ratio > 12)
+          )
+            continue;
           found.push({
             ...candidate,
             body: svg || asset.body,
@@ -961,7 +1186,9 @@ export async function analyzeWebsite(value) {
     fontHeading: "Heading font",
     textBody: "Body text colour",
     textHeading: "Heading text colour",
-    ctaGradient: "Primary button gradient",
+    ctaGradient: "CTA background gradient",
+    ctaColor: "CTA background colour",
+    ctaTextColor: "CTA text colour",
     radius: "Corner radius",
     shadowStyle: "Shadow style",
     logo: "Horizontal logo",

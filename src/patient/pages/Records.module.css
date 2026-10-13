@@ -1090,18 +1090,6 @@
 .tabLabel {
   white-space: nowrap;
 }
-.tabCount {
-  margin-left: 4px;
-  color: rgb(255 255 255 / 75%);
-  font-size: 11px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-.recordsBand [role="tab"][data-state="active"] .tabCount {
-  margin-left: 4px;
-  color: var(--brand-on-banner, white);
-  font-weight: 600;
-}
 
 .thumbnail {
   position: relative;

@@ -11,8 +11,8 @@ const expectedFields = [
   ["logoMark", "App icon"],
   ["logo", "Horizontal logo"],
   ["primary", "Primary colour"],
-  ["accent", "Secondary colour"],
-  ["textHeading", "Heading text colour"],
+  ["textHeading", "Primary heading colour"],
+  ["textBody", "Body text colour"],
   ["fontHeading", "Heading font"],
   ["fontBody", "Body font"],
 ];
@@ -38,20 +38,32 @@ export default function BrandWebsiteImport({
   useEffect(() => {
     if (!result || !previewColours.current) return;
     const patch = { ...originalColours.current };
+    if (selected.includes("primary")) {
+      patch.ctaColor = "";
+      patch.ctaGradient = "";
+      patch.ctaTextColor = "";
+    }
     for (const candidate of result.candidates) {
       if (
-        ["primary", "accent", "textHeading", "ctaGradient"].includes(
-          candidate.key,
-        ) &&
+        [
+          "primary",
+          "accent",
+          "textHeading",
+          "textBody",
+          "ctaGradient",
+          "ctaColor",
+          "ctaTextColor",
+        ].includes(candidate.key) &&
         selected.includes(candidate.key)
       ) {
         patch[candidate.key] = candidate.value;
-        if (candidate.key === "primary") patch.ctaGradient = "";
-        if (candidate.key === "ctaGradient")
-          patch.primary =
-            candidate.value.match(/#[a-f\d]{6}/i)?.[0] || patch.primary;
+        if (candidate.key === "ctaColor") patch.ctaGradient = "";
       }
     }
+    const selectedGradient = result.candidates.find(
+      (c) => c.key === "ctaGradient" && selected.includes(c.key),
+    );
+    if (selectedGradient) patch.ctaGradient = selectedGradient.value;
     previewColours.current(patch);
   }, [result, selected]);
   useEffect(() => () => request.current?.abort(), []);
@@ -64,10 +76,15 @@ export default function BrandWebsiteImport({
     const controller = new AbortController();
     request.current = controller;
     originalColours.current = Object.fromEntries(
-      ["primary", "accent", "textHeading", "ctaGradient"].map((key) => [
-        key,
-        colours?.[key] || "",
-      ]),
+      [
+        "primary",
+        "accent",
+        "textHeading",
+        "textBody",
+        "ctaGradient",
+        "ctaColor",
+        "ctaTextColor",
+      ].map((key) => [key, colours?.[key] || ""]),
     );
     setBusy(true);
     setResult(null);
@@ -88,25 +105,31 @@ export default function BrandWebsiteImport({
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.error || "Could not analyze this website.");
-      const hasPrimary = data.candidates.some((c) => c.key === "primary");
-      const supported = new Set([
-        ...expectedFields.map(([key]) => key),
-        "ctaGradient",
-      ]);
+      const supported = new Set(expectedFields.map(([key]) => key));
       const candidates = data.candidates
         .filter(
           (c) =>
             supported.has(c.key) &&
-            !(hasPrimary && c.key === "ctaGradient") &&
             (!c.key.startsWith("font") || availableFonts.has(c.value)),
         )
         .map((c) =>
-          c.key === "ctaGradient" ? { ...c, label: "Primary colour" } : c,
+          c.key === "ctaGradient"
+            ? { ...c, label: "CTA background gradient" }
+            : c,
         );
       setResult({ ...data, candidates });
       setSelected(
         candidates
-          .filter((c) => !["logo", "logoMark"].includes(c.key))
+          .filter(
+            (c) =>
+              ![
+                "logo",
+                "logoMark",
+                "ctaColor",
+                "ctaTextColor",
+                "ctaGradient",
+              ].includes(c.key),
+          )
           .map((c) => c.key),
       );
     } catch (issue) {
@@ -176,27 +199,29 @@ export default function BrandWebsiteImport({
           c.key.startsWith("font") ? fontStack(c.value) : c.value,
         ]),
     );
-    if (patch.ctaGradient) {
-      const anchor = patch.ctaGradient.match(/#[a-f\d]{6}/i)?.[0];
-      if (anchor) patch.primary = anchor;
-    } else if (patch.primary) {
-      patch.ctaGradient = "";
+    if (selected.includes("primary")) {
+      if (!selected.includes("ctaColor")) patch.ctaColor = "";
+      if (!selected.includes("ctaGradient")) patch.ctaGradient = "";
+      if (!selected.includes("ctaTextColor")) patch.ctaTextColor = "";
     }
     onApply(patch);
     setApplied(true);
   }
   return (
-    <section className={s.card} aria-labelledby="website-import-title">
+    <section
+      className={s.card}
+      aria-labelledby="website-import-title"
+      aria-busy={busy}
+    >
       <div className={s.heading}>
         <div className={s.headingCopy}>
           <div className={s.smartLabel}>
             <AiSpark size={18} />
-            <span>AI brand setup</span>
+            <span>AI setup</span>
           </div>
           <h2 id="website-import-title">Start with your hospital website</h2>
           <p>Find your logos, fonts and colours, then choose what to use.</p>
         </div>
-        <span className={s.optional}>Optional</span>
       </div>
       <div className={s.form}>
         <label htmlFor="hospital-website-url">Hospital website</label>
@@ -229,9 +254,26 @@ export default function BrandWebsiteImport({
         </div>
       </div>
       {busy && (
-        <p className={s.status} role="status">
-          Reading public website branding. This may take a few seconds.
-        </p>
+        <div className={s.loadingPanel} role="status" aria-live="polite">
+          <div className={s.loadingHeading}>
+            <span className={s.loadingSpark}>
+              <AiSpark size={24} />
+            </span>
+            <div>
+              <strong>Discovering your brand</strong>
+              <p>Looking for logos, brand colours and typography.</p>
+            </div>
+          </div>
+          <div className={s.loadingCards} aria-hidden="true">
+            {["Logos", "Colours", "Typography"].map((label) => (
+              <div key={label}>
+                <span className={s.loadingPlaceholder} />
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+          <small>This may take a few seconds.</small>
+        </div>
       )}
       {error && (
         <p id="website-import-error" className={s.error} role="alert">
@@ -293,6 +335,8 @@ export default function BrandWebsiteImport({
                           "textHeading",
                           "textBody",
                           "ctaGradient",
+                          "ctaColor",
+                          "ctaTextColor",
                         ].includes(c.key) && (
                           <i
                             className={
@@ -320,7 +364,7 @@ export default function BrandWebsiteImport({
                     !result.candidates.some(
                       (c) =>
                         c.key === key ||
-                        (key === "primary" && c.key === "ctaGradient"),
+                        (key === "ctaColor" && c.key === "ctaGradient"),
                     ),
                 )
                 .map(([key, label]) => (

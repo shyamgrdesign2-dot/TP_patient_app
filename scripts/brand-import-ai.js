@@ -24,6 +24,8 @@ export async function chooseBrandEvidence(
     "textBody",
     "textHeading",
     "ctaGradient",
+    "ctaColor",
+    "ctaTextColor",
     "radius",
     "shadowStyle",
     "logo",

@@ -229,6 +229,15 @@ export function AppProvider({ children }) {
   });
   const [brandDraft, setBrandDraft] = useState(null);
   const [, refreshConfig] = useState(0);
+  const [configurationPreviewId] = useState(() =>
+    window.location.pathname.startsWith("/admin")
+      ? crypto.randomUUID()
+      : window.self !== window.top
+        ? new URLSearchParams(window.location.search).get(
+            "configurationPreview",
+          )
+        : null,
+  );
   const previewChannel = useRef(null);
   const ownedPreview = useRef(null);
   const brand = brandDraft || savedBrand;
@@ -254,8 +263,10 @@ export function AppProvider({ children }) {
     previewChannel.current?.postMessage({ type: "preview", payload: null });
   }, [applyPreview]);
   useEffect(() => {
-    if (!window.BroadcastChannel) return;
-    const channel = new BroadcastChannel("tatva-configuration-live-preview");
+    if (!window.BroadcastChannel || !configurationPreviewId) return;
+    const channel = new BroadcastChannel(
+      `tatva-configuration-preview-${configurationPreviewId}`,
+    );
     previewChannel.current = channel;
     channel.onmessage = ({ data }) => {
       if (data?.type === "request" && ownedPreview.current)
@@ -279,7 +290,7 @@ export function AppProvider({ children }) {
       previewChannel.current = null;
       setAdminConfigPreview(null);
     };
-  }, [applyPreview]);
+  }, [applyPreview, configurationPreviewId]);
   // The admin console saved a new brand (logo, colours, fonts) in another
   // tab or in this tab's preview frame: apply it here without a reload.
   useEffect(() => {
@@ -453,6 +464,7 @@ export function AppProvider({ children }) {
         brand,
         setBrand,
         saveBrand,
+        configurationPreviewId,
         previewConfiguration,
         clearConfigurationPreview,
         toast,

@@ -9,6 +9,7 @@ export default function BrandHeaderPattern({ corners = false }) {
         : [s.gridLeft, s.gridRight]
       ).map((side) => (
         <AnimatedGrid
+          animated={false}
           key={side}
           className={`${s.grid} ${side}`}
           lineColor="color-mix(in srgb, var(--brand-on-banner, white) 18%, transparent)"

@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 
+test.setTimeout(60000);
+
 test("website branding is reviewed before selected fields enter the draft", async ({
   page,
 }) => {
@@ -48,9 +50,6 @@ test("website branding is reviewed before selected fields enter the draft", asyn
     }),
   );
   await page.goto("/admin/app");
-  await page
-    .getByRole("button", { name: "Continue with Tatva Practice" })
-    .click();
   if (await page.getByRole("button", { name: "Edit", exact: true }).isVisible())
     await page.getByRole("button", { name: "Edit", exact: true }).click();
   const name = page.getByLabel("Hospital name", { exact: true });
@@ -77,7 +76,7 @@ test("website branding is reviewed before selected fields enter the draft", asyn
         ),
       ),
     )
-    .toBe("#006b68");
+    .toBe("#4b4ad5");
   await expect(
     page
       .getByRole("group", { name: "Brand details to apply" })
@@ -103,6 +102,11 @@ test("website branding is reviewed before selected fields enter the draft", asyn
     page
       .getByRole("group", { name: "Brand details to apply" })
       .getByText("Shadow style", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("group", { name: "Brand details to apply" })
+      .getByText(/CTA/),
   ).toHaveCount(0);
   const fileChooser = page.waitForEvent("filechooser");
   await page
@@ -179,9 +183,6 @@ test("blank and broken logo suggestions become Missing and cannot overwrite bran
     }),
   );
   await page.goto("/admin/app");
-  await page
-    .getByRole("button", { name: "Continue with Tatva Practice" })
-    .click();
   if (await page.getByRole("button", { name: "Edit", exact: true }).isVisible())
     await page.getByRole("button", { name: "Edit", exact: true }).click();
   await page

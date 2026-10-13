@@ -1,3 +1,4 @@
+import { svgForWhiteBackground } from "../shared/logoContrast";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Slider } from "@dhspl-tatvacare/tesseract-ui";
 import { Icon } from "../shared/ui";
@@ -24,13 +25,18 @@ export const CROPS = {
     out: [800, 200],
   },
 };
-const STAGE = [560, 300];
+const STAGE = [880, 300];
 const MAX_SOURCE = 2048;
 const ZOOM = { min: 0.5, max: 10 };
 
 // Decode a PNG and downscale very large ones, so cropping stays fast and
 // the exported data URLs stay small.
 export async function loadLogoSource(file) {
+  if (file.type === "image/svg+xml") {
+    file = new File([svgForWhiteBackground(await file.text())], file.name, {
+      type: file.type,
+    });
+  }
   const url = URL.createObjectURL(file);
   try {
     const img = new Image();
@@ -297,6 +303,8 @@ export default function LogoCropper({
   surface = "light",
   onCancel,
   onApply,
+  onReplace,
+  onRemove,
 }) {
   const [view, setView] = useState(freshView);
   const [removeBackground, setRemoveBackground] = useState(false);
@@ -319,6 +327,12 @@ export default function LogoCropper({
     ctx.drawImage(cleaned, -cleaned.width / 2, -cleaned.height / 2);
     return canvas;
   }, [cleaned, rotation]);
+  useEffect(() => {
+    setView(freshView());
+    setRotation(0);
+    setRemoveBackground(false);
+    setUseBackground(false);
+  }, [source]);
   const dialog = useRef(null);
   const crop = CROPS[kind];
   const setZoom = (zoom) =>
@@ -385,13 +399,6 @@ export default function LogoCropper({
         </header>
         <div className={s.cropBody}>
           <div className={s.cropMain}>
-            <p className={s.cropUse}>
-              <strong>{crop.title}</strong> · {crop.use}.{" "}
-              {source.original
-                ? "Unedited SVGs stay vector. Edited artwork exports"
-                : "Exports"}{" "}
-              as PNG at {crop.out.join(" × ")} px.
-            </p>
             <CropStage
               img={cleanImage}
               crop={crop}
@@ -400,6 +407,26 @@ export default function LogoCropper({
               surface={surface}
               background={useBackground ? background : null}
             />
+            <div className={s.logoRow}>
+              {onReplace && (
+                <Button variant="outline" size="sm" onClick={onReplace}>
+                  <Icon name="gallery-add" size={16} />
+                  Replace image
+                </Button>
+              )}
+              {onRemove && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  theme="error"
+                  className={s.removeAsset}
+                  onClick={onRemove}
+                >
+                  <Icon name="trash" size={16} />
+                  Remove image
+                </Button>
+              )}
+            </div>
             <div className={s.cropControls}>
               <Slider
                 className={s.cropZoom}
@@ -419,17 +446,17 @@ export default function LogoCropper({
               >
                 <Icon name="refresh-circle" size={16} /> Fit to frame
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setRotation((angle) => (angle + 90) % 360);
+                  setView(freshView());
+                }}
+              >
+                <Icon name="refresh-circle" size={16} /> Rotate 90°
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setRotation((angle) => (angle + 90) % 360);
-                setView(freshView());
-              }}
-            >
-              <Icon name="refresh-circle" size={16} /> Rotate 90°
-            </Button>
             <div className={s.backgroundRemoval}>
               <label>
                 <input
@@ -481,6 +508,13 @@ export default function LogoCropper({
             )}
           </div>
           <aside className={s.cropAside}>
+            <p className={s.cropUse}>
+              <strong>{crop.title}</strong> · {crop.use}.{" "}
+              {source.original
+                ? "Unedited SVGs stay vector. Edited artwork exports"
+                : "Exports"}{" "}
+              as PNG at {crop.out.join(" × ")} px.
+            </p>
             <LogoGuidance />
           </aside>
         </div>

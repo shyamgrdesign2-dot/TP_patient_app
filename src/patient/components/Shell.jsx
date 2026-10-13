@@ -4,17 +4,16 @@ import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useApp } from "../state/AppContext";
 import { Button, Icon } from "./ui";
 import Splash from "./Splash";
-import { brandPresets } from "../../shared/brand";
 import s from "../App.module.css";
 import AgentNavigation from "./AgentNavigation";
 const tabs = [
-  { path: "/", label: "Home", icon: "home-2" },
+  { path: "/", label: "Home", icon: "home-2", inactiveIcon: "home-5" },
   { path: "/appointments", label: "Visits", icon: "calendar-2" },
   { path: "/records", label: "Records", icon: "document-text" },
   { path: "/more", label: "More", icon: "category" },
 ];
 export default function Shell() {
-  const { brand, setBrand, toast, session } = useApp();
+  const { toast, session } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const scroll = useRef(null);
@@ -103,20 +102,11 @@ export default function Shell() {
         <div className={s.previewBrand}>
           <small>MAKE IT YOUR HOSPITAL</small>
           <div className={s.swatches}>
-            {brandPresets.map((p) => (
-              <button
-                key={p.name}
-                style={{ background: p.primary }}
-                aria-label={`Preview ${p.name}`}
-                aria-pressed={brand.name === p.name}
-                onClick={() => setBrand(p)}
-              />
-            ))}
             <Button
               variant="link"
               size="sm"
               onClick={() =>
-                window.open("/admin/app#theme", "_blank", "noopener")
+                window.open("/admin/app#hospital", "_blank", "noopener")
               }
             >
               Customise <Icon name="chevron-right" size={16} />
@@ -164,7 +154,14 @@ export default function Shell() {
                   <button type="button">
                     <span className={s.navIcon}>
                       <Icon
-                        name={tab.icon}
+                        name={
+                          active === tab.path
+                            ? tab.icon
+                            : tab.inactiveIcon || tab.icon
+                        }
+                        {...(tab.path === "/" && active !== "/"
+                          ? { family: "home", corner: "rounded" }
+                          : {})}
                         size={22}
                         bulk={active === tab.path}
                       />

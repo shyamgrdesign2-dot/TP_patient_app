@@ -355,7 +355,7 @@ export function Login() {
           aria-label="Go back"
           onClick={back}
         >
-          <Icon name="arrow-left3" size={22} />
+          <Icon name="arrow-left3" size={20} />
         </Button>
         <BrandLogo height={28} />
       </div>

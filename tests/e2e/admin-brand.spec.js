@@ -12,9 +12,6 @@ async function admin(page) {
     );
   });
   await page.goto("/admin/app");
-  await page
-    .getByRole("button", { name: "Continue with Tatva Practice" })
-    .click();
 }
 const png = fileURLToPath(new URL("../fixtures/logo.png", import.meta.url));
 
@@ -90,7 +87,14 @@ test("app icon and horizontal SVG upload independently, save and update the pati
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", mark);
   await consolePage.getByRole("button", { name: "Edit", exact: true }).click();
   await consolePage
-    .getByRole("button", { name: "Remove horizontal logo", exact: true })
+    .getByRole("button", {
+      name: "Edit or replace horizontal logo",
+      exact: true,
+    })
+    .click();
+  await consolePage
+    .getByRole("dialog", { name: "Crop horizontal logo", exact: true })
+    .getByRole("button", { name: "Remove image", exact: true })
     .click();
   await expect(
     consolePage.getByRole("img", { name: "App icon", exact: true }),
@@ -144,7 +148,7 @@ test("JPG cropping can remove a solid background and restore it before applying"
   expect(await alpha()).toBe(0);
 });
 
-test("configuration edits preview across tabs immediately, cancel restores and save commits", async ({
+test("configuration drafts stay in the embedded preview and save updates live tabs", async ({
   page,
   context,
 }) => {
@@ -158,64 +162,80 @@ test("configuration edits preview across tabs immediately, cancel restores and s
   await editor
     .getByLabel("Hospital name", { exact: true })
     .fill("Preview Hospital");
-  await expect(page.locator('[data-brand-logo="name"]')).toContainText(
-    "Preview Hospital",
-  );
+  const preview = editor.frameLocator('iframe[title="Patient app preview"]');
+  await expect
+    .poll(() =>
+      preview
+        .locator("body")
+        .evaluate((node) =>
+          getComputedStyle(node).getPropertyValue("--tesseract-blue-500"),
+        ),
+    )
+    .toBe("#4b4ad5");
   expect(
     await page.evaluate(() => localStorage.getItem("tatva-brand-preview")),
   ).toBe(before);
   await editor
-    .getByRole("navigation", { name: "Sections", exact: true })
-    .getByRole("button", { name: "Theme" })
-    .click();
-  await editor.getByRole("radio", { name: "Gradient", exact: true }).check();
+    .getByLabel("Primary colour hex", { exact: true })
+    .fill("#176b55");
+  await expect
+    .poll(() =>
+      preview
+        .locator("body")
+        .evaluate((node) =>
+          getComputedStyle(node).getPropertyValue("--tesseract-blue-500"),
+        ),
+    )
+    .toBe("#176b55");
   await expect
     .poll(() =>
       page
         .locator("body")
         .evaluate((node) =>
-          getComputedStyle(node).getPropertyValue("--brand-cta-background"),
+          getComputedStyle(node).getPropertyValue("--tesseract-blue-500"),
         ),
     )
-    .toContain("linear-gradient");
-
+    .toBe("#4b4ad5");
   await editor.getByRole("button", { name: "Cancel", exact: true }).click();
-  await expect(page.locator('[data-brand-logo="name"]')).toContainText(
-    "Tatva Care Hospital",
-  );
   await editor.getByRole("button", { name: "Edit", exact: true }).click();
+  await expect(editor.getByLabel("Hospital name", { exact: true })).toHaveValue(
+    "Tatva Practice",
+  );
   await editor
     .getByLabel("Hospital name", { exact: true })
     .fill("Saved Hospital");
   await editor
+    .getByLabel("Primary colour hex", { exact: true })
+    .fill("#176b55");
+  await editor
     .getByRole("button", { name: "Save changes", exact: true })
     .click();
+  await expect
+    .poll(() =>
+      page
+        .locator("body")
+        .evaluate((node) =>
+          getComputedStyle(node).getPropertyValue("--tesseract-blue-500"),
+        ),
+    )
+    .toBe("#176b55");
   await page.reload();
-  await expect(page.locator('[data-brand-logo="name"]')).toContainText(
-    "Saved Hospital",
-  );
+  expect(
+    await page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem("tatva-brand-preview")).hospitalName,
+    ),
+  ).toBe("Saved Hospital");
 });
 
-test("an unconfigured hospital opens with blank identity and saves as configured", async ({
+test("the default Tatva Practice identity can be customised and saved", async ({
   page,
 }) => {
   await page.goto("/admin/app");
-  await page
-    .getByRole("button", { name: "Continue with Tatva Practice" })
-    .click();
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
   await expect(page.getByLabel("Hospital name", { exact: true })).toHaveValue(
-    "",
+    "Tatva Practice",
   );
-  await expect(page.getByLabel("App name", { exact: true })).toHaveCount(0);
-  await expect(
-    page.getByLabel("Primary colour hex", { exact: true }),
-  ).toHaveValue("");
-  await expect(
-    page.getByLabel("Secondary colour hex", { exact: true }),
-  ).toHaveValue("");
-  await expect(
-    page.getByRole("button", { name: "Save changes", exact: true }),
-  ).toBeDisabled();
   await page.getByLabel("Hospital name", { exact: true }).fill("City Hospital");
   await page
     .getByRole("navigation", { name: "Sections", exact: true })
@@ -223,7 +243,7 @@ test("an unconfigured hospital opens with blank identity and saves as configured
     .click();
   await page.getByLabel("Primary colour hex", { exact: true }).fill("#176b55");
   await page
-    .getByLabel("Secondary colour hex", { exact: true })
+    .getByLabel("Body text colour hex", { exact: true })
     .fill("#466699");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await expect

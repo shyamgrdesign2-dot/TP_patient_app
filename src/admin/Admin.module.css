@@ -1956,7 +1956,7 @@ textarea.input {
 }
 .cropBody {
   display: grid;
-  grid-template-columns: minmax(0, 560px) minmax(220px, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--tesseract-space-5);
   padding: var(--tesseract-space-5) var(--tesseract-space-6);
   overflow-y: auto;
@@ -1978,7 +1978,7 @@ textarea.input {
 .cropStage {
   display: block;
   width: 100%;
-  aspect-ratio: 560 / 300;
+  aspect-ratio: 880 / 300;
   border-radius: var(--tesseract-radius-12);
   cursor: grab;
   touch-action: none;
@@ -2107,7 +2107,7 @@ textarea.input {
   background: var(--tesseract-slate-0);
 }
 .pvIcon > span {
-  border-radius: 0;
+  border-radius: 12px;
 }
 .pvHome small {
   max-width: 100%;
@@ -2357,4 +2357,42 @@ textarea.input {
 }
 .brandAssetHead {
   min-height: 76px;
+}
+
+/* Only square app artwork is rounded; horizontal wordmarks retain their shape. */
+.logoThumb[data-shape="square"] img {
+  border-radius: 12px;
+}
+.cropMain {
+  gap: 16px;
+}
+.cropAside {
+  padding-top: 16px;
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.cropAside .logoGuide ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+.cropAside .ratioViz {
+  display: none;
+}
+.cropControls {
+  flex-wrap: wrap;
+}
+.cropZoom {
+  min-width: 180px;
+}
+@media (max-width: 600px) {
+  .cropAside .logoGuide ul {
+    grid-template-columns: 1fr;
+  }
+}
+
+.logoThumb[data-shape="wide"] {
+  border-radius: 0;
+}
+.logoThumb[data-shape="square"] {
+  border-radius: 12px;
 }

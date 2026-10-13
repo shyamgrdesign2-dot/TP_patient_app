@@ -9,14 +9,19 @@ import { accessibleBrandRamp } from "./brandContrast";
 // The hospital brand (see brand.js) as the Tesseract theme for either app.
 export default function BrandTheme({ brand, children }) {
   const cta = useMemo(
-    () => ctaPresentation(brand.ctaGradient, brand.primary),
-    [brand.ctaGradient, brand.primary],
+    () =>
+      ctaPresentation(
+        brand.ctaGradient,
+        brand.ctaColor || brand.primary,
+        brand.ctaTextColor,
+      ),
+    [brand.ctaGradient, brand.ctaColor || brand.primary, brand.ctaTextColor],
   );
   const theme = useMemo(
     () =>
       createTheme({
         brand: accessibleBrandRamp(brand.primary),
-        accent: accessibleBrandRamp(brand.accent, "#a461d8"),
+        accent: accessibleBrandRamp(brand.primary),
         fontBody: brand.fontBody,
         fontHeading: brand.fontHeading,
         radius: 12,
@@ -28,6 +33,7 @@ export default function BrandTheme({ brand, children }) {
       theme={theme}
       vars={{
         "--brand-cta-background": cta.background,
+        "--brand-cta-color": brand.ctaColor || brand.primary,
         "--brand-cta-foreground": cta.textColor,
         "--brand-cta-label-background": cta.labelBackground,
         "--brand-on-primary": cta.textColor,

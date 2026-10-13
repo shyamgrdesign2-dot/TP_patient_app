@@ -207,3 +207,29 @@
   top: auto;
   bottom: -25%;
 }
+
+/* Tesseract's native tab tags remain softly translucent on brand banners. */
+.band [role="tab"] > [data-variant="soft"] {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 0;
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 10%,
+    transparent
+  );
+  color: var(--brand-on-banner, white);
+  font-size: 10px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.band [role="tab"][data-state="active"] > [data-variant="soft"] {
+  background: color-mix(
+    in srgb,
+    var(--brand-on-banner, white) 18%,
+    transparent
+  );
+}

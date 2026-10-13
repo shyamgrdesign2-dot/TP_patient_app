@@ -2516,7 +2516,7 @@
   flex-shrink: 0;
   width: var(--brand-mark-size, var(--tesseract-size-32));
   height: var(--brand-mark-size, var(--tesseract-size-32));
-  border-radius: 24%;
+  border-radius: min(12px, calc(var(--brand-mark-size, 32px) * 0.22));
   overflow: hidden;
 }
 .brandMark img {
@@ -2942,7 +2942,7 @@
   min-height: var(--tesseract-patient-touch);
 }
 .button[data-variant="solid"][data-theme="primary"]:not(:disabled) {
-  background-color: var(--tesseract-blue-500);
+  background-color: var(--brand-cta-color, var(--tesseract-blue-500));
   background-image: var(--brand-cta-background, none);
   color: var(--brand-cta-foreground, white);
 }
@@ -4023,3 +4023,5 @@
 .memberContext > [data-tp-icon] {
   flex-shrink: 0;
 }
+
+.navItem[data-active="true"] .navIcon { color: var(--tesseract-blue-500); }

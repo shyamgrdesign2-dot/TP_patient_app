@@ -56,7 +56,12 @@ function CareBanners({ slides }) {
   }
   useLayoutEffect(() => {
     const node = track.current;
-    const observer = new ResizeObserver(() => center(physical.current));
+    let width = node.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (node.clientWidth === width) return;
+      width = node.clientWidth;
+      center(physical.current);
+    });
     observer.observe(node);
     center(start);
     return () => {

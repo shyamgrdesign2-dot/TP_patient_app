@@ -188,9 +188,6 @@ test("branding lives in the admin console, not the patient app", async ({
   const admin = await context.newPage();
   await admin.goto("/admin/theme");
   await admin.getByRole("radio", { name: /Admin doctor/ }).click();
-  await admin
-    .getByRole("button", { name: "Continue with Tatva Practice" })
-    .click();
   await expect(admin).toHaveURL(/\/admin\/app$/);
   // App configuration opens on the preview and summary; Edit opens the form.
   await expect(admin.getByTitle("Patient app preview")).toBeVisible();
@@ -232,9 +229,6 @@ test("admin fees come from the console; doctors without one stay bookable", asyn
 }) => {
   const admin = await context.newPage();
   await admin.goto("/admin/doctors");
-  await admin
-    .getByRole("button", { name: "Continue with Tatva Practice" })
-    .click();
   await expect(admin.getByRole("button", { name: "Add clinic" })).toHaveCount(
     0,
   );
@@ -263,7 +257,7 @@ test("admin fees come from the console; doctors without one stay bookable", asyn
   await expect(card).toContainText("₹900");
 });
 
-test("hospital contacts offer call, WhatsApp and a callback the console sees", async ({
+test("hospital contacts offer call and WhatsApp without callback requests", async ({
   page,
 }) => {
   await page.goto("/");
@@ -287,15 +281,11 @@ test("hospital contacts offer call, WhatsApp and a callback the console sees", a
   await expect(
     sheet.getByRole("link", { name: "Chat whatsapp" }),
   ).toHaveAttribute("href", "https://wa.me/919845012345");
-  await sheet.getByRole("button", { name: "Request", exact: true }).click();
-  await expect(sheet).toContainText("We'll call you back shortly");
   await expect(
-    sheet.getByRole("button", { name: "Requested", exact: true }),
-  ).toBeDisabled();
+    sheet.getByRole("button", { name: "Request", exact: true }),
+  ).toHaveCount(0);
+  await expect(sheet).not.toContainText("Request a callback");
   await page.goto("/admin/overview");
-  await page
-    .getByRole("button", { name: "Continue with Tatva Practice" })
-    .click();
   await expect(page).toHaveURL(/\/admin\/app$/);
   await expect(
     page
@@ -901,7 +891,7 @@ test("subpages have a sticky title-only header and direct-entry back fallback", 
   await expect(page).toHaveURL("/");
 });
 
-test("carousel loops in both directions with angled neighbours and no arrow buttons", async ({
+test("carousel loops in both directions with stable neighbours and no arrow buttons", async ({
   page,
 }) => {
   await page.goto("/");
@@ -946,7 +936,7 @@ test("carousel loops in both directions with angled neighbours and no arrow butt
   expect(geometry.leftPeek / geometry.width).toBeGreaterThan(0.06);
   expect(geometry.leftPeek / geometry.width).toBeLessThan(0.11);
   expect(geometry.rightPeek / geometry.width).toBeGreaterThan(0.06);
-  expect(geometry.angle).not.toBe("none");
+  expect(geometry.angle).toBe("none");
 });
 
 test("symptom collector reviews and edits a summary then hands it to booking", async ({
@@ -1583,9 +1573,6 @@ test("health packages and vaccines stay hidden until the hospital switches them 
   await page.goto("/");
   await expect(page.locator('[class*="quickIcon"]')).toHaveCount(3);
   await page.goto("/admin/packages");
-  await page
-    .getByRole("button", { name: "Continue with Tatva Practice" })
-    .click();
   await expect(page).toHaveURL(/\/admin\/app$/);
   await expect(
     page

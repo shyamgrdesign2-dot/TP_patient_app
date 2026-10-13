@@ -8,7 +8,8 @@
     ),
     var(--tesseract-gradient-ai-card) !important;
   color: var(--tesseract-violet-700) !important;
-  border: 1px solid var(--tesseract-violet-200) !important;
+  position: relative;
+  border: 1px solid transparent !important;
   box-shadow: none !important;
 }
 .aiAction [class*="_content_"] > span:last-child {
@@ -109,7 +110,6 @@
   color: inherit;
 }
 
-
 .visitType[data-compact] {
   min-width: 0;
   max-width: 100%;
@@ -141,4 +141,18 @@
 }
 .joinChecklist [data-tp-icon] {
   color: var(--tesseract-success-500);
+}
+
+.aiAction.aiAction[data-variant]::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--tesseract-gradient-ai-hero);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }
