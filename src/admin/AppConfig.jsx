@@ -232,11 +232,12 @@ function SummaryCard({ id, title, onEdit, children, wide }) {
         <h2 id={`sum-${id}`}>{title}</h2>
         <button
           type="button"
-          className={s.linkBtn}
+          className={`${s.linkBtn} ${s.summaryEdit}`}
           onClick={() => onEdit(id)}
           aria-label={`Edit ${title.toLowerCase()}`}
         >
-          Edit
+          <Icon name="edit" size={16} />
+          <span>Edit</span>
         </button>
       </header>
       {children}

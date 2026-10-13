@@ -334,6 +334,7 @@ export function PageHeader({
   );
 }
 export function Empty({
+  className = "",
   icon = "document-text",
   title,
   description,
@@ -341,7 +342,7 @@ export function Empty({
   onAction,
 }) {
   return (
-    <div className={s.empty}>
+    <div className={`${s.empty} ${className}`}>
       <div className={s.emptyIcon}>
         <Icon name={icon} size={32} bulk />
       </div>

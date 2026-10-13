@@ -1127,6 +1127,10 @@
   align-items: flex-start;
   gap: 16px;
   padding-block: 28px;
+  flex: 1;
+  justify-content: center;
+  width: min(100%, 320px);
+  margin-inline: auto;
   text-align: left;
 }
 .recordEmpty h2 {

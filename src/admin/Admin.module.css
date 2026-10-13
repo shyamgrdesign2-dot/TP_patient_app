@@ -2481,3 +2481,14 @@ textarea.input {
 .cropDimensions small {
   color: var(--tesseract-fg-error);
 }
+
+.summaryEdit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+}
+.summaryEdit span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

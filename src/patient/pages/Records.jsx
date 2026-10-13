@@ -534,7 +534,7 @@ export default function Records() {
             )}
           </div>
         )}
-        {tab === "visits" && (
+        {tab === "visits" && count > 0 && (
           <div className={r.documentGrid}>
             {prescriptions.map((record) => (
               <MedicalRecordTile
@@ -545,7 +545,7 @@ export default function Records() {
             ))}
           </div>
         )}
-        {tab === "labs" && (
+        {tab === "labs" && count > 0 && (
           <div className={r.documentGrid}>
             {labs.map((record) => (
               <MedicalRecordTile
@@ -638,6 +638,7 @@ export default function Records() {
             />
           ) : (
             <Empty
+              className={r.recordEmpty}
               icon={
                 TAB_ICONS[tab].name === "microscope"
                   ? "document-text"
