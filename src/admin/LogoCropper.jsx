@@ -13,7 +13,7 @@ export const CROPS = {
     title: "App icon",
     ratio: "1:1",
     use: "App icon, splash screen, favicon and small avatar spots",
-    frame: [240, 240],
+    frame: [360, 360],
     out: [512, 512],
     safe: 0.1,
   },
@@ -25,7 +25,27 @@ export const CROPS = {
     out: [800, 200],
   },
 };
-const STAGE = [880, 300];
+const horizontalSize = (source) => {
+  if (!source.preserveFrame) return [800, 200];
+  const scale = Math.min(1, 1600 / source.width, 800 / source.height);
+  return [
+    Math.max(64, Math.round(source.width * scale)),
+    Math.max(32, Math.round(source.height * scale)),
+  ];
+};
+const horizontalCrop = (dimensions) => {
+  const width = Math.max(64, Math.min(1600, Number(dimensions[0]) || 800));
+  const height = Math.max(32, Math.min(800, Number(dimensions[1]) || 200));
+  const scale = Math.min(0.6, 760 / width, 240 / height);
+  return {
+    ...CROPS.horizontal,
+    out: [width, height],
+    frame: [width * scale, height * scale],
+    ratio: width / height === 4 ? "4:1" : `${width}:${height}`,
+  };
+};
+const stageSize = (crop) =>
+  crop.title === "App icon" ? [880, 420] : [880, 300];
 const MAX_SOURCE = 2048;
 const ZOOM = { min: 0.5, max: 10 };
 
@@ -148,6 +168,50 @@ function removeSolidBackground(image) {
 const fitScale = (img, [fw, fh]) => Math.min(fw / img.width, fh / img.height);
 const freshView = () => ({ zoom: 1, x: 0, y: 0 });
 
+// Fit the visible artwork, rather than padding baked into the uploaded image.
+function fittedView(img, crop) {
+  const ctx = img.getContext("2d", { willReadFrequently: true });
+  const pixels = ctx.getImageData(0, 0, img.width, img.height).data;
+  const corners = [
+    0,
+    img.width - 1,
+    (img.height - 1) * img.width,
+    img.width * img.height - 1,
+  ];
+  const whiteEdges = corners.every(
+    (p) =>
+      pixels[p * 4 + 3] < 16 ||
+      Math.min(pixels[p * 4], pixels[p * 4 + 1], pixels[p * 4 + 2]) > 245,
+  );
+  const visible = whiteEdges ? removeSolidBackground(img) : img;
+  const data = visible
+    .getContext("2d")
+    .getImageData(0, 0, img.width, img.height).data;
+  let left = img.width,
+    top = img.height,
+    right = -1,
+    bottom = -1;
+  for (let y = 0; y < img.height; y++)
+    for (let x = 0; x < img.width; x++) {
+      if (data[(y * img.width + x) * 4 + 3] < 24) continue;
+      left = Math.min(left, x);
+      top = Math.min(top, y);
+      right = Math.max(right, x);
+      bottom = Math.max(bottom, y);
+    }
+  if (right < left) return freshView();
+  const width = right - left + 1,
+    height = bottom - top + 1;
+  if (width >= img.width * 0.8 && height >= img.height * 0.8)
+    return freshView();
+  const scale = Math.min(crop.frame[0] / width, crop.frame[1] / height) * 0.94;
+  return {
+    zoom: scale / fitScale(img, crop.frame),
+    x: (img.width / 2 - (left + width / 2)) * scale,
+    y: (img.height / 2 - (top + height / 2)) * scale,
+  };
+}
+
 // Where the image sits for a crop, in frame pixels around the frame centre.
 function placement(img, crop, view, k = 1) {
   const sc = fitScale(img, crop.frame) * view.zoom * k;
@@ -186,8 +250,8 @@ function tokens(el, surface) {
 
 function draw(canvas, img, crop, view, surface, background) {
   const dpr = window.devicePixelRatio || 1;
-  const [SW, SH] = STAGE;
-  if (canvas.width !== SW * dpr) {
+  const [SW, SH] = stageSize(crop);
+  if (canvas.width !== SW * dpr || canvas.height !== SH * dpr) {
     canvas.width = SW * dpr;
     canvas.height = SH * dpr;
   }
@@ -261,6 +325,10 @@ function CropStage({ img, crop, view, onView, surface, background }) {
     <canvas
       ref={canvas}
       className={s.cropStage}
+      style={{
+        aspectRatio: stageSize(crop).join(" / "),
+        marginInline: "auto",
+      }}
       tabIndex={0}
       role="img"
       aria-label={`${crop.title} crop area. Drag or use the arrow keys to move the logo.`}
@@ -271,7 +339,8 @@ function CropStage({ img, crop, view, onView, surface, background }) {
       }}
       onPointerMove={(e) => {
         if (!drag.current) return;
-        const ratio = STAGE[0] / e.currentTarget.getBoundingClientRect().width;
+        const ratio =
+          stageSize(crop)[0] / e.currentTarget.getBoundingClientRect().width;
         pan(
           (e.clientX - drag.current.x) * ratio,
           (e.clientY - drag.current.y) * ratio,
@@ -306,7 +375,11 @@ export default function LogoCropper({
   onReplace,
   onRemove,
 }) {
-  const [view, setView] = useState(freshView);
+  const initialCrop =
+    kind === "horizontal" ? horizontalCrop(horizontalSize(source)) : CROPS.mark;
+  const [view, setView] = useState(() => fittedView(source.image, initialCrop));
+  const [dimensions, setDimensions] = useState(() => horizontalSize(source));
+  const [frameEdited, setFrameEdited] = useState(false);
   const [removeBackground, setRemoveBackground] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [useBackground, setUseBackground] = useState(false);
@@ -328,13 +401,42 @@ export default function LogoCropper({
     return canvas;
   }, [cleaned, rotation]);
   useEffect(() => {
-    setView(freshView());
+    setView(
+      fittedView(
+        source.image,
+        kind === "horizontal"
+          ? horizontalCrop(horizontalSize(source))
+          : CROPS.mark,
+      ),
+    );
     setRotation(0);
     setRemoveBackground(false);
     setUseBackground(false);
-  }, [source]);
+    setDimensions(horizontalSize(source));
+    setFrameEdited(false);
+  }, [source, kind]);
   const dialog = useRef(null);
-  const crop = CROPS[kind];
+  const crop = kind === "horizontal" ? horizontalCrop(dimensions) : CROPS.mark;
+  const validFrame =
+    kind !== "horizontal" ||
+    dimensions.every(
+      (value, index) =>
+        Number.isInteger(Number(value)) &&
+        Number(value) >= (index ? 32 : 64) &&
+        Number(value) <= (index ? 800 : 1600),
+    );
+  function resizeFrame(next) {
+    const nextCrop = horizontalCrop(next);
+    // Resize the blue boundary while leaving the artwork at its current size.
+    setView((current) => ({
+      ...current,
+      zoom:
+        (current.zoom * fitScale(cleanImage, crop.frame)) /
+        fitScale(cleanImage, nextCrop.frame),
+    }));
+    setDimensions(next);
+    setFrameEdited(true);
+  }
   const setZoom = (zoom) =>
     setView({
       zoom,
@@ -427,12 +529,56 @@ export default function LogoCropper({
                 </Button>
               )}
             </div>
+            {kind === "horizontal" && (
+              <fieldset className={s.cropDimensions}>
+                <legend>Crop frame size</legend>
+                <p>
+                  Adjust the blue boundary independently of the logo. Width and
+                  height are in pixels.
+                </p>
+                <div>
+                  {["Width", "Height"].map((label, index) => (
+                    <label key={label}>
+                      {label}
+                      <input
+                        className={s.input}
+                        type="number"
+                        aria-label={`Crop frame ${label.toLowerCase()}`}
+                        min={index ? 32 : 64}
+                        max={index ? 800 : 1600}
+                        step="1"
+                        value={dimensions[index]}
+                        onChange={(event) =>
+                          resizeFrame(
+                            dimensions.map((value, i) =>
+                              i === index ? event.target.value : value,
+                            ),
+                          )
+                        }
+                      />
+                    </label>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => resizeFrame([800, 200])}
+                  >
+                    Reset to 4:1
+                  </Button>
+                </div>
+                {!validFrame && (
+                  <small role="alert">
+                    Use a width of 64–1600 px and a height of 32–800 px.
+                  </small>
+                )}
+              </fieldset>
+            )}
             <div className={s.cropControls}>
               <Slider
                 className={s.cropZoom}
                 label="Zoom"
-                min={ZOOM.min}
-                max={ZOOM.max}
+                min={Math.min(ZOOM.min, view.zoom)}
+                max={Math.max(ZOOM.max, view.zoom)}
                 step={0.01}
                 value={view.zoom}
                 showValue
@@ -442,7 +588,7 @@ export default function LogoCropper({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setView(freshView())}
+                onClick={() => setView(fittedView(cleanImage, crop))}
               >
                 <Icon name="refresh-circle" size={16} /> Fit to frame
               </Button>
@@ -523,9 +669,11 @@ export default function LogoCropper({
             Cancel
           </Button>
           <Button
+            disabled={!validFrame}
             onClick={() =>
               onApply(
                 source.original &&
+                  !frameEdited &&
                   !rotation &&
                   !removeBackground &&
                   !useBackground &&

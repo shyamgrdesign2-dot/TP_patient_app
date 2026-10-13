@@ -103,8 +103,8 @@ export default function Shell() {
           <small>MAKE IT YOUR HOSPITAL</small>
           <div className={s.swatches}>
             <Button
-              variant="link"
-              size="sm"
+              variant="outline"
+              className={s.customiseButton}
               onClick={() =>
                 window.open("/admin/app#hospital", "_blank", "noopener")
               }

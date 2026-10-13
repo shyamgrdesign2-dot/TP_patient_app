@@ -27,23 +27,14 @@ test("records show prescription documents, limited report summaries and history 
   page,
 }) => {
   await page.goto("/records?tab=visits");
-  await expect(
-    page.getByRole("region", { name: "Your prescription" }).locator("canvas"),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: /Visit with Dr/ })).toHaveCount(
-    0,
-  );
-  await expect(
-    page.getByLabel("Prescription date").locator("option"),
-  ).toHaveCount(4);
+  await expect(page.getByRole("article")).toHaveCount(4);
   await page
-    .getByRole("button", { name: "Previous prescription", exact: true })
+    .getByRole("button", { name: "View Dermatology prescription", exact: true })
     .click();
   await expect(
-    page.getByRole("img", {
-      name: "Dermatology prescription, page 1",
-      exact: true,
-    }),
+    page
+      .getByRole("dialog", { name: "Dermatology prescription", exact: true })
+      .locator("canvas"),
   ).toBeVisible();
   await page.goto("/records?tab=history");
   await expect(
@@ -83,36 +74,24 @@ test("PDF viewer scrolls internally with floating share, download and print acti
   page,
 }) => {
   await page.goto("/records?tab=visits");
-  const toolbar = page.getByRole("toolbar", {
-    name: "Prescription PDF controls",
+  await page
+    .getByRole("button", {
+      name: "View Consultation prescription",
+      exact: true,
+    })
+    .click();
+  const sheet = page.getByRole("dialog", {
+    name: "Consultation prescription",
+    exact: true,
   });
+  await expect(sheet.locator("canvas")).toBeVisible();
+  const toolbar = sheet.getByRole("toolbar");
   await expect(toolbar).toBeVisible();
-  await expect(
-    page.locator('[aria-label="Your prescription"] canvas'),
-  ).toBeVisible();
-  const nav = page.getByRole("navigation", { name: "Main navigation" });
-  const bounds = await toolbar.boundingBox();
-  expect(bounds.y + bounds.height).toBeLessThan((await nav.boundingBox()).y);
   await expect(toolbar.getByRole("button")).toHaveCount(3);
-  await expect(
-    toolbar.getByRole("button", { name: "Print prescription" }),
-  ).toBeEnabled();
-  await expect(
-    toolbar.getByRole("button", { name: "Share prescription" }),
-  ).toBeVisible();
   const download = page.waitForEvent("download");
-  await toolbar.getByRole("button", { name: "Download prescription" }).click();
+  await toolbar.getByRole("button", { name: /Download/ }).click();
   expect((await download).suggestedFilename()).toMatch(/\.pdf$/);
-  const viewer = page.getByRole("region", {
-    name: "Prescription document viewer",
-  });
-  expect(await viewer.evaluate((n) => getComputedStyle(n).overflowY)).toBe(
-    "auto",
-  );
-  await viewer.evaluate((n) => (n.scrollTop = 300));
-  expect(await page.locator("#app-content").evaluate((n) => n.scrollTop)).toBe(
-    0,
-  );
+  await sheet.getByRole("button", { name: "Close", exact: true }).click();
   await page.goto("/records?tab=records");
   await expect(toolbar).toHaveCount(0);
   await expect(

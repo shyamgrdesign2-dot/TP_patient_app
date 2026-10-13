@@ -375,3 +375,41 @@
     animation: none;
   }
 }
+
+.success {
+  padding: 18px;
+  border: 1px solid #a7d8c2;
+  border-radius: 12px;
+  background: #f0faf5;
+  color: #205840;
+  display: grid;
+  gap: 12px;
+}
+.success p {
+  margin: 8px 0 0;
+  line-height: 1.6;
+  font-size: 13px;
+}
+.success > button {
+  justify-self: start;
+}
+
+.noResults {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #fdba74;
+  border-radius: 12px;
+  background: #fff4e5;
+  color: #9a430a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.noResults strong {
+  color: #b45309;
+}
+.noResults p {
+  margin: 8px 0 0;
+}
+.noResults .warnings {
+  color: inherit;
+}

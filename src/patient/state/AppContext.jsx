@@ -299,7 +299,14 @@ export function AppProvider({ children }) {
       if (event.key !== BRAND || !event.newValue) return;
       try {
         const next = JSON.parse(event.newValue);
-        if (validBrand(next)) setBrand(restoreSavedBrand(next));
+        if (validBrand(next)) {
+          const restored = restoreSavedBrand(next);
+          setBrand((current) =>
+            JSON.stringify(current) === JSON.stringify(restored)
+              ? current
+              : restored,
+          );
+        }
       } catch {
         /* ignore unreadable saves from other tabs */
       }
@@ -338,13 +345,18 @@ export function AppProvider({ children }) {
       });
     }
   }, [state, accountDeleted]);
+  // Persist the initial migration once. Storage events are read-only: echoing
+  // them back can race newer saves across open previews and patient tabs.
+  const initialBrand = useRef(savedBrand);
   useEffect(() => {
     try {
-      localStorage.setItem(BRAND, JSON.stringify(savedBrand));
+      const serialized = JSON.stringify(initialBrand.current);
+      if (localStorage.getItem(BRAND) !== serialized)
+        localStorage.setItem(BRAND, serialized);
     } catch {
       /* preview remains usable in memory */
     }
-  }, [savedBrand]);
+  }, []);
   useEffect(() => {
     loadBrandFonts(brand);
     document.title = `${brand.name} · Your health, connected`;
@@ -453,7 +465,7 @@ export function AppProvider({ children }) {
     const next = initialState();
     stateRef.current = next;
     setState(next);
-    setBrand(defaultBrand);
+    saveBrand(defaultBrand);
     localStorage.removeItem("tatva-demo-credential");
     notify("Sample data reset.");
   }

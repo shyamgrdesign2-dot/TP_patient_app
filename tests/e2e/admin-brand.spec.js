@@ -321,3 +321,53 @@ test("logo editor rotates artwork and exports a chosen background colour", async
     [238, 204, 238, 255],
   ]);
 });
+
+test("horizontal crop frame resizes independently, preserves export dimensions and fits padded artwork", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/admin/app#hospital");
+  await page
+    .getByTestId("logo-file")
+    .setInputFiles({
+      name: "padded.svg",
+      mimeType: "image/svg+xml",
+      buffer: Buffer.from(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="200"><rect x="300" y="75" width="200" height="50" fill="#2255aa"/></svg>',
+      ),
+    });
+  const dialog = page.getByRole("dialog", {
+    name: "Crop horizontal logo",
+    exact: true,
+  });
+  await expect(dialog.getByRole("slider", { name: "Zoom" })).toHaveValue("3.76");
+  await dialog.getByLabel("Crop frame width").fill("400");
+  await dialog.getByLabel("Crop frame height").fill("100");
+  await expect(dialog.getByTestId("crop-4:1")).toBeVisible();
+  await dialog.getByRole("button", { name: "Fit to frame" }).click();
+  await dialog
+    .getByRole("button", { name: "Use horizontal logo", exact: true })
+    .click();
+  const image = page.getByRole("img", { name: "Horizontal logo", exact: true });
+  await expect
+    .poll(() => image.evaluate((img) => [img.naturalWidth, img.naturalHeight]))
+    .toEqual([400, 100]);
+  await page
+    .getByRole("button", {
+      name: "Edit or replace horizontal logo",
+      exact: true,
+    })
+    .click();
+  await expect(dialog.getByLabel("Crop frame width")).toHaveValue("400");
+  await expect(dialog.getByLabel("Crop frame height")).toHaveValue("100");
+  await dialog.getByLabel("Crop frame width").fill("300");
+  await expect(dialog.getByTestId("crop-300:100")).toBeVisible();
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Edit or replace app icon", exact: true })
+    .click();
+  const icon = page.getByRole("dialog", { name: "Crop app icon", exact: true });
+  await expect(icon.getByLabel("Crop frame width")).toHaveCount(0);
+  const bounds = await icon.getByTestId("crop-1:1").boundingBox();
+  expect(bounds.height).toBeGreaterThan(300);
+});

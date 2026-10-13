@@ -129,7 +129,7 @@ export function readWebsiteBody(response, { limit, allowPartial = false }) {
     });
   });
 }
-async function safeFetch(
+export async function safeFetch(
   value,
   { limit = MAX_HTML, allowPartial = false, signal, redirects = 0 } = {},
 ) {
@@ -161,8 +161,13 @@ async function safeFetch(
             ? done(null, [{ address, family: 4 }])
             : done(null, address, 4),
         headers: {
-          "User-Agent": "TatvaPracticeBrandImport/1.0",
-          Accept: "text/html,text/css,image/*;q=0.8",
+          // Some public sites reject a bare product-name user agent even
+          // though the same public page works for ordinary browser requests.
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          Accept:
+            "text/html,application/xhtml+xml,text/css,image/*;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
           "Accept-Encoding": "identity",
         },
         timeout: 7000,
@@ -175,7 +180,13 @@ async function safeFetch(
         }
         if (res.statusCode < 200 || res.statusCode >= 300) {
           res.resume();
-          reject(new Error(`Website returned HTTP ${res.statusCode}.`));
+          const message =
+            res.statusCode === 403 || res.statusCode === 401
+              ? "This website blocks automated access. Try its public homepage, or add the hospital name, colours and logos below. Your current details are unchanged."
+              : res.statusCode === 429
+                ? "This website is temporarily limiting requests. Please try again in a few minutes, or enter your brand details below."
+                : `The website could not be loaded (HTTP ${res.statusCode}). Check the URL or try again later.`;
+          reject(new Error(message));
           return;
         }
         if (
@@ -383,6 +394,25 @@ function websiteActions(html) {
         strong ? 130 : /primary|cta/i.test(classMarker) ? 90 : 45,
       ),
     );
+    const textIndex = actions.length - 1;
+    // Many sites paint the button wrapper and leave its link transparent.
+    // Limit this to a single-action wrapper, never a whole header or hero.
+    let parent = node.parentElement;
+    for (
+      let depth = 0;
+      parent && depth < 2;
+      depth++, parent = parent.parentElement
+    ) {
+      if (
+        /button|btn|cta/i.test(
+          `${parent.className || ""} ${parent.id || ""}`,
+        ) &&
+        parent.querySelectorAll('a, button, [role="button"]').length === 1
+      ) {
+        actions.push({ ...entry(parent, label, strong ? 130 : 60), textIndex });
+        break;
+      }
+    }
     for (const child of [...node.querySelectorAll(".btn, .button, .cta")].slice(
       0,
       2,
@@ -592,89 +622,105 @@ function imageDimensions(bytes, svg, fallback = {}) {
   return { width: Number(fallback.width), height: Number(fallback.height) };
 }
 export function findLogoCandidates(html, base) {
-  const regions = [
-    ...html.matchAll(/<(header|footer|nav)\b[^>]*>[\s\S]*?<\/\1>/gi),
-  ].map((m) => ({
-    start: m.index,
-    end: m.index + m[0].length,
-    place: m[1].toLowerCase(),
-  }));
+  const { document } = parseHTML(html);
+  const site = new URL(base).hostname.replace(/^www\./, "");
   const result = [];
-  const regionAt = (index) =>
-    regions.find((r) => index >= r.start && index < r.end)?.place;
-  for (const match of html.matchAll(/<img\b[^>]{0,8192}>/gi)) {
-    const a = tags(match[0], "img")[0];
-    if (!a) continue;
-    const marker = `${a.alt || ""} ${a.class || ""} ${a.id || ""} ${a.src || ""}`;
-    const place = regionAt(match.index);
-    const branded = /logo|wordmark|brand/i.test(marker);
-    const context = html.slice(Math.max(0, match.index - 600), match.index);
-    const enclosingLink = context.match(
-      /<a\b[^>]*href=["']([^"']+)["'][^>]*>(?:(?!<\/a>)[\s\S])*$/i,
-    )?.[1];
-    if (enclosingLink) {
+  for (const node of document.querySelectorAll('img, svg, [style*="url("]')) {
+    const link = node.closest("a[href]");
+    const href = link?.getAttribute("href");
+    if (href) {
       try {
-        if (
-          new URL(enclosingLink, base).hostname.replace(/^www\./, "") !==
-          new URL(base).hostname.replace(/^www\./, "")
-        )
+        if (new URL(href, base).hostname.replace(/^www\./, "") !== site)
           continue;
       } catch {
         continue;
       }
     }
-    const homeLink =
-      /<a\b[^>]*href=["'](?:\/|https?:\/\/[^/"']+\/?)["'][^>]*>[^<]*$/i.test(
-        context,
-      );
-    if (!branded && !(place && homeLink)) continue;
-    if (/partner|certification|award|badge|social|sponsor/i.test(marker))
-      continue;
-    const url = absolute(a.src || a["data-src"], base);
-    if (!url) continue;
-    result.push({
-      url,
-      width: parseFloat(a.width),
-      height: parseFloat(a.height),
-      place: place || "page",
-      score:
-        (branded ? 60 : 0) +
-        (place === "header"
-          ? 45
-          : place === "nav"
-            ? 40
-            : place === "footer"
-              ? 25
-              : 0) +
-        (homeLink ? 25 : 0),
-    });
-  }
-  for (const match of html.matchAll(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi)) {
-    const a = tags(match[0], "svg")[0] || {};
-    const place = regionAt(match.index);
-    const context = html.slice(Math.max(0, match.index - 500), match.index);
-    const branded = /logo|wordmark|brand/i.test(
-      `${a.class || ""} ${a.id || ""} ${a["aria-label"] || ""} ${context.slice(-250)}`,
+    const region = node.closest(
+      'header, nav, footer, [role="banner"], [role="contentinfo"], [class*="footer"], [id*="footer"]',
     );
-    const svg = safeSvg(Buffer.from(match[0]));
-    if (!svg) continue;
-    const dimensions = imageDimensions(null, svg);
-    const ratio = dimensions.width / dimensions.height;
-    if (!(ratio >= 1.5 && ratio <= 12 && (branded || place))) continue;
-    result.push({
-      svg: svg.toString(),
-      ...dimensions,
-      place: place || "page",
-      score:
-        (branded ? 65 : 0) +
-        (place === "header"
-          ? 45
-          : place === "nav"
-            ? 40
-            : place === "footer"
-              ? 25
-              : 0),
-    });
+    const place = region
+      ? /footer|contentinfo/i.test(
+          `${region.tagName} ${region.getAttribute("role")} ${region.className} ${region.id}`,
+        )
+        ? "footer"
+        : region.tagName.toLowerCase() === "nav"
+          ? "nav"
+          : "header"
+      : "page";
+    const parent = node.parentElement;
+    const marker = [
+      node.getAttribute("alt"),
+      node.getAttribute("class"),
+      node.id,
+      node.getAttribute("aria-label"),
+      node.getAttribute("src"),
+      node.getAttribute("data-src"),
+      parent?.getAttribute("class"),
+      link?.getAttribute("aria-label"),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const branded = /logo|wordmark|brand/i.test(marker);
+    const homeLink = href && new URL(href, base).pathname === "/";
+    if (!branded && !(homeLink && place !== "page")) continue;
+    if (
+      /partner|certification|award|badge|social|sponsor|developed|powered.by/i.test(
+        marker,
+      )
+    )
+      continue;
+    const score =
+      (branded ? 60 : 0) +
+      (place === "header"
+        ? 45
+        : place === "nav"
+          ? 40
+          : place === "footer"
+            ? 25
+            : 0) +
+      (homeLink ? 25 : 0);
+    if (node.tagName.toLowerCase() === "svg") {
+      const svg = safeSvg(Buffer.from(node.outerHTML));
+      if (!svg) continue;
+      const dimensions = imageDimensions(null, svg);
+      const ratio = dimensions.width / dimensions.height;
+      if (!(ratio >= 0.65 && ratio <= 12)) continue;
+      result.push({
+        svg: svg.toString(),
+        ...dimensions,
+        place,
+        score: score + 5,
+      });
+    } else {
+      const srcset =
+        node.getAttribute("data-srcset") ||
+        node.getAttribute("srcset") ||
+        node.parentElement
+          ?.querySelector("source[srcset]")
+          ?.getAttribute("srcset");
+      const background = node
+        .getAttribute("style")
+        ?.match(/url\(["']?([^"')]+)["']?\)/i)?.[1];
+      const sources = [
+        node.getAttribute("data-src"),
+        node.getAttribute("data-lazy-src"),
+        node.getAttribute("src"),
+        srcset?.split(",").at(-1)?.trim().split(/\s+/)[0],
+        background,
+      ];
+      for (const source of sources.filter(Boolean)) {
+        const url = absolute(source, base);
+        if (!url) continue;
+        result.push({
+          url,
+          width: parseFloat(node.getAttribute("width")),
+          height: parseFloat(node.getAttribute("height")),
+          place,
+          score,
+        });
+      }
+    }
   }
   return result
     .sort((a, b) => b.score - a.score)
@@ -682,8 +728,73 @@ export function findLogoCandidates(html, base) {
       (v, i, all) =>
         all.findIndex((x) => (x.url || x.svg) === (v.url || v.svg)) === i,
     )
-    .slice(0, 4);
+    .slice(0, 8);
 }
+
+export function brandDiscoveryPages(html, base) {
+  const { document } = parseHTML(html);
+  const origin = new URL(base).origin;
+  return [
+    ...new Set(
+      [...document.querySelectorAll("a[href]")]
+        .filter((link) =>
+          /about|contact|our.company|our.hospital/i.test(
+            `${link.textContent} ${link.getAttribute("href")}`,
+          ),
+        )
+        .map((link) => {
+          try {
+            const url = validateWebsiteUrl(
+              new URL(link.getAttribute("href"), base).href,
+            );
+            return url.origin === origin &&
+              url.href !== base &&
+              !/\.(pdf|zip|png|jpe?g)$/i.test(url.pathname)
+              ? url.href
+              : null;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean),
+    ),
+  ].slice(0, 2);
+}
+
+// Prefer the site's own theme over early framework/plugin files, then restore
+// document order so later overrides retain their place in the CSS cascade.
+function websiteStylesheets(links, base) {
+  const origin = new URL(base).origin;
+  return [
+    ...new Map(
+      links
+        .filter(
+          (a) =>
+            a.rel?.toLowerCase().split(/\s+/).includes("stylesheet") &&
+            a.media?.toLowerCase() !== "print",
+        )
+        .map((a, index) => {
+          const url = absolute(a.href, base);
+          if (!url) return [null, null];
+          const score =
+            (new URL(url).origin === origin ? 40 : 0) +
+            (/theme|custom|brand|style|main|app/i.test(url) ? 30 : 0) -
+            (/bootstrap|slick|font-awesome|fancybox|plugins|fonts\.google/i.test(
+              url,
+            )
+              ? 50
+              : 0);
+          return [url, { url, index, score }];
+        })
+        .filter(([url]) => url),
+    ).values(),
+  ]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12)
+    .sort((a, b) => a.index - b.index)
+    .map((a) => a.url);
+}
+
 export function extractBrand(html, css, base) {
   css = resolvedCss(css.replace(/\/\*[\s\S]*?\*\//g, ""));
   const meta = tags(html, "meta");
@@ -758,7 +869,9 @@ export function extractBrand(html, css, base) {
         continue;
       painted.add(action.index);
       const matching = ctaRules.filter((rule) =>
-        rule.matches?.some((match) => match.index === action.index),
+        rule.matches?.some(
+          (match) => match.index === (action.textIndex ?? action.index),
+        ),
       );
       const foreground = hexColor(declaration(matching, "color")?.value);
       buttonEvidence.push({
@@ -784,10 +897,10 @@ export function extractBrand(html, css, base) {
       )?.[1];
       const text = declaration([row], "color")?.value;
       const value = colour(border) || colour(text);
-      if (value)
+      if (value && !/^(?:a|button)$/.test(row.selector))
         vote(
           value,
-          /^(?:a|button)$/.test(row.selector) ? 15 : action.actionWeight - 10,
+          action.actionWeight - 10,
           `${action.label}: ${border ? "outline" : "link"} colour (${row.selector.slice(0, 90)})`,
           `action-${action.index}`,
         );
@@ -813,6 +926,39 @@ export function extractBrand(html, css, base) {
         `Brand CSS token --${match[1]}`,
         `token-${match[1]}`,
       );
+  }
+  // Client-rendered homepages may omit their main CTAs from the initial HTML.
+  // Repeated custom button styles are useful fallback evidence; framework
+  // palettes and interaction states are not. Visible matched CTAs rank higher.
+  const fallbackButtons = new Map();
+  for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    for (const selector of match[1].split(",").map((part) => part.trim())) {
+      if (
+        !/(?:button|btn|cta|submit)/i.test(selector) ||
+        /hover|focus|active|disabled|danger|success|warning|info|secondary|cookie|consent/i.test(
+          selector,
+        ) ||
+        /^(?:\.btn(?:-[\w-]+)?|button|input(?:\[[^\]]+\])?)$/.test(selector)
+      )
+        continue;
+      const value = colour(
+        declaration([{ body: match[2], selector }], "background(?:-color)?")
+          ?.value,
+      );
+      if (!value) continue;
+      const selectors = fallbackButtons.get(value) || new Set();
+      selectors.add(selector);
+      fallbackButtons.set(value, selectors);
+    }
+  }
+  for (const [value, selectors] of fallbackButtons) {
+    if (selectors.size < 2) continue;
+    vote(
+      value,
+      Math.min(70, 30 + selectors.size * 5),
+      `Repeated custom CTA styles (${[...selectors].slice(0, 2).join(", ")})`,
+      `fallback-${value}`,
+    );
   }
   const theme = colour(meta.find((m) => m.name === "theme-color")?.content);
   if (theme) vote(theme, 55, "Website theme colour", "theme");
@@ -923,11 +1069,7 @@ export function extractBrand(html, css, base) {
     // Only the first identified site logo; do not substitute a partner/footer brand.
     logos: [...new Set(logo)].slice(0, 1),
     icons: [...new Set(icon)].slice(0, 2),
-    stylesheets: links
-      .filter((a) => a.rel?.toLowerCase() === "stylesheet")
-      .map((a) => absolute(a.href, base))
-      .filter(Boolean)
-      .slice(0, 4),
+    stylesheets: websiteStylesheets(links, base),
     detectedFonts: [...new Set(declared)].slice(0, 8),
   };
 }
@@ -1083,37 +1225,52 @@ export async function analyzeWebsite(value) {
   await Promise.all([
     (async () => {
       const found = [];
-      for (const candidate of extracted.logoCandidates) {
-        try {
-          const asset = candidate.svg
-            ? { body: Buffer.from(candidate.svg) }
-            : await safeFetch(candidate.url, { limit: MAX_ASSET, signal });
-          const safeVector = safeSvg(asset.body);
-          const svg = safeVector
-            ? Buffer.from(svgForWhiteBackground(safeVector.toString()))
-            : null;
-          const mime = rasterType(asset.body) || (svg ? "image/svg+xml" : null);
-          if (!mime || (svg && whiteOnlySvg(svg))) continue;
-          const dimensions = imageDimensions(asset.body, svg, candidate);
-          const ratio = dimensions.width / dimensions.height;
+      async function collect(candidates) {
+        for (const candidate of candidates) {
+          try {
+            const asset = candidate.svg
+              ? { body: Buffer.from(candidate.svg) }
+              : await safeFetch(candidate.url, { limit: MAX_ASSET, signal });
+            const safeVector = safeSvg(asset.body);
+            const svg = safeVector
+              ? Buffer.from(svgForWhiteBackground(safeVector.toString()))
+              : null;
+            const mime =
+              rasterType(asset.body) || (svg ? "image/svg+xml" : null);
+            if (!mime || (svg && whiteOnlySvg(svg))) continue;
+            const dimensions = imageDimensions(asset.body, svg, candidate);
+            const ratio = dimensions.width / dimensions.height;
+            if (Number.isFinite(ratio) && (ratio < 0.65 || ratio > 12))
+              continue;
+            found.push({
+              ...candidate,
+              body: svg || asset.body,
+              mime,
+              score: candidate.score + (Number.isFinite(ratio) ? 35 : 0),
+              ratio,
+            });
+          } catch {
+            /* Keep other public header/footer candidates available. */
+          }
+        }
+      }
+      await collect(extracted.logoCandidates);
+      if (!found.length && !signal.aborted) {
+        const additional = await Promise.allSettled(
+          brandDiscoveryPages(html, page.url).map((url) =>
+            safeFetch(url, { signal, allowPartial: true }),
+          ),
+        );
+        for (const result of additional) {
           if (
-            Number.isFinite(ratio) &&
-            (ratio <
-              (candidate.place === "header" || candidate.place === "nav"
-                ? 0.65
-                : 1.45) ||
-              ratio > 12)
+            result.status !== "fulfilled" ||
+            !result.value.type.includes("text/html")
           )
             continue;
-          found.push({
-            ...candidate,
-            body: svg || asset.body,
-            mime,
-            score: candidate.score + (Number.isFinite(ratio) ? 35 : 0),
-            ratio,
-          });
-        } catch {
-          /* Keep other public header/footer candidates available. */
+          const linked = result.value;
+          await collect(
+            findLogoCandidates(linked.body.toString("utf8"), linked.url),
+          );
         }
       }
       const best = found.sort((a, b) => b.score - a.score)[0];

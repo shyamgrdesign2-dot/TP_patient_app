@@ -115,6 +115,21 @@ export default function AppConfig({ config, setConfig, flash }) {
         : "hospital",
   );
   const frame = useRef(null);
+  const previewDialog = useRef(null);
+  const previewToggle = useRef(null);
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    const dialog = previewDialog.current;
+    if (!dialog) return;
+    // Promote the same iframe to the top layer, retaining its route and state.
+    if (dialog.open) dialog.close();
+    if (expanded) {
+      dialog.showModal();
+      previewToggle.current?.focus();
+    } else {
+      dialog.show();
+    }
+  }, [expanded]);
   const [actionHost, setActionHost] = useState(null);
   return (
     <>
@@ -166,14 +181,40 @@ export default function AppConfig({ config, setConfig, flash }) {
           <ConfigSummary brand={brand} config={config} onEdit={setEditing} />
         )}
         <div className={s.previewCol}>
-          <div className={s.device}>
-            <iframe
-              ref={frame}
-              title="Patient app preview"
-              src={`/?configurationPreview=${configurationPreviewId}`}
-            />
-          </div>
-          <small className={s.muted}>Live preview · updates as you edit</small>
+          <dialog
+            ref={previewDialog}
+            className={s.previewDialog}
+            data-expanded={expanded || undefined}
+            role={expanded ? "dialog" : "presentation"}
+            aria-modal={expanded || undefined}
+            aria-label={expanded ? "Expanded patient app preview" : undefined}
+            onCancel={(event) => {
+              event.preventDefault();
+              setExpanded(false);
+            }}
+          >
+            <div className={s.previewToolbar}>
+              {expanded && <strong>Patient app preview</strong>}
+              <Button
+                ref={previewToggle}
+                variant="outline"
+                onClick={() => setExpanded((value) => !value)}
+              >
+                <Icon name={expanded ? "close" : "maximize"} size={18} />
+                {expanded ? "Close preview" : "Expand preview"}
+              </Button>
+            </div>
+            <div className={s.device}>
+              <iframe
+                ref={frame}
+                title="Patient app preview"
+                src={`/?configurationPreview=${configurationPreviewId}`}
+              />
+            </div>
+            <small className={s.muted}>
+              Live preview · updates as you edit
+            </small>
+          </dialog>
         </div>
       </div>
     </>
@@ -383,12 +424,12 @@ function ConfigEditor({
   ];
 
   // Scroll the panel (not the page) to a section.
-  const goTo = (id, behavior = "smooth") => {
+  const goTo = (id, behavior = "smooth", reviewFields = false) => {
     const el = document.getElementById(`edit-${id}`);
     const box = body.current;
     if (!el || !box) return;
     setActiveSection(id);
-    if (id === "hospital") {
+    if (id === "hospital" && !reviewFields) {
       box.scrollTo({ top: 0, behavior });
       return;
     }
@@ -500,14 +541,7 @@ function ConfigEditor({
       </header>
       <div className={s.editBody} ref={body}>
         <BrandWebsiteImport
-          colours={form}
-          onPreviewColours={(patch) =>
-            setForm((current) => ({ ...current, ...patch }))
-          }
-          onUploadMissing={(kind) => {
-            goTo("hospital");
-            logoFiles.current[kind]?.click();
-          }}
+          onReview={() => goTo("hospital", "smooth", true)}
           onApply={(patch) => setForm((current) => ({ ...current, ...patch }))}
         />
         <ConfigurationSection id="edit-hospital">
@@ -551,7 +585,7 @@ function ConfigEditor({
                   kind: "horizontal",
                   title: "Horizontal logo",
                   shape: "wide",
-                  hint: "Wide · 4:1 · Headers and sign-in screens",
+                  hint: "Flexible crop · Headers and sign-in screens",
                 },
               ].map((asset) => {
                 const uploadAsset =
@@ -642,7 +676,7 @@ function ConfigEditor({
                               }),
                             );
                             setCropSource({
-                              source,
+                              source: { ...source, preserveFrame: true },
                               key: asset.key,
                               kind: asset.kind,
                               surface: "light",

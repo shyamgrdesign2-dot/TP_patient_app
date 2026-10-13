@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.setTimeout(60000);
 
-test("website branding is reviewed before selected fields enter the draft", async ({
+test("website analysis fills editable fields automatically and Cancel restores saved branding", async ({
   page,
 }) => {
   await page.route("**/api/brand-import", (route) =>
@@ -61,13 +61,18 @@ test("website branding is reviewed before selected fields enter the draft", asyn
     .getByRole("button", { name: "Analyze website", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Review detected branding" }),
+    page.getByText("Your brand details are ready", { exact: true }),
   ).toBeVisible();
-  await expect(name).toHaveValue(before);
+  await expect(name).toHaveValue("Example Hospital");
   await expect(
     page.getByLabel("Primary colour hex", { exact: true }),
   ).toHaveValue("#006b68");
-  // Analyzed colours preview before applying identity or saving configuration.
+  await expect(
+    page.getByRole("group", { name: "Brand details to apply" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Apply selected to draft" }),
+  ).toHaveCount(0);
   await expect
     .poll(() =>
       page.evaluate(() =>
@@ -77,55 +82,10 @@ test("website branding is reviewed before selected fields enter the draft", asyn
       ),
     )
     .toBe("#4b4ad5");
-  await expect(
-    page
-      .getByRole("group", { name: "Brand details to apply" })
-      .getByRole("checkbox", { name: /Primary colour/ }),
-  ).toHaveCount(1);
-  await expect(
-    page
-      .getByRole("group", { name: "Brand details to apply" })
-      .getByText("Corner radius", { exact: true }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByText("Rule-based detection. AI extraction is not configured."),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("checkbox", { name: "App icon: Couldn't detect" }),
-  ).toBeDisabled();
-  await expect(
-    page
-      .getByRole("group", { name: "Brand details to apply" })
-      .getByRole("checkbox", { name: /Body font/ }),
-  ).toBeChecked();
-  await expect(
-    page
-      .getByRole("group", { name: "Brand details to apply" })
-      .getByText("Shadow style", { exact: true }),
-  ).toHaveCount(0);
-  await expect(
-    page
-      .getByRole("group", { name: "Brand details to apply" })
-      .getByText(/CTA/),
-  ).toHaveCount(0);
-  const fileChooser = page.waitForEvent("filechooser");
   await page
-    .getByRole("group", { name: "Brand details to apply" })
-    .getByRole("button", { name: "Upload app icon", exact: true })
+    .getByRole("button", { name: "Review app details", exact: true })
     .click();
-  await fileChooser;
-
-  await page
-    .getByRole("group", { name: "Brand details to apply" })
-    .getByRole("checkbox", { name: /Primary colour/ })
-    .uncheck();
-  await page.getByRole("button", { name: "Apply selected to draft" }).click();
-  await expect(name).toHaveValue("Example Hospital");
-  await expect(
-    page.getByText(
-      "Selected branding added to your draft. Review the preview before saving.",
-    ),
-  ).toBeVisible();
+  await expect(name).toBeVisible();
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   if (await page.getByRole("button", { name: "Edit", exact: true }).isVisible())
     await page.getByRole("button", { name: "Edit", exact: true }).click();
@@ -147,7 +107,7 @@ test("website import API refuses loopback URLs without fetching", async ({
   expect(response.headers()["cache-control"]).toBe("no-store");
 });
 
-test("blank and broken logo suggestions become Missing and cannot overwrite branding", async ({
+test("blank and broken logo suggestions preserve existing branding", async ({
   page,
 }) => {
   const white =
@@ -191,18 +151,43 @@ test("blank and broken logo suggestions become Missing and cannot overwrite bran
   await page
     .getByRole("button", { name: "Analyze website", exact: true })
     .click();
-  const group = page.getByRole("group", { name: "Brand details to apply" });
   await expect(
-    group.getByRole("checkbox", { name: "Horizontal logo: Couldn't detect" }),
-  ).toBeDisabled();
-  await expect(
-    group.getByRole("checkbox", { name: "App icon: Couldn't detect" }),
-  ).toBeDisabled();
-  await expect(group.getByRole("img")).toHaveCount(0);
-  await expect(
-    group.getByRole("checkbox", { name: /Primary colour/ }),
-  ).toBeChecked();
-  await expect(
-    group.getByRole("button", { name: "Upload horizontal logo" }),
+    page.getByText(/Some logos could not be displayed clearly/),
   ).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: "Horizontal logo", exact: true }),
+  ).toHaveAttribute("src", /tatvapractice-wordmark/);
+  await expect(
+    page.getByRole("img", { name: "App icon", exact: true }),
+  ).toHaveAttribute("src", /tatvapractice-app-icon/);
+  await expect(
+    page.getByLabel("Primary colour hex", { exact: true }),
+  ).toHaveValue("#123456");
+});
+
+test("no detected branding uses an orange notice without a review CTA", async ({
+  page,
+}) => {
+  await page.route("**/api/brand-import", (route) =>
+    route.fulfill({ json: { candidates: [], warnings: [] } }),
+  );
+  await page.goto("/admin/app#hospital");
+  const name = page.getByLabel("Hospital name", { exact: true });
+  const original = await name.inputValue();
+  await page
+    .getByLabel("Hospital website", { exact: true })
+    .fill("https://hospital.example");
+  await page
+    .getByRole("button", { name: "Analyze website", exact: true })
+    .click();
+  await expect(
+    page.getByText("No brand details could be detected", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Review app details", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("No brand details could be detected", { exact: true }),
+  ).toHaveCSS("color", "rgb(180, 83, 9)");
+  await expect(name).toHaveValue(original);
 });

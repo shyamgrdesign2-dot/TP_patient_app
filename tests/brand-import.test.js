@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import https from "node:https";
+import { EventEmitter } from "node:events";
 import { PassThrough } from "node:stream";
 import {
+  brandDiscoveryPages,
+  safeFetch,
   safeSvg,
   readWebsiteBody,
   normalizeCtaGradient,
@@ -357,4 +361,95 @@ test("hospital controls outrank generic link colour and third-party footer logos
   assert.equal(fields.textBody, "#222222");
   assert.equal(fields.textHeading, undefined);
   assert.deepEqual(result.logos, ["https://hospital.example/zydus-logo.svg"]);
+});
+
+test("website fetching uses compatible headers and explains access blocks without erasing branding", async (t) => {
+  let observed;
+  t.mock.method(https, "get", (_url, options, callback) => {
+    observed = options.headers;
+    const request = new EventEmitter();
+    queueMicrotask(() => {
+      const response = new PassThrough();
+      response.statusCode = 403;
+      callback(response);
+      response.end();
+    });
+    return request;
+  });
+  await assert.rejects(
+    safeFetch("https://8.8.8.8/"),
+    /blocks automated access.*current details are unchanged/,
+  );
+  assert.match(observed["User-Agent"], /Mozilla.*Chrome/);
+  assert.equal(observed["Accept-Language"], "en-US,en;q=0.9");
+});
+
+test("logo discovery reads footer, lazy images and inline SVG while excluding external credits", () => {
+  const html = `<div class="site-footer"><a href="/"><img alt="Hospital logo" src="data:image/gif;base64,R0lG" data-src="/footer.png"></a>
+    <a href="/"><svg aria-label="Hospital wordmark" viewBox="0 0 400 100"><path fill="#007777" d="M0 0h400v100H0z"/></svg></a>
+    <a href="https://developer.example/"><svg aria-label="Developer logo" viewBox="0 0 400 100"><path d="M0 0h400v100H0z"/></svg></a></div>`;
+  const logos = findLogoCandidates(html, "https://hospital.example/");
+  assert.equal(logos.length, 2);
+  assert.ok(logos.every((logo) => logo.place === "footer"));
+  assert.ok(
+    logos.some((logo) => logo.url === "https://hospital.example/footer.png"),
+  );
+  assert.ok(logos.some((logo) => logo.svg?.includes("Hospital wordmark")));
+});
+test("supporting logo discovery follows only bounded same-site about and contact pages", () => {
+  assert.deepEqual(
+    brandDiscoveryPages(
+      `<a href="/about">About us</a><a href="/contact">Contact</a><a href="/about">About</a><a href="https://other.example/about">About partner</a><a href="/contact.pdf">Contact brochure</a><a href="/about/team">Team</a>`,
+      "https://hospital.example/",
+    ),
+    ["https://hospital.example/about", "https://hospital.example/contact"],
+  );
+});
+
+test("hospital CTA wrapper overrides framework palette and later site styles are retained", () => {
+  const html = `<link rel="stylesheet" href="/bootstrap.css">${Array.from({ length: 12 }, (_, i) => `<link rel="stylesheet" href="/plugins/library${i}.css">`).join("")}<link rel="stylesheet" href="/themes/hospital/custom.css"><header class="site-header"><div class="appointment-btn"><a href="/book">Appointment</a></div></header>`;
+  const result = extractBrand(
+    html,
+    `:root{--primary:#007bff} a{color:#007bff} .site-header .appointment-btn{background:#c51d0d} .appointment-btn a{color:#fff}`,
+    "https://hospital.example/",
+  );
+  assert.equal(
+    result.candidates.find((c) => c.key === "primary").value,
+    "#c51d0d",
+  );
+  assert.ok(
+    result.stylesheets.includes(
+      "https://hospital.example/themes/hospital/custom.css",
+    ),
+  );
+  assert.equal(result.stylesheets.length, 12);
+});
+
+test("repeated custom CTA colours can identify a client-rendered brand without using generic blue links", () => {
+  const html = `<a href="/contact">Contact Us</a><button class="black_btn">Download App</button>`;
+  const css = `a{color:#337ab7}.black_btn{background:#000}.city-yellow-button{background:#ffca20}.places-yellow-button{background:#ffca20}.yellow-btn{background:#f9c935}.btn-primary{background:#337ab7}.places-yellow-button:hover{background:#d3a91f}`;
+  const result = extractBrand(html, css, "https://brand.example/");
+  const primary = result.candidates.find((c) => c.key === "primary");
+  assert.equal(primary.value, "#ffca20");
+  assert.match(primary.evidence, /Repeated custom CTA/);
+  assert.equal(
+    extractBrand(
+      html,
+      "a{color:#337ab7}.btn-primary{background:#337ab7}",
+      "https://brand.example/",
+    ).candidates.find((c) => c.key === "primary"),
+    undefined,
+  );
+});
+
+test("actual colored CTA evidence outranks black CTAs and stylesheet-only fallback", () => {
+  const result = extractBrand(
+    `<button class="black">Get started</button><button class="red">Book appointment</button>`,
+    `.black{background:#000}.red{background:#c51d0d}.site-cta{background:#ffca20}.hero-cta{background:#ffca20}`,
+    "https://hospital.example/",
+  );
+  assert.equal(
+    result.candidates.find((c) => c.key === "primary").value,
+    "#c51d0d",
+  );
 });

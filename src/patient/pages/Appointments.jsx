@@ -1087,16 +1087,24 @@ export function Appointments() {
           ))}
         </div>
         {!items.length && (
-          <Empty
-            icon="calendar-2"
-            title={`No ${tab.toLowerCase()} appointments`}
-            description={`Your ${tab.toLowerCase()} visits for ${activeMember.name.split(" ")[0]} will appear here.`}
-            action={[
-              <Icon key="add" name="add-plain" size={18} />,
-              "Book new appointment",
-            ]}
-            onAction={() => navigate("/book")}
-          />
+          <>
+            <Empty
+              icon="calendar-2"
+              title={`No ${tab.toLowerCase()} appointments`}
+              description={`Your ${tab.toLowerCase()} visits for ${activeMember.name.split(" ")[0]} will appear here.`}
+              action={[
+                <Icon key="add" name="add-plain" size={18} />,
+                "Book new appointment",
+              ]}
+              onAction={() => navigate("/book")}
+            />
+            {tab !== "Upcoming" && (
+              <Notice tone="pending">
+                You’ll start seeing {tab.toLowerCase()} visits here once your
+                doctor or hospital updates their status in the portal.
+              </Notice>
+            )}
+          </>
         )}
       </div>
       <Sheet

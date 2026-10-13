@@ -6,7 +6,7 @@ import s from "./Admin.module.css";
 export const LOGO_TIPS = [
   "SVG recommended. PNG and JPG also supported.",
   "Square mark: at least 512×512 px (1024×1024 ideal), keep ~10% empty space around it",
-  "Horizontal logo: 4:1, e.g. 1200×300 px",
+  "Horizontal logo: start at 4:1, then adjust the crop width and height to fit",
   "Logos appear on white backgrounds; avoid thin text",
   "Max 5 MB",
 ];

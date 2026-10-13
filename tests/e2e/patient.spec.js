@@ -1966,19 +1966,25 @@ test("health records are grouped into visits, lab results, medical records, disc
     page.getByRole("tab", { name: /Medical records/ }),
   ).toHaveAttribute("aria-selected", "true");
   await page.getByRole("tab", { name: /Visits/ }).click();
-  // Visits opens the latest prescription, with a selector for older visits.
-  await expect(
-    page.getByRole("img", { name: "Consultation prescription, page 1" }),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: /Visit with Dr/ })).toHaveCount(
-    0,
-  );
+  await expect(page.getByRole("article")).toHaveCount(4);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page
+    .getByRole("button", {
+      name: "View Consultation prescription",
+      exact: true,
+    })
+    .click();
+  const prescription = page.getByRole("dialog", {
+    name: "Consultation prescription",
+    exact: true,
+  });
+  await expect(prescription.locator("canvas")).toBeVisible();
+  await prescription
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Upload medical records" }),
   ).toHaveCount(0);
-  await expect(
-    page.getByLabel("Prescription date").locator("option"),
-  ).toHaveCount(4);
   await page.goto("/records?tab=labs");
   await expect(page.getByText("3 records")).toBeVisible();
   await expect(
@@ -2037,7 +2043,9 @@ test("health records are grouped into visits, lab results, medical records, disc
     .getByRole("button", { name: /Sunita Sharma/ })
     .click();
   await page.goto("/records?tab=discharge");
-  await page.getByRole("button", { name: /Discharge summary/ }).click();
+  await page
+    .getByRole("button", { name: "View Discharge summary", exact: true })
+    .click();
   const stay = page.getByRole("dialog", { name: "Discharge summary" });
   await expect(stay).toContainText("Orthopaedics, Jayanagar");
   await expect(stay).toContainText("Knee joint aspiration");

@@ -1,6 +1,5 @@
 import BrandHeaderPattern from "../components/BrandHeaderPattern";
 import MedicalRecordTile from "../components/MedicalRecordTile";
-import { PrescriptionReader } from "../components/RecordDocuments";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@dhspl-tatvacare/tesseract-ui";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -320,6 +319,7 @@ export default function Records() {
       );
     });
   }
+  const hasTabRecords = records.some((record) => tabFor(record) === tab);
   const emptyCopy = {
     visits: {
       title: "No prescriptions yet",
@@ -355,10 +355,7 @@ export default function Records() {
     },
   }[tab];
   return (
-    <div
-      className={`${s.page} ${tab === "visits" ? r.prescriptionPage : ""}`}
-      data-prescription-page={tab === "visits" || undefined}
-    >
+    <div className={s.page}>
       <div className={banner.group}>
         <BrandHeaderPattern />
         <PageHeader
@@ -367,7 +364,8 @@ export default function Records() {
           brandPattern={false}
           patientSelector
           action={
-            tab === "records" && (
+            tab === "records" &&
+            hasTabRecords && (
               <Button
                 className={r.uploadFloat}
                 aria-label="Upload medical records"
@@ -474,7 +472,7 @@ export default function Records() {
               <Icon name="chevron-right" size={18} />
             </button>
           ))}
-        {tab !== "history" && tab !== "visits" && (
+        {tab !== "history" && hasTabRecords && (
           <Field
             aria-label={`Search ${RECORD_TABS.find((t) => t.id === tab).label.toLowerCase()}`}
             placeholder={
@@ -487,7 +485,7 @@ export default function Records() {
             onChange={(e) => setSearch(e.target.value)}
           />
         )}
-        {tab === "records" && (
+        {tab === "records" && hasTabRecords && (
           <ChoiceGroup
             label="Record type"
             hideLabel
@@ -513,7 +511,7 @@ export default function Records() {
             }}
           />
         )}
-        {tab !== "history" && tab !== "visits" && (
+        {tab !== "history" && hasTabRecords && (
           <div className={s.listMeta}>
             <span aria-live="polite">
               {count}{" "}
@@ -537,11 +535,15 @@ export default function Records() {
           </div>
         )}
         {tab === "visits" && (
-          <PrescriptionReader
-            key={activeMember.id}
-            records={prescriptions}
-            onOpen={openRecord}
-          />
+          <div className={r.documentGrid}>
+            {prescriptions.map((record) => (
+              <MedicalRecordTile
+                key={record.id}
+                record={record}
+                onOpen={openRecord}
+              />
+            ))}
+          </div>
         )}
         {tab === "labs" && (
           <div className={r.documentGrid}>
@@ -609,21 +611,71 @@ export default function Records() {
             ))}
           </div>
         )}
-        {tab === "history" && <MedicalHistory member={activeMember} />}
-        {tab !== "history" && !count && (
-          <Empty
-            icon={
-              TAB_ICONS[tab].name === "microscope"
-                ? "document-text"
-                : TAB_ICONS[tab].name
-            }
-            title={search ? "Nothing matches your search" : emptyCopy.title}
-            description={
-              search ? "Try a different search or tab." : emptyCopy.description
-            }
-            action={search ? "Clear search" : emptyCopy.action}
-            onAction={search ? () => setSearch("") : emptyCopy.onAction}
+        {tab === "history" && (
+          <MedicalHistory
+            member={activeMember}
+            onUpload={() => {
+              setTab("records");
+              setUpload(true);
+            }}
           />
+        )}
+        {tab !== "history" &&
+          !count &&
+          (!search && !hasTabRecords ? (
+            <RecordEmpty
+              icon={
+                TAB_ICONS[tab].name === "microscope"
+                  ? "document-text"
+                  : TAB_ICONS[tab].name
+              }
+              title={emptyCopy.title}
+              label={RECORD_TABS.find((t) => t.id === tab).label.toLowerCase()}
+              onUpload={() => {
+                setTab("records");
+                setUpload(true);
+              }}
+            />
+          ) : (
+            <Empty
+              icon={
+                TAB_ICONS[tab].name === "microscope"
+                  ? "document-text"
+                  : TAB_ICONS[tab].name
+              }
+              title={search ? "Nothing matches your search" : emptyCopy.title}
+              description={
+                search
+                  ? "Try a different search or tab."
+                  : emptyCopy.description
+              }
+              action={search ? "Clear search" : "Clear filters"}
+              onAction={
+                search
+                  ? () => setSearch("")
+                  : () => {
+                      setTypeFilter("All");
+                      setAbhaOnly(false);
+                    }
+              }
+            />
+          ))}
+        {tab === "labs" && hasTabRecords && (
+          <Notice icon="document-upload">
+            <strong>Have lab results to add?</strong>
+            <p>
+              Upload your lab reports in Medical Records to keep them together.
+            </p>
+            <Button
+              variant="link"
+              onClick={() => {
+                setTab("records");
+                setUpload(true);
+              }}
+            >
+              Upload in Medical Records
+            </Button>
+          </Notice>
         )}
       </div>
       {abhaLink && (
@@ -945,9 +997,28 @@ function DischargeSheet({ record, onClose, onOpenPdf }) {
   );
 }
 
+function RecordEmpty({ icon, title, label, onUpload }) {
+  return (
+    <section className={r.recordEmpty}>
+      <span className={r.recordEmptyIcon}>
+        <Icon name={icon} size={30} bulk />
+      </span>
+      <h2>{title}</h2>
+      <Notice tone="pending">
+        You’ll start seeing {label} here once your doctor or hospital uploads or
+        updates them in the portal.
+      </Notice>
+      <Button onClick={onUpload}>
+        <Icon name="document-upload" size={18} />
+        Upload Records
+      </Button>
+    </section>
+  );
+}
+
 // What the hospital knows about the patient: conditions, allergies,
 // medications, surgeries, vaccinations and family history.
-function MedicalHistory({ member }) {
+function MedicalHistory({ member, onUpload }) {
   const history = member.history || {};
   const total = HISTORY_SECTIONS.reduce(
     (n, sec) => n + (history[sec.key]?.length || 0),
@@ -955,10 +1026,11 @@ function MedicalHistory({ member }) {
   );
   if (!total && !history.lifestyle)
     return (
-      <Empty
+      <RecordEmpty
         icon="health"
         title="No medical history yet"
-        description="Your doctor records medical conditions, allergies and health history during your visits."
+        label="your medical history"
+        onUpload={onUpload}
       />
     );
   return (
@@ -985,11 +1057,10 @@ function MedicalHistory({ member }) {
                 ))}
               </ul>
             ) : (
-              <p className={r.historyEmpty}>
-                {sec.key === "allergies"
-                  ? "No allergy information recorded."
-                  : "Nothing recorded."}
-              </p>
+              <Notice tone="pending">
+                You’ll start seeing {sec.label.toLowerCase()} here once your
+                doctor or hospital updates them in the portal.
+              </Notice>
             )}
           </section>
         );

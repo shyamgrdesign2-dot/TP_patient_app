@@ -112,7 +112,7 @@ test("website analysis shows a loading state and restores controls on failure", 
       json: { error: "This website is temporarily unavailable." },
     });
   });
-  await page.goto("/admin/app");
+  await page.goto("/admin/app#hospital");
   await page
     .getByLabel("Hospital website", { exact: true })
     .fill("https://example.com");

@@ -182,12 +182,13 @@ export function loadBrandFonts(brand, doc = globalThis.document) {
     style.id = "brand-custom-fonts";
     doc.head.appendChild(style);
   }
-  style.textContent = custom
+  const rules = custom
     .map(
       (f) =>
         `@font-face{font-family:"${f.name.replace(/"/g, "")}";src:url("${f.src}");font-display:swap;}`,
     )
     .join("\n");
+  if (style.textContent !== rules) style.textContent = rules;
 }
 // The square mark for icons, splash and avatar spots.
 export const brandMarkSrc = (brand) =>

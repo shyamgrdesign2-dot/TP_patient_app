@@ -1120,3 +1120,25 @@
     animation: none !important;
   }
 }
+
+.recordEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding-block: 28px;
+  text-align: left;
+}
+.recordEmpty h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.recordEmptyIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: var(--tesseract-blue-500);
+  background: var(--tesseract-blue-50);
+}
