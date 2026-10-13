@@ -201,3 +201,39 @@ test("app logo uses supplied artwork with rounded corners while wordmark stays s
     await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
   }
 });
+
+test("returning live-app visitors receive the current default icon and favicon", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    const brand = JSON.parse(localStorage.getItem("tatva-brand-preview"));
+    delete brand.defaultIconVersion;
+    Object.assign(brand, {
+      hospitalName: "Tatva Care Hospital",
+      logo: "",
+      logoMark: "",
+    });
+    localStorage.setItem("tatva-brand-preview", JSON.stringify(brand));
+  });
+  await page.reload();
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+    "href",
+    "/brand/tatvapractice-app-icon.png",
+  );
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+    "href",
+    "/brand/tatvapractice-app-icon.png",
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => JSON.parse(localStorage.getItem("tatva-brand-preview")).logoMark,
+      ),
+    )
+    .toBe("/brand/tatvapractice-app-icon.png");
+  await page.goto("/admin/app#hospital");
+  await expect(
+    page.getByRole("img", { name: "App icon", exact: true }),
+  ).toHaveAttribute("src", "/brand/tatvapractice-app-icon.png");
+});

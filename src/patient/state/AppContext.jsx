@@ -16,13 +16,14 @@ import {
   validBrand,
   loadBrandFonts,
   brandMarkSrc,
+  restoreSavedBrand,
 } from "../../shared/brand";
 import { setAdminConfigPreview } from "../../shared/hospitalConfig";
 const Context = createContext(null);
 const KEY = "tatva-patient-demo-v1";
 const ACCOUNTS = "tatva-demo-accounts";
 const BRAND = "tatva-brand-preview";
-const DEFAULT_ICON = "/icons/app-192.png";
+const DEFAULT_ICON = defaultBrand.logoMark;
 // Point the favicon and home-screen icon at the hospital mark when set.
 function setDocumentIcons(brand) {
   const href = brandMarkSrc(brand) || DEFAULT_ICON;
@@ -225,7 +226,7 @@ export function AppProvider({ children }) {
   }, []);
   const [savedBrand, setBrand] = useState(() => {
     const saved = read(BRAND, defaultBrand);
-    return validBrand(saved) ? { ...defaultBrand, ...saved } : defaultBrand;
+    return restoreSavedBrand(saved);
   });
   const [brandDraft, setBrandDraft] = useState(null);
   const [, refreshConfig] = useState(0);
@@ -298,7 +299,7 @@ export function AppProvider({ children }) {
       if (event.key !== BRAND || !event.newValue) return;
       try {
         const next = JSON.parse(event.newValue);
-        if (validBrand(next)) setBrand({ ...defaultBrand, ...next });
+        if (validBrand(next)) setBrand(restoreSavedBrand(next));
       } catch {
         /* ignore unreadable saves from other tabs */
       }

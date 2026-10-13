@@ -3,6 +3,7 @@ import { normalizeCtaGradient } from "./brandGradient.js";
 // One tenant configuration is the source for UI, assets and native packaging.
 export const defaultBrand = {
   id: "tatva-demo",
+  defaultIconVersion: 1,
   name: "Tatva Practice",
   hospitalName: "Tatva Practice",
   tagline: "Your health, connected.",
@@ -274,4 +275,31 @@ export function shiftRows(shifts = []) {
     rows.set(sh.days, [...(rows.get(sh.days) || []), time]);
   }
   return [...rows.entries()].map(([days, times]) => [days, times.join(" · ")]);
+}
+
+// Older browsers persisted the former empty Tatva logo defaults. Upgrade only
+// that built-in identity once; never replace hospital uploads or later removals.
+export function restoreSavedBrand(saved) {
+  if (!validBrand(saved)) return { ...defaultBrand };
+  const restored = { ...defaultBrand, ...saved };
+  const builtInArtwork = new Set([
+    "",
+    "/icons/app-192.png",
+    "/icons/app-512.png",
+    "/brand/tatvapractice-symbol.svg",
+    "/brand/tatvapractice-wordmark.svg",
+  ]);
+  if (
+    !saved.defaultIconVersion &&
+    saved.id === defaultBrand.id &&
+    ["Tatva Practice", "TatvaPractice", "Tatva Care Hospital"].includes(
+      saved.hospitalName,
+    ) &&
+    builtInArtwork.has(saved.logoMark || "") &&
+    builtInArtwork.has(saved.logo || "")
+  ) {
+    restored.logoMark = defaultBrand.logoMark;
+  }
+  restored.defaultIconVersion = 1;
+  return restored;
 }
