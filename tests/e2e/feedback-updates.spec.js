@@ -96,7 +96,8 @@ test("white auth logo areas and exact primary actions coexist with dark banners"
   }
   await page.goto("/");
   const bell = page.getByRole("button", { name: "Notifications", exact: true });
-  await expect(bell).toHaveCSS("background-color", "rgba(255, 255, 255, 0.94)");
+  await expect(bell).toHaveCSS("background-image", /linear-gradient/);
+  await expect(bell).toHaveCSS("backdrop-filter", /blur\(20px\)/);
   const surface = page.locator('[class*="homeHeroSurface"]');
   await expect(surface).toHaveCSS("background-image", /linear-gradient/);
   const cta = page

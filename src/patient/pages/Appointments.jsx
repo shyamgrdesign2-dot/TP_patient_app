@@ -88,7 +88,7 @@ function VisitStatusIcon({ status, selected }) {
         }[status]
       }
       size={16}
-      bulk={!selected}
+      bulk={selected}
     />
   );
 }
