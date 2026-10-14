@@ -182,7 +182,7 @@ export default function LabReport({
       >
         {selectedTab === "original" && record.source === "abha" && (
           <div className={s.sourceInfo}>
-            <Icon name="info-circle" size={18} />
+            <AbhaLogo />
             <div>
               <strong>Fetched from ABHA</strong>
               <p>

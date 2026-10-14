@@ -542,9 +542,10 @@
 
 .sourceInfo {
   display: flex;
-  gap: 10px;
-  margin: 12px;
-  padding: 12px;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px;
+  padding: 6px 10px;
   border: 1px solid #e2e2e8;
   border-radius: 10px;
   background: #f6f6f8;
@@ -552,9 +553,10 @@
   font-size: 12px;
   line-height: 1.5;
 }
-.sourceInfo > [data-tp-icon] {
+.sourceInfo > img {
   flex-shrink: 0;
-  margin-top: 2px;
+  width: 18px;
+  height: 18px;
 }
 .sourceInfo strong {
   color: #454551;

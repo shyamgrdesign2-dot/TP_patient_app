@@ -2417,7 +2417,7 @@ textarea.input {
 .previewToolbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   width: 100%;
   gap: 24px;
 }
@@ -2432,6 +2432,7 @@ textarea.input {
   overflow: auto;
 }
 .previewDialog[data-expanded] .previewToolbar {
+  order: -1;
   flex: 0 0 auto;
   justify-content: space-between;
 }

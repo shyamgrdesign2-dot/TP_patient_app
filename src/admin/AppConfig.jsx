@@ -121,6 +121,7 @@ export default function AppConfig({ config, setConfig, flash }) {
   useEffect(() => {
     const dialog = previewDialog.current;
     if (!dialog) return;
+    const wasOpen = dialog.open;
     // Promote the same iframe to the top layer, retaining its route and state.
     if (dialog.open) dialog.close();
     if (expanded) {
@@ -128,6 +129,7 @@ export default function AppConfig({ config, setConfig, flash }) {
       previewToggle.current?.focus();
     } else {
       dialog.show();
+      if (wasOpen) previewToggle.current?.focus();
     }
   }, [expanded]);
   const [actionHost, setActionHost] = useState(null);
@@ -193,6 +195,13 @@ export default function AppConfig({ config, setConfig, flash }) {
               setExpanded(false);
             }}
           >
+            <div className={s.device}>
+              <iframe
+                ref={frame}
+                title="Patient app preview"
+                src={`/?configurationPreview=${configurationPreviewId}`}
+              />
+            </div>
             <div className={s.previewToolbar}>
               {expanded && <strong>Patient app preview</strong>}
               <Button
@@ -203,13 +212,6 @@ export default function AppConfig({ config, setConfig, flash }) {
                 <Icon name={expanded ? "close" : "maximize"} size={18} />
                 {expanded ? "Close preview" : "Expand preview"}
               </Button>
-            </div>
-            <div className={s.device}>
-              <iframe
-                ref={frame}
-                title="Patient app preview"
-                src={`/?configurationPreview=${configurationPreviewId}`}
-              />
             </div>
             <small className={s.muted}>
               Live preview · updates as you edit
