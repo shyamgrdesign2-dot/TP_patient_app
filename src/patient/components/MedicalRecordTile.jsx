@@ -129,6 +129,7 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
           description={record.title}
         >
           <Button
+            className={s.documentAction}
             variant="ghost"
             theme="neutral"
             fullWidth
@@ -141,6 +142,7 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
             View Document
           </Button>
           <Button
+            className={s.documentAction}
             variant="ghost"
             theme="neutral"
             fullWidth
@@ -151,6 +153,7 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
             Download Document
           </Button>
           <Button
+            className={s.documentAction}
             variant="ghost"
             theme="neutral"
             fullWidth

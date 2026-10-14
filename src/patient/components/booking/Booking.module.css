@@ -175,7 +175,13 @@
   pointer-events: none;
 }
 .option[data-ai] .optionIcon {
-  background: var(--tesseract-slate-0);
+  overflow: hidden;
+  background: transparent;
+}
+.option[data-ai] .optionIcon img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
 }
 .option[data-ai] .optionIcon [data-tp-icon] {
   background: var(--tesseract-gradient-ai-hero) !important;

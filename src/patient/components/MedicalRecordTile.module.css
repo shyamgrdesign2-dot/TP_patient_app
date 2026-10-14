@@ -289,3 +289,32 @@ button.actions {
   mask-composite: exclude;
   pointer-events: none;
 }
+
+/* Fade document detail behind labels while preserving the full-size original. */
+.preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 90%) 0%,
+    rgb(255 255 255 / 0%) 32%,
+    rgb(255 255 255 / 0%) 62%,
+    rgb(255 255 255 / 90%) 100%
+  );
+}
+.category,
+.analysisTag {
+  z-index: 1;
+}
+.documentAction.documentAction {
+  justify-content: flex-start;
+  text-align: left;
+  min-height: 56px;
+  border-radius: 0;
+  padding-inline: 12px;
+}
+.documentAction.documentAction + .documentAction.documentAction {
+  border-top: 1px solid var(--tesseract-border-soft);
+}

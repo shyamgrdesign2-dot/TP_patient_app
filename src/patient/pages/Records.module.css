@@ -881,27 +881,22 @@
   gap: 12px;
   min-width: 0;
 }
-.uploadChooseRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
 .uploadPicker.uploadPicker {
-  display: inline-flex;
-  flex-direction: row;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid var(--tesseract-border-soft);
+  min-height: 150px;
+  padding: 20px 14px;
+  border: 3px dotted var(--tesseract-blue-500);
   border-radius: var(--tesseract-radius-12);
-  background: var(--tesseract-bg-surface);
+  background: transparent;
   color: var(--tesseract-fg-link);
   font-size: var(--tesseract-text-body-sm);
 }
 .uploadPicker.uploadPicker strong {
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .uploadPicker:has(input:disabled) {
   color: var(--tesseract-fg-secondary);
@@ -945,15 +940,12 @@
   color: var(--tesseract-fg-primary);
   text-align: left;
 }
-.uploadFileIcon {
-  display: grid;
-  place-items: center;
+.uploadChevron {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--tesseract-bg-subtle);
-  color: var(--tesseract-fg-secondary);
+  transition: transform 160ms ease;
+}
+.uploadFileToggle[aria-expanded="true"] .uploadChevron {
+  transform: rotate(180deg);
 }
 .uploadFileInfo {
   flex: 1;
@@ -973,21 +965,26 @@
   color: var(--tesseract-fg-secondary);
 }
 .uploadRemove {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 12px 0 0;
   border: 0;
-  border-radius: 10px;
+  border-top: 1px solid var(--tesseract-border-soft);
   background: transparent;
-  color: var(--tesseract-fg-secondary);
+  color: var(--tesseract-fg-error);
+  font: inherit;
+  font-size: var(--tesseract-text-body-sm);
+  cursor: pointer;
 }
 .uploadRemove:focus-visible,
 .uploadFileToggle:focus-visible,
 .uploadNotes textarea:focus-visible,
-.uploadType select:focus-visible {
+.uploadType select:focus-visible,
+.uploadType input:focus-visible {
   outline: 2px solid var(--tesseract-border-focus);
   outline-offset: -2px;
 }
@@ -1012,6 +1009,7 @@
   flex-direction: column;
   gap: 8px;
   font-size: var(--tesseract-text-body-sm);
+  line-height: 1.5;
   min-width: 0;
 }
 .uploadType > span {
@@ -1020,10 +1018,11 @@
 .uploadType > span > span {
   color: var(--tesseract-fg-error);
 }
-.uploadType select {
+.uploadType select,
+.uploadType input {
   width: 100%;
   min-width: 0;
-  min-height: 48px;
+  height: 48px;
   padding: 10px 12px;
   border: 1px solid var(--tesseract-border-soft);
   border-radius: 12px;
@@ -1066,7 +1065,7 @@
 }
 @media (min-width: 370px) {
   .uploadMetaFields {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .uploadMetaFields :is(label, span) {
     font-size: 12px;
@@ -1083,7 +1082,8 @@
   border-top: 1px solid var(--tesseract-border-soft) !important;
 }
 .uploadNotes textarea,
-.uploadType select {
+.uploadType select,
+.uploadType input {
   border-color: var(--tesseract-border-strong, #d6d6e2);
 }
 
@@ -1124,14 +1124,14 @@
 .recordEmpty {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
   padding-block: 28px;
   flex: 1;
   justify-content: center;
   width: min(100%, 320px);
   margin-inline: auto;
-  text-align: left;
+  text-align: center;
 }
 .recordEmpty h2 {
   margin: 0;
@@ -1145,4 +1145,71 @@
   border-radius: 50%;
   color: var(--tesseract-blue-500);
   background: var(--tesseract-blue-50);
+}
+
+.recordEmpty > [data-tone="pending"] {
+  flex-direction: column;
+  align-items: center;
+}
+.recordEmptyDescription {
+  margin: 0;
+  color: var(--tesseract-fg-secondary);
+  font-size: var(--tesseract-text-body-sm);
+  line-height: var(--tesseract-text-body-sm-lh);
+}
+
+:global([role="dialog"]) :global([class*="_body_"]):has(> .uploadForm) {
+  display: flex;
+  flex-direction: column;
+}
+.uploadForm[data-empty] {
+  flex: 1;
+  justify-content: center;
+}
+.uploadFooterActions {
+  display: flex;
+  gap: 10px;
+}
+.uploadFooterActions > button {
+  flex: 1;
+  min-width: 0;
+}
+
+.uploadPicker.uploadPicker[hidden] {
+  display: none;
+}
+.uploadSelect {
+  position: relative;
+}
+.uploadSelect select {
+  appearance: none;
+  padding-right: 36px;
+}
+.uploadSelect > [data-tp-icon] {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.uploadPreview {
+  display: block;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--tesseract-border-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--tesseract-bg-subtle);
+}
+.uploadPreview > div {
+  height: 100%;
+}
+.uploadPreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
 }

@@ -1,48 +1,48 @@
-# Home care-card contract
+# Home care-card content and states
 
-`src/patient/services/careUpdates.js` selects patient-scoped events from synchronous demo state. The hero is not a permanent list of categories.
+The source of truth is `src/patient/services/careUpdates.js`. Each branch keeps the status tag, middle heading/subtext, footer details and CTA together. `CareCarousel.jsx` renders that payload without choosing business states. Edit copy in the selector, not in the renderer.
 
-## Eligibility and precedence
+Cards keep stable category slots: Appointments, Health records, ABHA, and optional Preventive care. Each has one current state for the active patient. The `variant` field (also exposed as `data-variant`) identifies the exact content/action state; `state` retains the category lifecycle.
 
-| Priority | Event                  | Visibility                                      | Appearance and action                                                                                                                                                 |
-| -------- | ---------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0        | Checked-in appointment | Confirmed, today, check-in complete             | Deep green token banner; amber with “Longer wait” above the supplied expected wait, or 30 minutes if absent. Add symptoms while pending; review symptoms once shared. |
-| 10       | Appointment today      | Confirmed, same day                             | Brand gradient, doctor and time. Share symptoms, then check in for in-clinic visits; view details for video visits.                                                   |
-| 15       | Overdue bill           | Outstanding with a past due date                     | Amber payment banner. View bills.                                                                                                                                     |
-| 20       | New hospital record    | Released, unseen, published in last 7 days      | Blue-tonal report banner. Open that document.                                                                                                                         |
-| 30       | Upcoming appointment   | Confirmed within next 30 days                   | Brand gradient, nearest date/time first. Open visit details.                                                                                                          |
-| 40       | Recent hospital record | Released within last 7 days, already seen       | Blue-tonal report banner. Open document.                                                                                                                              |
-| 50       | New bill               | Outstanding, issued within last 14 days or due today | Amber payment banner. View bills.                                                                                                                                     |
-| 60       | Latest completed visit | Completed within last 30 days                   | Deep green banner. Open completed-visit details.                                                                                                                      |
+## Complete content matrix
 
-One card per category (appointments, records, payments, completed). Multiple relevant bills are summed; paid bills disappear. Recent means today through the inclusive day boundary. Unreleased records and patient uploads do not trigger a hospital-update banner. Unseen records rank ahead of seen ones. Other family members’ events never enter this selection.
+Dynamic values in brackets come from the selected patient’s data.
 
-- No history and no eligible events: one welcome card, “Let’s plan your first visit”, leading to doctor search. It disappears when relevant activity exists.
-- Returning patient with no eligible events: no hero; show home actions and records directly. Cancelled/stale entities never become filler cards.
-- One eligible event: a full-width card, no dots or swipe loop.
-- Two to four: swipe loop with ~8–9% angled neighbours, dots and keyboard arrows. No automatic rotation or arrow controls.
-- Changing the event-category set resets selection. Content changes within existing slots update in place. Covered cards become inert while the foreground home sheet scrolls over them.
+| Category / variant            | Status tag        | Heading · subtext                                         | Footer                                 | CTA              |
+| ----------------------------- | ----------------- | --------------------------------------------------------- | -------------------------------------- | ---------------- |
+| Appointments / welcome        | Book a visit      | Book your first visit · Choose a doctor and time.         | In clinic or by video                  | Find a doctor    |
+| Appointments / available      | Book a visit      | Plan your next visit · Choose a doctor and time.          | In clinic or by video                  | Find a doctor    |
+| Appointments / upcoming       | Confirmed         | [Doctor] · [Specialty]                                    | [Date, time, hospital]                 | View visit       |
+| Appointments / needs-symptoms | Confirmed         | [Doctor] · [Specialty]                                    | [Today, time, hospital]                | Add symptoms     |
+| Appointments / completed      | Completed         | [Doctor] · [Specialty]                                    | [Date, time, hospital]                 | View summary     |
+| Records / empty               | Getting started   | Your health records · Hospital and uploaded records.      | Visits · Lab results · Medical records | Add a record     |
+| Records / history             | Your records      | Your health history · All your records in one place.      | [Count] saved records                  | View records     |
+| Records / new                 | New report        | Your report is ready. · [Report title]                    | [Date, category]                       | View report      |
+| Records / available           | Recently added    | Your latest record · [Report title]                       | [Date, category]                       | View report      |
+| ABHA / unlinked               | Not linked        | Connect your health · Link ABHA to your profile.          | One health identity                    | Link ABHA        |
+| ABHA / linked                 | Linked            | [ABHA address] · [Masked number]                          | Your health identity                   | View ABHA card   |
+| Packages / empty              | Stay a step ahead | Care for a healthier you · Preventive care in one place.  | Care for your whole family             | Explore packages |
+| Packages / available          | Stay a step ahead | Care for a healthier you · Health checks, tests and more. | [Starting price, or family-care text]  | Explore packages |
+| Packages / requested          | Request sent      | [Package name] · Your next step to better health.         | [Date, clinic]                         | View booking     |
+| Packages / confirmed          | Confirmed         | [Package name] · Your next step to better health.         | [Date, clinic]                         | View booking     |
 
-The whole active card and its CTA open the same destination. The CTA provides keyboard access. Compact 16px-corner banners keep details and CTA in one footer row. Faded Tesseract grids sit left and generated clinic/laboratory photographs sit right. Decorative category glyphs are removed. The track clips vertical overflow and accepts horizontal gestures only. Colour is reinforced by explicit status text.
+## Selection and transitions
 
-## Check-in
+- Choose the earliest confirmed appointment within 30 days, inclusive. Same-day in-person visits with missing, unskipped symptom intake use `needs-symptoms`. Prepared, skipped, future and video visits use `upcoming` with View visit.
+- Without an upcoming appointment, show the latest completed visit within 30 days. Otherwise show `welcome` for no appointment history or `available` for existing history. Cancelled or stale appointments never produce an active visit CTA.
+- Released hospital records published within 7 days are eligible for `new` or `available`; prefer unseen reports, then the latest publication. Patient uploads and unreleased reports never trigger a new hospital-report banner. With no recent hospital report, released records (including uploads) yield `history`; no released records yields `empty`.
+- ABHA follows the active patient’s saved link. Unlinking returns the card to `unlinked`.
+- Preventive care appears only when the hospital enables packages. A current Requested or Confirmed booking takes precedence over the listed catalog. Cancelled and past bookings fall back to the catalog or empty state.
+- All three areas update together from the selected payload. There are no invented wait times, queue statuses or payment states in these banners.
 
-The visit flow is confirmation → symptom questions → reviewed summary → location check-in → queue token. The Home appointment CTA leads to symptom collection while preparation is pending. The queue page offers collection first; patients can explicitly skip it without losing access to care. Saved intake is attached to the visit and can be reviewed before check-in. Pre-booking intake is reused when its patient and note match the confirmed booking.
+## Presentation and integration
 
-`verifyArrival` rejects non-confirmed/online/wrong-day appointments, missing hospital coordinates, malformed or stale (>2 minutes) readings, accuracy worse than 100m, and readings whose distance plus accuracy exceeds the site radius (default 250m). Permission-denied and unavailable-location states offer reception as the fallback. Location is checked once and not persisted. A successful reducer mutation allocates a local sequence token idempotently and the home appointment banner becomes a queue banner. Demo wait = six minutes per checked-in patient ahead.
+Headings and subtext stay on one line. Static copy is short; dynamic text scales down to a readable minimum, then ellipsizes with the full value in its title and destination screen. Footer details may wrap. AI symptom actions retain their AI gradient outline.
 
-These are presentation/demo rules, not an anti-spoofing or authoritative queue system. Server integration must validate tenant/patient authorization, site coordinates, appointment window and arrival evidence; atomically allocate queue tokens; publish live wait and status changes; and clear queue state when a visit finishes or is cancelled. Geolocation alone cannot prove physical presence.
+Each current card has a keyboard-accessible CTA. Inactive loop duplicates are inert. Stable category slots preserve the carousel position when content changes; changing the patient or category set resets it.
 
-## Backend boundary
+The selector accepts tenant doctor/location/config data through its fourth argument. Missing doctor, report or package names have safe display fallbacks. Routes are assembled locally and record identifiers encoded where needed. No other family member’s data participates in selection.
 
-Use validated appointment/record/invoice entities and inject tenant doctor/location directories through the selector’s fourth argument. UI labels, patterns, safe routes and gradients belong to the client. Never accept executable HTML, arbitrary URLs or CSS from card payloads.
+The current store is synchronous. Real API integration must distinguish loading, failure and verified-empty results before using this selector, rather than presenting an empty state for a failed request. Patient authorization, release permissions and hospital timezone remain server responsibilities.
 
-Live APIs must distinguish loading, error and verified-empty results so a failed fetch does not masquerade as a first-time user. Use hospital timezone, authoritative balances/currency, released-record permissions and expected-wait estimates. These asynchronous states are not implemented in the synchronous local demo.
-
-Tests exercise all 16 event combinations, priority, first-time/returning states, inclusive windows, video appointments, profile isolation, wait thresholds and geofence boundaries.
-
-## Symptom reminders
-
-Home has no separate symptom strip or floating symptom carousel. The appointment/queue banner is the Home entry; upcoming visit cards and queue details also offer Add symptoms while intake is pending. Skipping intake or checking in does not complete it. The queue hero retains date, appointment time, wait estimate and a location icon alongside the hospital. All symptom actions use a pale Tesseract AI gradient, darker gradient text and a plus icon, and open the full-page collector directly.
-
-The visible visit type is In clinic (hospital bulk icon) or Video consultation (video bulk icon). The existing internal In-person enum is retained for stored demo appointments and check-in compatibility.
+`tests/care-updates.test.js` covers eligibility, date boundaries, profile isolation, action transitions and completeness of all variants. `tests/e2e/carousel-mobile.spec.js` covers narrow layouts and long content.

@@ -227,3 +227,89 @@ test("preventive care is the fourth card only when enabled, with patient-scoped 
     ids,
   );
 });
+
+test("every supported banner variant has a status, middle content and actionable footer", () => {
+  const config = {
+    features: { packages: true },
+    healthPackages: [],
+    vaccines: [],
+  };
+  const scenarios = [
+    empty,
+    {
+      ...empty,
+      appointments: [visit("cancelled", today, { status: "Cancelled" })],
+    },
+    { ...empty, appointments: [visit("next", "2026-09-23")] },
+    { ...empty, appointments: [visit("today")] },
+    { ...empty, appointments: [visit("done", today, { status: "Completed" })] },
+    { ...empty, records: [record("old", "2026-08-01")] },
+    { ...empty, records: [record("new", today, { new: true })] },
+    { ...empty, records: [record("seen")] },
+    {
+      ...empty,
+      healthLinks: {
+        self: {
+          abha: { address: "patient@abdm", identifier: "12345678901234" },
+        },
+      },
+    },
+    ...["Requested", "Confirmed"].map((status) => ({
+      ...empty,
+      packageRequests: [
+        { memberId: "self", status, date: today, itemName: "Health check" },
+      ],
+    })),
+  ];
+  const variants = new Set();
+  for (const state of scenarios) {
+    for (const card of selectCareUpdates(state, "self", today, { config })) {
+      variants.add(`${card.id}/${card.variant}`);
+      for (const key of ["status", "title", "description", "detail"])
+        assert.ok(
+          card[key]?.length,
+          `${card.id}/${card.variant}: missing ${key}`,
+        );
+      assert.ok(card.action.label && card.action.path.startsWith("/"));
+    }
+  }
+  const listed = selectCareUpdates(empty, "self", today, {
+    config: {
+      ...config,
+      healthPackages: [{ id: "p", name: "Health check", price: 99 }],
+    },
+  });
+  variants.add(`packages/${listed[3].variant}`);
+  assert.deepEqual(
+    [...variants].sort(),
+    [
+      "appointments/welcome",
+      "appointments/available",
+      "appointments/upcoming",
+      "appointments/needs-symptoms",
+      "appointments/completed",
+      "records/empty",
+      "records/history",
+      "records/new",
+      "records/available",
+      "abha/unlinked",
+      "abha/linked",
+      "packages/empty",
+      "packages/available",
+      "packages/requested",
+      "packages/confirmed",
+    ].sort(),
+  );
+  for (const extra of [
+    { symptomIntakeSkipped: true },
+    { type: "Video consultation" },
+  ]) {
+    const card = selectCareUpdates(
+      { ...empty, appointments: [visit("ready", today, extra)] },
+      "self",
+      today,
+    )[0];
+    assert.equal(card.variant, "upcoming");
+    assert.equal(card.action.path, "/appointments?visit=ready");
+  }
+});

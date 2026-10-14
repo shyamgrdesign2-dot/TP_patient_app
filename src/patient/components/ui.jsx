@@ -638,7 +638,7 @@ export function ChoiceGroup({
 export function Notice({ children, tone = "neutral", icon = "info-circle" }) {
   return (
     <div className={s.notice} data-tone={tone}>
-      <Icon name={icon} size={18} />
+      {icon && <Icon name={icon} size={18} />}
       <div>{children}</div>
     </div>
   );

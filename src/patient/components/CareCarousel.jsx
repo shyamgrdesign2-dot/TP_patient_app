@@ -8,6 +8,37 @@ import v from "./VisitExperience.module.css";
 import shared from "../App.module.css";
 import s from "../Home.module.css";
 
+// Fit the available text column, including custom fonts and resized previews.
+function BannerText({ children, as: Tag = "h2", minimum = 14 }) {
+  const heading = useRef(null);
+  useLayoutEffect(() => {
+    const node = heading.current;
+    let mounted = true;
+    const fit = () => {
+      if (!mounted || !node.clientWidth) return;
+      node.style.fontSize = "";
+      const maximum = parseFloat(getComputedStyle(node).fontSize);
+      if (node.scrollWidth > node.clientWidth)
+        node.style.fontSize = `${Math.max(Math.min(minimum, maximum), Math.floor(((maximum * node.clientWidth) / node.scrollWidth) * 10) / 10)}px`;
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(node.parentElement);
+    document.fonts.ready.then(fit);
+    document.fonts.addEventListener("loadingdone", fit);
+    fit();
+    return () => {
+      mounted = false;
+      observer.disconnect();
+      document.fonts.removeEventListener("loadingdone", fit);
+    };
+  }, [children, minimum]);
+  return (
+    <Tag ref={heading} title={children}>
+      {children}
+    </Tag>
+  );
+}
+
 // Bulk icon before each banner's heading; appointments show the visit type.
 function labelIcon(slide) {
   if (slide.category.id === "appointments")
@@ -140,6 +171,7 @@ function CareBanners({ slides }) {
               }
             }}
             data-state={slide.state}
+            data-variant={slide.variant}
             data-side={
               index === position
                 ? "center"
@@ -194,8 +226,10 @@ function CareBanners({ slides }) {
                 />
               )}
               <div className={shared.grow}>
-                <h2>{slide.title}</h2>
-                <p>{slide.description}</p>
+                <BannerText>{slide.title}</BannerText>
+                <BannerText as="p" minimum={12}>
+                  {slide.description}
+                </BannerText>
               </div>
             </div>
             <div

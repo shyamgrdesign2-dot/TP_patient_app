@@ -23,6 +23,15 @@ async function expectUnclipped(card) {
       const rect = el.getBoundingClientRect();
       if (rect.width <= 1 || rect.height <= 1) continue;
       if (!inside(rect, bounds)) errors.push(`outside card: ${el.className}`);
+      if (el.matches("h2, p")) {
+        if (getComputedStyle(el).whiteSpace !== "nowrap")
+          errors.push("banner text can wrap");
+        if (rect.height > parseFloat(getComputedStyle(el).lineHeight) + 1)
+          errors.push("banner text uses multiple lines");
+        if (el.title !== el.textContent)
+          errors.push("full banner text is unavailable");
+        continue;
+      }
       if (el.clientWidth && el.scrollWidth > el.clientWidth + 1)
         errors.push(`overflow: ${el.textContent}`);
       if (el.matches("[data-tp-icon]")) {

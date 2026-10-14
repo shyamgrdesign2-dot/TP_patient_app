@@ -1,5 +1,6 @@
 import BrandHeaderPattern from "../components/BrandHeaderPattern";
 import MedicalRecordTile from "../components/MedicalRecordTile";
+import { FileThumbnail } from "../components/RecordDocuments";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@dhspl-tatvacare/tesseract-ui";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -91,6 +92,7 @@ export default function Records() {
   const [uploadDrafts, setUploadDrafts] = useState([]);
   const [expandedUploads, setExpandedUploads] = useState({});
   const uploadMember = useRef(activeMember.id);
+  const uploadInput = useRef(null);
   useEffect(() => {
     if (uploadMember.current !== activeMember.id) {
       uploadMember.current = activeMember.id;
@@ -286,9 +288,15 @@ export default function Records() {
       }
       // Publish records only after every original file is safely stored. Draft
       // IDs remain stable so retrying a storage failure cannot duplicate files.
-      await Promise.all(
-        uploadDrafts.map((draft) => saveFile(draft.id, draft.file)),
-      );
+      try {
+        await Promise.all(
+          uploadDrafts.map((draft) => saveFile(draft.id, draft.file)),
+        );
+      } catch {
+        throw new Error(
+          "We couldn’t save your files. Your selected files are still here. Free up device storage and try again.",
+        );
+      }
       for (const draft of uploadDrafts) {
         dispatch({
           type: "RECORD",
@@ -611,15 +619,7 @@ export default function Records() {
             ))}
           </div>
         )}
-        {tab === "history" && (
-          <MedicalHistory
-            member={activeMember}
-            onUpload={() => {
-              setTab("records");
-              setUpload(true);
-            }}
-          />
-        )}
+        {tab === "history" && <MedicalHistory member={activeMember} />}
         {tab !== "history" &&
           !count &&
           (!search && !hasTabRecords ? (
@@ -630,6 +630,7 @@ export default function Records() {
                   : TAB_ICONS[tab].name
               }
               title={emptyCopy.title}
+              medicalRecords={tab === "records"}
               label={RECORD_TABS.find((t) => t.id === tab).label.toLowerCase()}
               onUpload={() => {
                 setTab("records");
@@ -661,23 +662,6 @@ export default function Records() {
               }
             />
           ))}
-        {tab === "labs" && hasTabRecords && (
-          <Notice icon="document-upload">
-            <strong>Have lab results to add?</strong>
-            <p>
-              Upload your lab reports in Medical Records to keep them together.
-            </p>
-            <Button
-              variant="link"
-              onClick={() => {
-                setTab("records");
-                setUpload(true);
-              }}
-            >
-              Upload in Medical Records
-            </Button>
-          </Notice>
-        )}
       </div>
       {abhaLink && (
         <>
@@ -719,56 +703,88 @@ export default function Records() {
         title="Upload medical records"
         description={`For ${activeMember.name} · Up to 5 documents at once`}
         footer={
-          <div className={r.uploadFooter}>
-            <ErrorText>{error}</ErrorText>
-            <Button
-              type="submit"
-              form="medical-record-upload"
-              loading={busy}
-              disabled={!uploadDrafts.length}
-              fullWidth
-            >
-              {uploadDrafts.length > 1
-                ? `Save ${uploadDrafts.length} records`
-                : "Save record"}
-            </Button>
-          </div>
+          uploadDrafts.length > 0 ? (
+            <div className={r.uploadFooter}>
+              <ErrorText>{error}</ErrorText>
+              <div className={r.uploadFooterActions}>
+                <Button
+                  variant="outline"
+                  disabled={busy || uploadDrafts.length >= 5}
+                  onClick={() => uploadInput.current?.click()}
+                  fullWidth
+                >
+                  <Icon name="document-upload" size={18} />
+                  Upload more
+                </Button>
+                {uploadDrafts.length > 0 && (
+                  <Button
+                    type="submit"
+                    form="medical-record-upload"
+                    loading={busy}
+                    fullWidth
+                  >
+                    <Icon
+                      name="check-mark---tick"
+                      family="arrow2"
+                      corner="rounded"
+                      variant="linear"
+                      size={18}
+                    />
+                    {uploadDrafts.length > 1
+                      ? `Save ${uploadDrafts.length} records`
+                      : "Save record"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : undefined
         }
       >
         <form
           id="medical-record-upload"
           className={r.uploadForm}
+          data-empty={uploadDrafts.length === 0 || undefined}
           onSubmit={uploadRecord}
           noValidate
         >
-          <div className={r.uploadChooseRow}>
-            <label className={`${s.uploadZone} ${r.uploadPicker}`}>
-              <Icon name="document-upload" size={20} />
-              <strong>
-                {uploadDrafts.length === 5
-                  ? "5 files selected"
-                  : uploadDrafts.length
-                    ? "Add files"
-                    : "Choose files"}
-              </strong>
-              <input
-                aria-label="Record file"
-                type="file"
-                multiple
-                disabled={busy || uploadDrafts.length >= 5}
-                accept="application/pdf,image/jpeg,image/png,image/gif"
-                onChange={addUploadFiles}
-              />
-            </label>
-            <span className={r.uploadCount} role="status">
+          {!uploadDrafts.length && <ErrorText>{error}</ErrorText>}
+          {uploadDrafts.length > 0 && (
+            <p className={r.uploadCount} role="status">
               {uploadDrafts.length} of 5 selected
+            </p>
+          )}
+          <label
+            hidden={uploadDrafts.length > 0}
+            className={`${s.uploadZone} ${r.uploadPicker}`}
+          >
+            <Icon name="document-upload" size={20} />
+            <strong>
+              {uploadDrafts.length === 5
+                ? "5 files selected"
+                : uploadDrafts.length
+                  ? "Add files"
+                  : "Upload record"}
+            </strong>
+            <input
+              aria-label="Record file"
+              ref={uploadInput}
+              type="file"
+              multiple
+              disabled={busy || uploadDrafts.length >= 5}
+              accept="application/pdf,image/jpeg,image/png,image/gif"
+              onChange={addUploadFiles}
+            />
+            {!uploadDrafts.length && (
+              <span className={r.uploadCount} role="status">
+                0 of 5 selected
+              </span>
+            )}
+            <span className={r.uploadHint}>
+              Select up to 5 files, together or one at a time.
+              <br />
+              PDF, JPG, PNG or GIF · Up to 10 MB each
             </span>
-          </div>
-          <p className={r.uploadHint}>
-            Select multiple files together, or add them one at a time.
-            <br />
-            PDF, JPG, PNG or GIF · Up to 10 MB each
-          </p>
+          </label>
           {uploadDrafts.map((draft, index) => {
             const expanded = expandedUploads[draft.id] ?? index === 0;
             return (
@@ -792,41 +808,21 @@ export default function Records() {
                       }))
                     }
                   >
-                    <span className={r.uploadFileIcon}>
-                      <Icon
-                        name={
-                          draft.file.type === "application/pdf"
-                            ? "document-text"
-                            : "gallery"
-                        }
-                        size={20}
+                    <span className={r.uploadPreview}>
+                      <FileThumbnail
+                        file={draft.file}
+                        title={draft.file.name}
                       />
                     </span>
                     <span className={r.uploadFileInfo}>
                       <strong>{draft.file.name}</strong>
-                      <small>
-                        {draft.type} · {formatDate(draft.date)} ·{" "}
-                        {Math.max(1, Math.ceil(draft.file.size / 1024))} KB
-                      </small>
+                      <small>{formatDate(draft.date)}</small>
                     </span>
                     <Icon
-                      name={expanded ? "arrow-up" : "arrow-down"}
-                      size={16}
+                      name="chevron-down"
+                      className={r.uploadChevron}
+                      size={18}
                     />
-                  </button>
-                  <button
-                    type="button"
-                    className={r.uploadRemove}
-                    aria-label={`Remove ${draft.file.name}`}
-                    disabled={busy}
-                    onClick={() => {
-                      setUploadDrafts((drafts) =>
-                        drafts.filter((item) => item.id !== draft.id),
-                      );
-                      setError("");
-                    }}
-                  >
-                    <Icon name="trash" size={18} />
                   </button>
                 </div>
                 <div
@@ -845,36 +841,44 @@ export default function Records() {
                     }
                   />
                   <div className={r.uploadMetaFields}>
-                    <Field
-                      label="Date of Investigation"
-                      type="date"
-                      required
-                      disabled={busy}
-                      max={dateKey()}
-                      value={draft.date}
-                      onChange={(e) =>
-                        updateUploadDraft(draft.id, "date", e.target.value)
-                      }
-                    />
+                    <label className={r.uploadType}>
+                      <span>
+                        Date of Investigation <span aria-hidden="true">*</span>
+                      </span>
+                      <input
+                        aria-label="Date of Investigation"
+                        type="date"
+                        required
+                        disabled={busy}
+                        max={dateKey()}
+                        value={draft.date}
+                        onChange={(e) =>
+                          updateUploadDraft(draft.id, "date", e.target.value)
+                        }
+                      />
+                    </label>
                     <label className={r.uploadType}>
                       <span>
                         Record type <span aria-hidden="true">*</span>
                       </span>
-                      <select
-                        aria-label="Record type"
-                        required
-                        disabled={busy}
-                        value={draft.type}
-                        onChange={(e) =>
-                          updateUploadDraft(draft.id, "type", e.target.value)
-                        }
-                      >
-                        {MEDICAL_RECORD_TYPES.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
+                      <div className={r.uploadSelect}>
+                        <select
+                          aria-label="Record type"
+                          required
+                          disabled={busy}
+                          value={draft.type}
+                          onChange={(e) =>
+                            updateUploadDraft(draft.id, "type", e.target.value)
+                          }
+                        >
+                          {MEDICAL_RECORD_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                        <Icon name="chevron-down" size={16} />
+                      </div>
                     </label>
                   </div>
                   <label className={r.uploadNotes}>
@@ -893,6 +897,21 @@ export default function Records() {
                       }
                     />
                   </label>
+                  <button
+                    type="button"
+                    className={r.uploadRemove}
+                    aria-label={`Remove ${draft.file.name}`}
+                    disabled={busy}
+                    onClick={() => {
+                      setUploadDrafts((drafts) =>
+                        drafts.filter((item) => item.id !== draft.id),
+                      );
+                      setError("");
+                    }}
+                  >
+                    <Icon name="trash" size={18} />
+                    Remove file
+                  </button>
                 </div>
               </section>
             );
@@ -998,20 +1017,31 @@ function DischargeSheet({ record, onClose, onOpenPdf }) {
   );
 }
 
-function RecordEmpty({ icon, title, label, onUpload }) {
+function RecordEmpty({ icon, title, label, onUpload, medicalRecords = false }) {
+  const navigate = useNavigate();
   return (
     <section className={r.recordEmpty}>
       <span className={r.recordEmptyIcon}>
         <Icon name={icon} size={30} bulk />
       </span>
       <h2>{title}</h2>
-      <Notice tone="pending">
-        You’ll start seeing {label} here once your doctor or hospital uploads or
-        updates them in the portal.
-      </Notice>
-      <Button onClick={onUpload}>
-        <Icon name="document-upload" size={18} />
-        Upload Records
+      {medicalRecords ? (
+        <p className={r.recordEmptyDescription}>
+          Your medical records will appear here when your doctor or hospital
+          adds them. You can also upload your own records.
+        </p>
+      ) : (
+        <Notice tone="pending" icon={null}>
+          You’ll start seeing {label} here once your doctor or hospital uploads
+          or updates them in Tatva Practice.
+        </Notice>
+      )}
+      <Button onClick={medicalRecords ? onUpload : () => navigate("/book")}>
+        <Icon
+          name={medicalRecords ? "document-upload" : "calendar-2"}
+          size={18}
+        />
+        {medicalRecords ? "Upload Records" : "Book appointment"}
       </Button>
     </section>
   );
@@ -1019,7 +1049,7 @@ function RecordEmpty({ icon, title, label, onUpload }) {
 
 // What the hospital knows about the patient: conditions, allergies,
 // medications, surgeries, vaccinations and family history.
-function MedicalHistory({ member, onUpload }) {
+function MedicalHistory({ member }) {
   const history = member.history || {};
   const total = HISTORY_SECTIONS.reduce(
     (n, sec) => n + (history[sec.key]?.length || 0),
@@ -1031,7 +1061,6 @@ function MedicalHistory({ member, onUpload }) {
         icon="health"
         title="No medical history yet"
         label="your medical history"
-        onUpload={onUpload}
       />
     );
   return (

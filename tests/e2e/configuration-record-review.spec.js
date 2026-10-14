@@ -71,7 +71,7 @@ test("name saves settle across tabs without repainting themes, and expanded prev
   ).toBeFocused();
 });
 
-test("empty record categories explain hospital updates without search; labs link to upload", async ({
+test("empty record categories explain hospital updates; only Medical Records offers uploads", async ({
   page,
 }) => {
   await page.goto("/records");
@@ -92,23 +92,45 @@ test("empty record categories explain hospital updates without search; labs link
   ]) {
     await page.goto(`/records?tab=${tab}`);
     await expect(
-      page.getByText(/You’ll start seeing.*doctor or hospital/),
+      page.getByText(
+        tab === "records"
+          ? /Your medical records will appear here.*doctor or hospital/
+          : /You’ll start seeing.*doctor or hospital/,
+      ),
     ).toBeVisible();
     await expect(page.getByRole("textbox", { name: /^Search/ })).toHaveCount(0);
+    const actionName =
+      tab === "records" ? "Upload Records" : "Book appointment";
+    await expect(
+      page.getByRole("button", { name: actionName, exact: true }),
+    ).toHaveCount(1);
     await expect(
       page.getByRole("button", { name: "Upload Records", exact: true }),
-    ).toHaveCount(1);
+    ).toHaveCount(tab === "records" ? 1 : 0);
     await expect(
       page.getByRole("button", { name: "Upload medical records", exact: true }),
     ).toHaveCount(0);
-    const empty = page
-      .locator("section")
-      .filter({
-        has: page.getByRole("button", { name: "Upload Records", exact: true }),
-      });
-    await expect(empty).toHaveCSS("text-align", "left");
+    const empty = page.locator("section").filter({
+      has: page.getByRole("button", { name: actionName, exact: true }),
+    });
+    await expect(empty).toHaveCSS("text-align", "center");
+    await expect(empty).toHaveCSS("align-items", "center");
+    await expect(
+      empty.locator('[data-tone="pending"] [data-tp-icon]'),
+    ).toHaveCount(0);
+    if (tab === "records") {
+      await expect(empty.locator('[data-tone="pending"]')).toHaveCount(0);
+      await expect(
+        empty.getByText(/You can also upload your own records/),
+      ).toBeVisible();
+    }
   }
   await page.goto("/records?tab=labs");
+  await page
+    .getByRole("button", { name: "Book appointment", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/book$/);
+  await page.goto("/records?tab=records");
   await page
     .getByRole("button", { name: "Upload Records", exact: true })
     .click();

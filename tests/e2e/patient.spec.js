@@ -624,7 +624,6 @@ test("patients link ABHA with verification, persist and unlink without UHID link
     page.getByRole("button", { name: "Link UHID", exact: true }),
   ).toHaveCount(0);
   // ABHA links through the full ABHA flow (link existing by ABHA number).
-  await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
   await expect(page).toHaveURL(/\/abha$/);
   await page.getByRole("button", { name: "Link using ABHA number" }).click();
   await page.getByLabel("ABHA number").fill("12345678901234");
@@ -634,7 +633,8 @@ test("patients link ABHA with verification, persist and unlink without UHID link
   await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
   await page.getByLabel("Digit 1").fill("123456");
   await page.getByRole("button", { name: "Link ABHA", exact: true }).click();
-  await expect(page).toHaveURL(/\/link-records$/, { timeout: 8000 });
+  await expect(page).toHaveURL(/\/records/, { timeout: 8000 });
+  await page.goto("/link-records");
   await page.reload();
   await expect(page.getByText("Linked", { exact: true })).toHaveCount(1);
   await page.getByRole("button", { name: /For Aarav Sharma/ }).click();
@@ -649,18 +649,15 @@ test("patients link ABHA with verification, persist and unlink without UHID link
     .getByRole("dialog")
     .getByRole("button", { name: /Aarav Sharma/ })
     .click();
-  await page.getByRole("button", { name: "ABHA linked. Manage" }).click();
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Unlink", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Unlink", exact: true }).click();
   await page
     .getByRole("alertdialog")
     .getByRole("button", { name: "Unlink identity", exact: true })
     .click();
   await expect(page.getByText("Linked", { exact: true })).toHaveCount(0);
+  await expect(page).toHaveURL(/\/abha$/);
   await expect(
-    page.getByRole("button", { name: "Link ABHA", exact: true }),
+    page.getByRole("button", { name: "Link using ABHA number" }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Link UHID", exact: true }),

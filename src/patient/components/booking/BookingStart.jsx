@@ -1,6 +1,6 @@
 import BookingAssistant from "./BookingAssistant";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AiSpark } from "../AiNote";
+import MiraAvatar from "../MiraAvatar";
 import { Icon, MemberContext, PageHeader, Sheet } from "../ui";
 import s from "../../App.module.css";
 import b from "./Booking.module.css";
@@ -41,7 +41,7 @@ export default function BookingStart() {
             onClick={() => navigate("/book?mode=assistant", { replace: true })}
           >
             <span className={b.optionIcon}>
-              <AiSpark size={24} />
+              <MiraAvatar size={44} />
             </span>
             <span className={s.grow}>
               <strong>Book with AI assistant</strong>

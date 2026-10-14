@@ -17,11 +17,34 @@ test("multiple uploads retain each investigation date, category, notes and origi
     .getByRole("button", { name: "Upload medical records", exact: true })
     .click();
   const dialog = page.getByRole("dialog", { name: "Upload medical records" });
+  await expect(
+    dialog.getByRole("button", { name: /Save|Upload more/ }),
+  ).toHaveCount(0);
+
   await dialog
     .getByLabel("Record file", { exact: true })
     .setInputFiles([image("Knee scan.png"), image("Blood report.png")]);
   const first = dialog.getByRole("group", { name: "Document 1", exact: true });
   const second = dialog.getByRole("group", { name: "Document 2", exact: true });
+  await expect(dialog.locator('label[class*="uploadPicker"]')).toBeHidden();
+  await expect(
+    dialog.getByRole("button", { name: "Upload more", exact: true }),
+  ).toBeVisible();
+  await expect(first.getByRole("textbox", { name: /Notes/ })).toHaveAttribute(
+    "maxlength",
+    "300",
+  );
+  const dateBox = await first
+    .getByLabel("Date of Investigation", { exact: true })
+    .boundingBox();
+  const typeBox = await first
+    .getByLabel("Record type", { exact: true })
+    .boundingBox();
+  expect(Math.abs(dateBox.y - typeBox.y)).toBeLessThanOrEqual(1);
+  expect(dateBox.height).toBe(typeBox.height);
+  await expect(
+    first.locator('[class*="uploadFileHeading"] [class*="uploadPreview"]'),
+  ).toHaveCSS("width", "44px");
   await first
     .getByLabel("Record title", { exact: true })
     .fill("Knee scan review");
@@ -41,6 +64,7 @@ test("multiple uploads retain each investigation date, category, notes and origi
   await second
     .getByRole("textbox", { name: /Notes/ })
     .fill("Fasting sample from the outside laboratory.");
+  await page.screenshot({ path: "/tmp/patient-upload-reviewed.png" });
   await dialog
     .getByRole("button", { name: "Save 2 records", exact: true })
     .click();
@@ -114,6 +138,11 @@ test("upload rejects more than five documents and supports removing a selected f
     .getByLabel("Record file", { exact: true })
     .setInputFiles([image("Keep.png"), image("Remove.png")]);
   await dialog
+    .getByRole("button", { name: "Remove.png", exact: false })
+    .filter({ hasText: "Remove.png" })
+    .first()
+    .click();
+  await dialog
     .getByRole("button", { name: "Remove Remove.png", exact: true })
     .click();
   await expect(dialog.getByRole("group", { name: /^Document \d/ })).toHaveCount(
@@ -122,4 +151,56 @@ test("upload rejects more than five documents and supports removing a selected f
   await expect(
     dialog.getByText("1 of 5 selected", { exact: true }),
   ).toBeVisible();
+});
+
+test("upload errors preserve drafts and let patients correct invalid metadata", async ({
+  page,
+}) => {
+  await page.goto("/records?tab=records&upload=1");
+  const dialog = page.getByRole("dialog", { name: "Upload medical records" });
+  const picker = dialog.getByLabel("Record file", { exact: true });
+  await picker.setInputFiles({
+    name: "Not a report.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("test"),
+  });
+  await expect(dialog.getByRole("alert")).toContainText(
+    "choose a PDF, JPG, PNG or GIF",
+  );
+  await picker.setInputFiles({
+    name: "Empty.png",
+    mimeType: "image/png",
+    buffer: Buffer.alloc(0),
+  });
+  await expect(dialog.getByRole("alert")).toContainText(
+    "between 1 byte and 10 MB",
+  );
+  await picker.setInputFiles(image("Report.png"));
+  await expect(dialog.getByRole("alert")).toHaveCount(0);
+  const title = dialog.getByLabel("Record title", { exact: true });
+  await title.fill("");
+  await dialog
+    .getByRole("button", { name: "Save record", exact: true })
+    .click();
+  await expect(dialog.getByRole("alert")).toContainText(
+    "Give Report.png a title",
+  );
+  await title.fill("My report");
+  await dialog
+    .getByLabel("Date of Investigation", { exact: true })
+    .fill("2099-01-01");
+  await dialog
+    .getByRole("button", { name: "Save record", exact: true })
+    .click();
+  await expect(dialog.getByRole("alert")).toContainText(
+    "today or a past investigation date",
+  );
+  await expect(title).toHaveValue("My report");
+  await dialog
+    .getByRole("button", { name: "Remove Report.png", exact: true })
+    .click();
+  await expect(dialog.locator('label[class*="uploadPicker"]')).toBeVisible();
+  await expect(
+    dialog.getByRole("button", { name: /Save|Upload more/ }),
+  ).toHaveCount(0);
 });

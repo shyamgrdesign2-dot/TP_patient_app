@@ -10,7 +10,7 @@ import { locations } from "../../shared/brand.js";
 export const CARE_CATEGORIES = Object.freeze([
   { id: "appointments", label: "Appointments", icon: "calendar-2" },
   { id: "records", label: "Health records", icon: "document-text" },
-  { id: "abha", label: "Connected health", icon: "abha" },
+  { id: "abha", label: "ABHA", icon: "abha" },
   { id: "packages", label: "Preventive care", icon: "health" },
 ]);
 export const CARE_WINDOWS = Object.freeze({
@@ -18,6 +18,9 @@ export const CARE_WINDOWS = Object.freeze({
   records: 7,
   completed: 30,
 });
+// Every selected state supplies its tag, middle content and footer action here.
+// See docs/home-card-contract.md for triggers and the complete content matrix.
+// `variant` distinguishes action states without changing the category lifecycle.
 function days(date, today) {
   return (
     (Date.parse(`${date}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) /
@@ -121,11 +124,13 @@ export function selectCareUpdates(
       upcoming.type === "In-person" &&
       !upcoming.symptomIntakeSkipped &&
       needsSymptoms(upcoming)
-    )
+    ) {
+      content.appointments.variant = "needs-symptoms";
       content.appointments.action = {
         label: "Add symptoms",
         path: `/assistant?appointment=${encodeURIComponent(upcoming.id)}`,
       };
+    }
   }
   if (record)
     content.records = {
@@ -134,10 +139,8 @@ export function selectCareUpdates(
       priority: record.new ? 20 : 40,
       label: record.new ? "New health record" : "Latest health record",
       status: record.new ? "New report" : "Recently added",
-      title: record.new
-        ? "Your report is ready."
-        : "New to your health records.",
-      description: record.title,
+      title: record.new ? "Your report is ready." : "Your latest record",
+      description: record.title || "Hospital report",
       detail: formatDate(record.date),
       meta: record.category,
       entityId: record.id,
@@ -159,9 +162,9 @@ export function selectCareUpdates(
             : "Book your first visit",
           status: "Book a visit",
           title: appointments.length
-            ? "Ready for your next visit?"
-            : "Let’s plan your first visit.",
-          description: "Choose your doctor and a time that suits you.",
+            ? "Plan your next visit"
+            : "Book your first visit",
+          description: "Choose a doctor and time.",
           detail: "In clinic or by video",
           action: { label: "Find a doctor", path: "/book" },
         };
@@ -176,12 +179,10 @@ export function selectCareUpdates(
       priority: 20,
       label: "Your health records",
       status: count ? "Your records" : "Getting started",
-      title: count
-        ? "Your health history, together."
-        : "A home for your health records.",
+      title: count ? "Your health history" : "Your health records",
       description: count
-        ? "Find reports and prescriptions in one place."
-        : "Hospital reports will appear here. You can add your own too.",
+        ? "All your records in one place."
+        : "Hospital and uploaded records.",
       detail: count
         ? `${count} saved ${count === 1 ? "record" : "records"}`
         : "Visits · Lab results · Medical records",
@@ -204,10 +205,10 @@ export function selectCareUpdates(
         priority: 80,
         label: "Your ABHA",
         categoryLabel: "ABHA",
-        status: "Connected",
+        status: "Linked",
         title: abha.address || abhaAddress(member),
         description: maskAbha(abha.identifier),
-        detail: "",
+        detail: "Your health identity",
         action: { label: "View ABHA card", path: "/records?abha=card" },
       }
     : {
@@ -215,9 +216,9 @@ export function selectCareUpdates(
         tone: "primary",
         priority: 80,
         label: "Link your ABHA",
-        status: "Connect ABHA",
-        title: "Your health, connected.",
-        description: "Link your ABHA to your hospital profile.",
+        status: "Not linked",
+        title: "Connect your health",
+        description: "Link ABHA to your profile.",
         detail: "One health identity",
         action: { label: "Link ABHA", path: "/abha" },
       };
@@ -238,11 +239,12 @@ export function selectCareUpdates(
     content.packages = request
       ? {
           state: "requested",
+          variant: request.status === "Confirmed" ? "confirmed" : "requested",
           tone: "primary",
           label: "Your preventive care booking",
           status: request.status === "Confirmed" ? "Confirmed" : "Request sent",
-          title: request.itemName,
-          description: "Your next step towards better health.",
+          title: request.itemName || "Your care booking",
+          description: "Your next step to better health.",
           detail: formatDate(request.date),
           meta: request.clinicName,
           action: { label: "View booking", path: "/packages?tab=bookings" },
@@ -252,10 +254,10 @@ export function selectCareUpdates(
           tone: "primary",
           label: "Explore preventive care",
           status: "Stay a step ahead",
-          title: "A little check-in. A healthier you.",
+          title: "Care for a healthier you",
           description: hasCatalog
-            ? "Explore health checks, laboratory tests and more."
-            : "Your hospital’s preventive care, in one place.",
+            ? "Health checks, tests and more."
+            : "Preventive care in one place.",
           detail: prices.length
             ? `Health checks from ${money(Math.min(...prices))}`
             : "Care for your whole family",
@@ -265,6 +267,7 @@ export function selectCareUpdates(
   return CARE_CATEGORIES.filter((category) => content[category.id]).map(
     (category) => ({
       ...content[category.id],
+      variant: content[category.id].variant || content[category.id].state,
       id: category.id,
       category,
       memberId,

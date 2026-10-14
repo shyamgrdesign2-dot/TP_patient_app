@@ -103,6 +103,10 @@ export function PrescriptionReader({ records }) {
 }
 export function RecordThumbnail({ record }) {
   const { file, error } = useRecordFile(record);
+  return <FileThumbnail file={file} error={error} title={record.title} />;
+}
+// Shared local preview for saved records and unsaved upload drafts.
+export function FileThumbnail({ file, error, title }) {
   const [url, setUrl] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -127,7 +131,7 @@ export function RecordThumbnail({ record }) {
     >
       {file?.type === "application/pdf" ? (
         <Suspense fallback={<span data-loading="true" />}>
-          <PdfViewer blob={file} title={record.title} />
+          <PdfViewer blob={file} title={title} />
         </Suspense>
       ) : url && !imageError ? (
         <img
