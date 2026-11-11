@@ -580,7 +580,9 @@ export default function Feedback() {
             "message-text",
             <>
               {filtered.length ? (
-                <DataTable className={s.fbTable} columns={columns} data={filtered} rowHeight="lg" pageSize={8} pageSizeOptions={[8, 16, 32]} hoverable={false} />
+                <div className={s.tableScroll}>
+                  <DataTable className={s.fbTable} columns={columns} data={filtered} rowHeight="lg" pageSize={8} pageSizeOptions={[8, 16, 32]} hoverable={false} />
+                </div>
               ) : (
                 <Empty size="sm" icon="search-normal" title="No responses match" description="Widen the period or clear a filter." action={<Button variant="outline" size="sm" onClick={reset}>Reset filters</Button>} />
               )}

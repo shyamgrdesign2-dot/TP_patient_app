@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Navigate,
   Route,
@@ -14,7 +14,7 @@ import AppConfig from "./AppConfig";
 import DoctorsConfig from "./DoctorsConfig";
 import Feedback from "./Feedback";
 import s from "./Admin.module.css";
-import { Sidebar } from "@dhspl-tatvacare/tesseract-ui";
+import { Sidebar, Tabs, TabsList, TabsTrigger } from "@dhspl-tatvacare/tesseract-ui";
 
 // Hospital admin portal (web, desktop layout). Separate from the patient app
 // and its phone frame; in Tatva Practice it sits inside the admin-doctor
@@ -27,6 +27,20 @@ const NAV = [
   ["packages", "Packages & vaccines", "health"],
   ["notifications", "Messages", "message-text"],
 ];
+
+// Matches the stylesheet's breakpoints so layout and markup switch together:
+// ≤900px a top bar with tabs replaces the sidebar; ≤1100px the sidebar is a rail.
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const update = () => setMatches(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [query]);
+  return matches;
+}
 
 function useAdminConfig() {
   const [config, setConfig] = useState(readAdminConfig);
@@ -57,6 +71,8 @@ function AdminShell() {
     });
   }, [location.pathname]);
   const { brand } = useApp();
+  const compact = useMediaQuery("(max-width: 900px)");
+  const rail = useMediaQuery("(max-width: 1100px)");
   const [config, setConfig] = useAdminConfig();
   const [saved, setSaved] = useState("");
   const flash = (msg) => {
@@ -64,58 +80,91 @@ function AdminShell() {
     clearTimeout(flash.t);
     flash.t = setTimeout(() => setSaved(""), 2400);
   };
+  const active = location.pathname.split("/")[2] || "app";
+  const brandBlock = (
+    <div className={s.sideBrand}>
+      <span className={s.brandMark} data-small>
+        {brandMarkSrc(brand) ? (
+          <img src={brandMarkSrc(brand)} alt="" />
+        ) : (
+          <Icon name="hospital" family="building" bulk size={20} />
+        )}
+      </span>
+      <div>
+        <strong>{brand.hospitalName}</strong>
+        <small>Patient app console</small>
+      </div>
+    </div>
+  );
+  const openApp = (
+    <a href="/" target="_blank" rel="noreferrer" className={s.footLink}>
+      <Icon name="export" size={16} /> Open patient app
+    </a>
+  );
   return (
-    <div className={s.shell}>
-      <Sidebar
-        ref={sidebar}
-        className={s.tesseractSidebar}
-        expandedWidth={264}
-        showCollapseToggle={false}
-        bottomFade={false}
-        aria-label="Admin sections"
-        items={NAV.map(([id, label, icon]) => ({
-          id,
-          label,
-          icon: <Icon name={icon} size={18} />,
-        }))}
-        activeId={location.pathname.split("/")[2] || "app"}
-        onSelect={(id) => {
-          if (NAV.find((item) => item[0] === id)?.[3]) navigate(`/admin/${id}`);
-        }}
-        logo={
-          <>
-            <div className={s.sideBrand}>
-              <span className={s.brandMark} data-small>
-                {brandMarkSrc(brand) ? (
-                  <img src={brandMarkSrc(brand)} alt="" />
-                ) : (
-                  <Icon name="hospital" family="building" bulk size={20} />
-                )}
+    <div className={s.shell} data-compact={compact || undefined}>
+      {compact ? (
+        // Phones and portrait tablets: a top bar with the sections as tabs,
+        // scrollable sideways, instead of a sidebar that would fill the screen.
+        <header className={s.topBar}>
+          <div className={s.topBarRow}>
+            {brandBlock}
+            {openApp}
+          </div>
+          <nav className={s.topNav} aria-label="Admin sections">
+            <Tabs value={active} size="sm" onValueChange={(id) => navigate(`/admin/${id}`)}>
+              <TabsList>
+                {NAV.map(([id, label, icon, enabled]) => (
+                  <TabsTrigger key={id} value={id} disabled={!enabled} leftIcon={<Icon name={icon} size={16} />}>
+                    {label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </nav>
+        </header>
+      ) : (
+        <Sidebar
+          ref={sidebar}
+          className={s.tesseractSidebar}
+          expandedWidth={264}
+          collapsedWidth={80}
+          collapsed={rail}
+          showCollapseToggle={false}
+          bottomFade={false}
+          aria-label="Admin sections"
+          items={NAV.map(([id, label, icon]) => ({
+            id,
+            label,
+            icon: <Icon name={icon} size={18} />,
+          }))}
+          activeId={active}
+          onSelect={(id) => {
+            if (NAV.find((item) => item[0] === id)?.[3]) navigate(`/admin/${id}`);
+          }}
+          logo={
+            rail ? (
+              <span className={s.brandMark} data-small title={brand.hospitalName}>
+                {brandMarkSrc(brand) ? <img src={brandMarkSrc(brand)} alt="" /> : <Icon name="hospital" family="building" bulk size={20} />}
               </span>
-              <div>
-                <strong>{brand.hospitalName}</strong>
-                <small>Patient app console</small>
-              </div>
-            </div>
-          </>
-        }
-        footer={
-          <>
-            {" "}
+            ) : (
+              brandBlock
+            )
+          }
+          footer={
             <div className={s.sideFoot}>
-              <span className={s.rolePill}>Hospital admin</span>
-              <a
-                href="/"
-                target="_blank"
-                rel="noreferrer"
-                className={s.footLink}
-              >
-                <Icon name="export" size={16} /> Open patient app
-              </a>
+              {!rail && <span className={s.rolePill}>Hospital admin</span>}
+              {rail ? (
+                <a href="/" target="_blank" rel="noreferrer" className={s.footLink} aria-label="Open patient app" title="Open patient app">
+                  <Icon name="export" size={16} />
+                </a>
+              ) : (
+                openApp
+              )}
             </div>
-          </>
-        }
-      />
+          }
+        />
+      )}
       <main className={s.main} aria-label="App administration">
         {saved && (
           <div className={s.saved} role="status">

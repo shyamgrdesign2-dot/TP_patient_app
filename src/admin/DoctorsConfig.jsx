@@ -78,6 +78,7 @@ export default function DoctorsConfig({ config, setConfig, flash }) {
           </div>
         </div>
         {atClinic.length ? (
+          <div className={s.tableScroll}>
           <table className={s.table}>
             <thead>
               <tr>
@@ -142,6 +143,7 @@ export default function DoctorsConfig({ config, setConfig, flash }) {
               })}
             </tbody>
           </table>
+          </div>
         ) : (
           <div className={s.empty}>
             <Icon name="profile-2user" size={32} bulk />

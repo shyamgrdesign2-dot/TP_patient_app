@@ -119,11 +119,68 @@
   background: var(--tesseract-slate-100);
 }
 .main {
+  --main-pad-x: var(--tesseract-space-8);
+  --main-pad-y: var(--tesseract-space-8);
   position: relative;
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--tesseract-space-8);
+  padding: var(--main-pad-y) var(--main-pad-x);
+}
+/* Horizontal scroll for wide tables on narrow screens, instead of overflow. */
+.tableScroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tableScroll > table {
+  min-width: 640px;
+}
+/* Compact shell (≤900px): brand + tabs on top, content below. */
+.topBar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4) 0;
+  border-bottom: 1px solid var(--tesseract-border-soft);
+  background: var(--tesseract-bg-surface);
+}
+.topBarRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-3);
+}
+.topBarRow .sideBrand {
+  padding: 0;
+  min-width: 0;
+}
+.topBarRow .sideBrand strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topBarRow .footLink {
+  flex-shrink: 0;
+}
+.topNav {
+  margin: 0 calc(var(--tesseract-space-4) * -1);
+  padding: 0 var(--tesseract-space-4);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.topNav::-webkit-scrollbar {
+  display: none;
+}
+.topNav [role="tablist"] {
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: 100%;
+}
+.topNav [role="tab"] {
+  white-space: nowrap;
 }
 /* One content column for every section: same left edge, same width. */
 .content {
@@ -613,17 +670,25 @@ textarea.input {
     opacity: 0;
   }
 }
+@media (max-width: 1100px) {
+  .shell {
+    grid-template-columns: 80px minmax(0, 1fr);
+  }
+  .sideFoot {
+    align-items: center;
+  }
+}
 @media (max-width: 900px) {
   .sidebar {
     height: auto;
   }
   .shell {
-    display: block;
-    overflow-y: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
   .main {
-    overflow: visible;
-    padding: var(--tesseract-space-5) var(--tesseract-space-4);
+    --main-pad-x: var(--tesseract-space-4);
+    --main-pad-y: var(--tesseract-space-5);
   }
   .grid2,
   .stats,
@@ -996,9 +1061,16 @@ textarea.input {
 }
 .factGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--tesseract-space-3) var(--tesseract-space-5);
   margin: 0;
+}
+.factGrid dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.factGrid dd a {
+  white-space: nowrap;
 }
 .factGrid > div[data-wide] {
   grid-column: span 2;
@@ -1327,6 +1399,13 @@ textarea.input {
 @media (max-width: 1100px) {
   .appLayout {
     gap: 20px;
+  }
+  .clinicDetails {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .clinicExtras {
+    padding-left: 0;
+    border-left: 0;
   }
   .editorTopbar {
     flex-wrap: wrap;
@@ -1663,13 +1742,13 @@ textarea.input {
    sticky offsets are measured on the margin box, so `top` cancels it too. */
 .fbSticky {
   position: sticky;
-  top: calc(var(--tesseract-space-8) * -1);
+  top: calc(var(--main-pad-y) * -1);
   z-index: 5;
   display: flex;
   flex-direction: column;
   gap: var(--tesseract-space-4);
-  margin: calc(var(--tesseract-space-8) * -1) calc(var(--tesseract-space-8) * -1) 0;
-  padding: var(--tesseract-space-5) var(--tesseract-space-8) var(--tesseract-space-4);
+  margin: calc(var(--main-pad-y) * -1) calc(var(--main-pad-x) * -1) 0;
+  padding: var(--tesseract-space-5) var(--main-pad-x) var(--tesseract-space-4);
   background: var(--tesseract-bg-surface);
   border-bottom: 1px solid var(--tesseract-border-neutral);
 }
@@ -1779,6 +1858,24 @@ textarea.input {
   }
   .fbCharts {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .fbKpis {
+    grid-template-columns: 1fr;
+  }
+  .fbSearch {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .fbTools {
+    width: 100%;
+    margin-left: 0;
+  }
+  .fbRange,
+  .fbSort {
+    flex: 1 1 calc(50% - var(--tesseract-space-1));
+    width: auto;
   }
 }
 
@@ -2486,8 +2583,15 @@ textarea.input {
 }
 @media (max-width: 600px) {
   .configTopbar {
-    flex-wrap: wrap;
-    padding: 16px;
+    gap: 12px;
+    padding: 14px 16px;
+    min-height: 0;
+  }
+  .configTopbar > div:first-child {
+    min-width: 0;
+  }
+  .configTopbar h1 {
+    font-size: 20px;
   }
   .configTopActions {
     margin-left: auto;

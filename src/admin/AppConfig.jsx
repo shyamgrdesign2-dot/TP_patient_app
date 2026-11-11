@@ -118,19 +118,29 @@ export default function AppConfig({ config, setConfig, flash }) {
   const previewDialog = useRef(null);
   const previewToggle = useRef(null);
   const [expanded, setExpanded] = useState(false);
+  // Previous value of `expanded`, so focus only moves when the admin actually
+  // toggled the preview (not on mount, nor on StrictMode's second effect run).
+  const wasExpanded = useRef(null);
   useEffect(() => {
     const dialog = previewDialog.current;
     if (!dialog) return;
-    const wasOpen = dialog.open;
+    const toggled = wasExpanded.current !== null && wasExpanded.current !== expanded;
+    wasExpanded.current = expanded;
     // Promote the same iframe to the top layer, retaining its route and state.
     if (dialog.open) dialog.close();
-    if (expanded) {
-      dialog.showModal();
-      previewToggle.current?.focus();
-    } else {
-      dialog.show();
-      if (wasOpen) previewToggle.current?.focus();
-    }
+    // show()/showModal() move focus into the dialog, which scrolls the console
+    // to the phone when the preview sits below the content (tablets, phones).
+    // Keep the scroll position the admin had and only focus the toggle on a
+    // real toggle, without scrolling.
+    const scrollers = [dialog.closest("main"), document.scrollingElement].filter(Boolean);
+    const tops = scrollers.map((el) => el.scrollTop);
+    if (expanded) dialog.showModal();
+    else dialog.show();
+    scrollers.forEach((el, i) => {
+      el.scrollTop = tops[i];
+    });
+    if (toggled) previewToggle.current?.focus({ preventScroll: true });
+    else if (dialog.contains(document.activeElement)) document.activeElement.blur();
   }, [expanded]);
   const [actionHost, setActionHost] = useState(null);
   return (
