@@ -30,9 +30,10 @@ The full number stays in the patient record.
 
 Older submissions made before identity was attached show "Not recorded".
 
-Because feedback now names the patient, the app's feedback screen should
-state that the hospital will see who submitted the rating. Add that line (or
-a consent checkbox, if legal asks for one) before this ships.
+Because feedback names the patient, the app's feedback screen says so above
+the Save button: "Shared with the hospital as <name> (<patient ID>), so they
+can follow up if needed. Your mobile number is shown to them masked." Swap
+this for a consent checkbox if legal asks for one.
 
 ## What the admin sees
 

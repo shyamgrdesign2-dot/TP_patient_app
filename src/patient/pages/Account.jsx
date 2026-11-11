@@ -564,6 +564,11 @@ export function Feedback() {
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
+          <p className={s.fieldHint}>
+            Shared with the hospital as {activeMember.name}
+            {activeMember.mrn ? ` (${activeMember.mrn})` : ""}, so they can follow up if needed.
+            Your mobile number is shown to them masked.
+          </p>
           <ErrorText>{error}</ErrorText>
           <Button type="submit">Save feedback</Button>
         </form>
