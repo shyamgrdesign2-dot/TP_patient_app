@@ -12,6 +12,7 @@ import { Icon } from "../shared/ui";
 import { readAdminConfig, writeAdminConfig } from "../shared/hospitalConfig";
 import AppConfig from "./AppConfig";
 import DoctorsConfig from "./DoctorsConfig";
+import Feedback from "./Feedback";
 import s from "./Admin.module.css";
 import { Sidebar } from "@dhspl-tatvacare/tesseract-ui";
 
@@ -22,6 +23,7 @@ const NAV = [
   ["overview", "Overview", "category-2"],
   ["app", "App configuration", "mobile", true],
   ["doctors", "Doctors & clinics", "profile-2user", true],
+  ["feedback", "Patient feedback", "message-favorite", true],
   ["packages", "Packages & vaccines", "health"],
   ["notifications", "Messages", "message-text"],
 ];
@@ -143,6 +145,7 @@ function AdminShell() {
                 />
               }
             />
+            <Route path="feedback" element={<Feedback />} />
             <Route path="*" element={<Navigate to="/admin/app" replace />} />
           </Routes>
         </div>

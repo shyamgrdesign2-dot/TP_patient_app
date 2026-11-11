@@ -3,7 +3,8 @@ import { locations } from "../shared/brand";
 import { allDoctors, dateKey } from "../shared/data";
 import { Icon } from "../shared/ui";
 import { Button } from "../patient/components/ui";
-import { PageTitle, PackagesOffNote } from "./AdminParts";
+import { Bars, PageTitle, PackagesOffNote } from "./AdminParts";
+import { FeedbackPanel } from "./Feedback";
 import s from "./Admin.module.css";
 
 const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0);
@@ -13,24 +14,6 @@ const timeAgo = (iso) => {
   const hours = Math.round(mins / 60);
   return hours < 24 ? `${hours} h ago` : `${Math.round(hours / 24)} d ago`;
 };
-
-// Horizontal bars, scaled to the largest value in the set.
-function Bars({ rows, label }) {
-  const max = Math.max(1, ...rows.map((r) => r[1]));
-  return (
-    <ul className={s.bars} aria-label={label}>
-      {rows.map(([name, value, tone]) => (
-        <li key={name}>
-          <span className={s.barName}>{name}</span>
-          <span className={s.barTrack} aria-hidden="true">
-            <span className={s.barFill} data-tone={tone} style={{ width: value ? `max(4px, ${(value / max) * 100}%)` : 0 }} />
-          </span>
-          <strong className={s.barValue}>{value}</strong>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 function Card({ title, sub, children, wide }) {
   return (
@@ -69,6 +52,8 @@ export default function Overview({ config }) {
   const abhaLinked = members.filter((m) => state.healthLinks?.[m.id]?.abha).length;
   const callbacks = state.callbackRequests || [];
   const waiting = callbacks.filter((r) => r.status === "Requested");
+  const feedback = state.feedback || [];
+  const feedbackThisMonth = feedback.filter((f) => f.createdAt?.startsWith(month)).length;
   const stats = [
     ["Patients on the app", members.length, "profile-2user"],
     ["Upcoming appointments", byStatus(visits, "Confirmed"), "calendar-2"],
@@ -208,6 +193,17 @@ export default function Overview({ config }) {
           ) : (
             <p className={s.hint}>No callback requests yet.</p>
           )}
+        </Card>
+        <Card
+          wide
+          title="Patient feedback"
+          sub={
+            feedback.length
+              ? `${feedback.length} response${feedback.length === 1 ? "" : "s"} · ${feedbackThisMonth} this month · shared from Account → Feedback in the patient app`
+              : "Ratings and comments patients share from Account → Feedback in the patient app"
+          }
+        >
+          <FeedbackPanel feedback={feedback} />
         </Card>
       </div>
     </>

@@ -1589,6 +1589,65 @@ textarea.input {
   background: none;
 }
 
+/* Overview: patient feedback card. */
+.feedbackGrid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+  gap: var(--tesseract-space-6);
+}
+.feedbackSummary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-4);
+}
+.stars {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--tesseract-fg-warning);
+}
+.feedbackList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.feedbackList li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-1);
+  padding: var(--tesseract-space-3) 0;
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.feedbackList li:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.feedbackList p {
+  margin: 0;
+  font-size: var(--tesseract-text-body-sm);
+  color: var(--tesseract-fg-secondary);
+  overflow-wrap: anywhere;
+}
+.feedbackList em {
+  color: var(--tesseract-fg-tertiary);
+}
+.feedbackMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-3);
+}
+.feedbackMeta small {
+  font-size: var(--tesseract-text-caption);
+  color: var(--tesseract-fg-tertiary);
+}
+@media (max-width: 1100px) {
+  .feedbackGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Packages & vaccines: photo thumbnails in the table and the drawer. */
 .pkgNameCell {
   display: flex;

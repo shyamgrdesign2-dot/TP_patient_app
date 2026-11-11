@@ -2,7 +2,8 @@
 
 The desktop web console mounted by `src/main.jsx` for `/admin/*`
 (`AdminRoot.jsx` → `AdminApp.jsx`). Routes: `/admin/overview`, `/admin/app`
-(app configuration and theme), `/admin/doctors`, `/admin/packages`,
+(app configuration and theme), `/admin/doctors`, `/admin/feedback`
+(ratings and comments patients submit in the app), `/admin/packages`,
 `/admin/notifications`.
 
 The demo opens directly in the Hospital admin workspace, without a role picker.
@@ -19,7 +20,8 @@ Hospital Configuration service/API that the patient app reads. See
 
 - `patient/state/AppContext.jsx` — `AppProvider`/`useApp` give the console
   the saved brand and `saveBrand` (App configuration), and the demo patient
-  state plus `dispatch` (Overview: visits, package requests, callbacks).
+  state plus `dispatch` (Overview: visits, package requests, callbacks;
+  Patient feedback: the `feedback` list the app writes).
 - `PackagesConfig.jsx` reads and updates package bookings directly in the
   patient's localStorage key `tatva-patient-demo-v1`.
 - `patient/components/ui.jsx` — `Button` (carries the patient button style)

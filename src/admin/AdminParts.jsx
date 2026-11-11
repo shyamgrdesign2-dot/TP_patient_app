@@ -82,3 +82,23 @@ export function PackagesOffNote({ config }) {
     </InfoNote>
   );
 }
+
+// Horizontal bars, scaled to the largest value in the set.
+export function Bars({ rows, label }) {
+  const max = Math.max(1, ...rows.map((r) => r[1]));
+  return (
+    <ul className={s.bars} aria-label={label}>
+      {rows.map(([name, value, tone]) => (
+        <li key={name}>
+          <span className={s.barName}>{name}</span>
+          <span className={s.barTrack} aria-hidden="true">
+            <span className={s.barFill} data-tone={tone} style={{ width: value ? `max(4px, ${(value / max) * 100}%)` : 0 }} />
+          </span>
+          <strong className={s.barValue}>{value}</strong>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+
