@@ -15,6 +15,7 @@ import {
 } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../patient/state/AppContext";
 import { dateKey } from "../shared/data";
+import { ageLabel } from "../shared/age";
 import { Icon } from "../shared/ui";
 import { Button } from "../patient/components/ui";
 import { Bars, PageTitle } from "./AdminParts";
@@ -70,19 +71,21 @@ function SentimentInfo({ side = "top" }) {
 }
 
 // Who gave the rating. The app stores the member id plus a snapshot of the
-// name, phone and patient ID at submission time; the live member record wins
-// when it is still in this account. The mobile number is masked to its last
-// four digits in the console; the full number stays in the patient record.
-const maskPhone = (phone) => (phone ? `+91 •••••• ${String(phone).slice(-4)}` : null);
+// name, date of birth, gender, relation and patient ID at submission time;
+// the live member record wins when it is still in this account. No contact
+// details are stored with feedback: follow-up goes through the patient record.
 const whoOf = (f, members = []) => {
   const m = f.memberId ? members.find((x) => x.id === f.memberId) : null;
+  const src = m || { dob: f.dob, relation: f.relation };
   return {
     name: m?.name || f.patientName || "Not recorded",
     mrn: m?.mrn || f.mrn || null,
-    phone: maskPhone(m?.phone || f.phone),
+    age: ageLabel(src) || null,
+    gender: m?.gender || f.gender || null,
     relation: m?.relation || f.relation || null,
   };
 };
+const whoLine = (who) => [who.age, who.gender, who.mrn].filter(Boolean).join(" · ");
 
 // Gold stars. Filled = amber, empty = slate outline. Colour is never the only
 // signal: every instance carries the numeric rating in its label.
@@ -130,7 +133,7 @@ export function FeedbackPanel({ feedback, members = [], limit = 6 }) {
                   <Stars value={f.rating} />
                   <small>
                     {who.name}
-                    {who.mrn ? ` · ${who.mrn}` : ""}
+                    {whoLine(who) ? ` · ${whoLine(who)}` : ""}
                   </small>
                 </span>
                 <small>{timeAgo(f.createdAt)}</small>
@@ -276,10 +279,10 @@ const SORTS = [
 const csvOf = (list, members) => {
   const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   return [
-    "Submitted,Rating,Comment,Patient,Patient ID,Mobile (masked)",
+    "Submitted,Rating,Comment,Patient,Age,Gender,Patient ID",
     ...list.map((f) => {
       const who = whoOf(f, members);
-      return [esc(new Date(f.createdAt).toISOString()), f.rating, esc(f.message || ""), esc(who.name), esc(who.mrn || ""), esc(who.phone || "")].join(",");
+      return [esc(new Date(f.createdAt).toISOString()), f.rating, esc(f.message || ""), esc(who.name), esc(who.age || ""), esc(who.gender || ""), esc(who.mrn || "")].join(",");
     }),
   ].join("\n");
 };
@@ -388,10 +391,7 @@ export default function Feedback() {
       header: "Patient",
       width: 220,
       primary: (row) => whoOf(row, members).name,
-      secondary: (row) => {
-        const who = whoOf(row, members);
-        return [who.mrn, who.phone].filter(Boolean).join(" · ") || "No patient details";
-      },
+      secondary: (row) => whoLine(whoOf(row, members)) || "No patient details",
     },
     {
       id: "message",
@@ -584,7 +584,7 @@ export default function Feedback() {
               ) : (
                 <Empty size="sm" icon="search-normal" title="No responses match" description="Widen the period or clear a filter." action={<Button variant="outline" size="sm" onClick={reset}>Reset filters</Button>} />
               )}
-              <p className={s.hint}>Each response shows the patient who submitted it, their patient ID and a masked mobile number so the hospital can follow up. The full number stays in the patient record.</p>
+              <p className={s.hint}>Each response shows the patient who submitted it with their age, gender and patient ID. Contact details are not stored with feedback; follow up through the patient record.</p>
             </>,
           )}
         </>

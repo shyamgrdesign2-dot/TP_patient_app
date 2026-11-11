@@ -18,22 +18,22 @@ optional comment (up to 1,000 characters). Each submission is stored as:
 | `createdAt`   | ISO timestamp of submission                                  |
 | `memberId`    | The family member who was active when the rating was given   |
 | `patientName` | Snapshot of that member's name at submission time            |
-| `phone`       | Snapshot of the member's mobile number                       |
+| `dob`         | Snapshot of the member's date of birth (age is derived)      |
+| `gender`      | Snapshot of the member's gender                              |
 | `mrn`         | Snapshot of the member's patient ID (MRN)                    |
 | `relation`    | Snapshot of the relation (Self, Father, …)                   |
 
 The console resolves `memberId` against the live member record first and
 falls back to the snapshot, so a renamed member shows the current name while
-a deleted one still shows who gave the rating. The console never shows the
-full mobile number: it is masked to the last four digits (`+91 •••••• 0001`).
-The full number stays in the patient record.
+a deleted one still shows who gave the rating. No contact details are stored
+with feedback; follow-up goes through the patient record by patient ID.
 
 Older submissions made before identity was attached show "Not recorded".
 
 Because feedback names the patient, the app's feedback screen says so above
 the Save button: "Shared with the hospital as <name> (<patient ID>), so they
-can follow up if needed. Your mobile number is shown to them masked." Swap
-this for a consent checkbox if legal asks for one.
+can follow up if needed." Swap this for a consent checkbox if legal asks for
+one.
 
 ## What the admin sees
 
@@ -80,7 +80,7 @@ visible.
 ### Responses table
 
 Tesseract `DataTable`, 8 rows per page (16 or 32 selectable). Columns: Rating
-(stars and number), Patient (name, then patient ID and masked mobile), Comment
+(stars and number), Patient (name, then age · gender · patient ID), Comment
 (full text, wraps), Submitted (date, time, time ago). Rating-only submissions
 are labelled as such. The CSV export carries the same columns.
 
@@ -124,16 +124,16 @@ enabled in the console navigation.
 Replace the localStorage read with the tenant-scoped feedback service listed
 in `DEVELOPER_HANDOFF.md` under "Support and feedback". The page needs:
 
-- A list endpoint returning `{ id, rating, message, createdAt, patient: { id, name, mrn, phoneMasked } }`
+- A list endpoint returning `{ id, rating, message, createdAt, patient: { id, name, mrn, age, gender } }`
   for the hospital, filterable server-side by date range (the client can keep
-  the rating/sentiment/comment filters and sorting for the page it has). Mask
-  the phone on the server; the console must not receive the full number.
+  the rating/sentiment/comment filters and sorting for the page it has). Do
+  not include contact details in the feedback payload.
 - Pagination once volumes grow. The table is already paginated client-side.
 - Role check: admins and admin doctors only, like the rest of the console.
 - CSV export can stay client-side for the filtered page, or move to the
   service if the hospital wants the full history.
 
 Patient identity on feedback is a product decision (the hospital wants to
-follow up on reviews). Keep the masked phone, keep the "hospital will see who
-submitted this" line on the app's feedback screen, and restrict the page to
-admin roles.
+follow up on reviews). Keep contact details out of the feedback record, keep
+the "shared with the hospital" line on the app's feedback screen, and restrict
+the page to admin roles.

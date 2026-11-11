@@ -529,7 +529,8 @@ export function Feedback() {
                   // Who is giving the rating, so the hospital can follow up.
                   memberId: activeMember.id,
                   patientName: activeMember.name,
-                  phone: activeMember.phone,
+                  dob: activeMember.dob,
+                  gender: activeMember.gender,
                   mrn: activeMember.mrn,
                   relation: activeMember.relation,
                 },
@@ -567,7 +568,6 @@ export function Feedback() {
           <p className={s.fieldHint}>
             Shared with the hospital as {activeMember.name}
             {activeMember.mrn ? ` (${activeMember.mrn})` : ""}, so they can follow up if needed.
-            Your mobile number is shown to them masked.
           </p>
           <ErrorText>{error}</ErrorText>
           <Button type="submit">Save feedback</Button>

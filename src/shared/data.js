@@ -202,13 +202,13 @@ export const packages = [
 ];
 const hoursAgo = (h) => new Date(Date.now() - h * 3600000).toISOString();
 // Ratings and comments patients have shared from Account → Feedback, with
-// who gave them (member id plus a snapshot of name, phone and patient ID so
-// the console can show it even if the member is later edited). Days are
-// relative so the Feedback analytics page always has recent data.
+// who gave them (member id plus a snapshot of name, date of birth, gender,
+// relation and patient ID so the console can show it even if the member is
+// later edited). Days are relative so the analytics page always has recent data.
 const demoPatients = {
-  self: { patientName: "Aarav Sharma", phone: "9000000001", mrn: "TP-10482", relation: "Self" },
-  father: { patientName: "Rajesh Sharma", phone: "9000000002", mrn: "TP-10483", relation: "Father" },
-  mother: { patientName: "Sunita Sharma", phone: "9000000003", mrn: "TP-10484", relation: "Mother" },
+  self: { patientName: "Aarav Sharma", dob: "1994-05-12", gender: "Male", mrn: "TP-10482", relation: "Self" },
+  father: { patientName: "Rajesh Sharma", dob: "1962-11-08", gender: "Male", mrn: "TP-10483", relation: "Father" },
+  mother: { patientName: "Sunita Sharma", dob: "1966-03-21", gender: "Female", mrn: "TP-10484", relation: "Mother" },
 };
 const demoFeedback = [
   [1, 5, "Booking was quick and Dr. Mehta explained everything clearly.", "self"],
@@ -247,7 +247,7 @@ const demoFeedback = [
 export function initialState() {
   return {
     version: 1,
-    seedVersion: 9,
+    seedVersion: 10,
     activeMember: "self",
     location: "indiranagar",
     members: [

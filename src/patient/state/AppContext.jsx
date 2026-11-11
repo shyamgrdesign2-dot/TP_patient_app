@@ -206,17 +206,20 @@ export function AppProvider({ children }) {
         ...(isDemo ? seed.feedback.filter((f) => !have.has(f.id)) : []),
       ];
     }
-    // Seed feedback gained who gave it; copy that onto copies already saved.
-    if ((saved.seedVersion || 0) < 9) {
+    // Seed feedback gained who gave it (v9) and dropped the phone snapshot in
+    // favour of date of birth and gender (v10); bring saved copies in line.
+    if ((saved.seedVersion || 0) < 10) {
       saved.feedback = (saved.feedback || []).map((f) => {
-        if (f.memberId) return f;
+        const { phone: _phone, ...rest } = f;
         const s = seed.feedback.find((x) => x.id === f.id);
-        return s ? { ...f, ...pick(s, ["memberId", "patientName", "phone", "mrn", "relation"]) } : f;
+        return s
+          ? { ...rest, ...pick(s, ["memberId", "patientName", "dob", "gender", "mrn", "relation"]) }
+          : rest;
       });
     }
     // Records saved under the older document categories move to their tab.
     saved.records = (saved.records || []).map(normalizeRecord);
-    saved.seedVersion = 9;
+    saved.seedVersion = 10;
     return saved;
   });
   const stateRef = useRef(state);
