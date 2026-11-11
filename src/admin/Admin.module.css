@@ -2625,9 +2625,7 @@ textarea.input {
   overflow: auto;
 }
 .previewDialog[data-expanded] .previewToolbar {
-  order: -1;
   flex: 0 0 auto;
-  justify-content: space-between;
 }
 .previewDialog[data-expanded] .device {
   --device-scale: min(
@@ -2636,7 +2634,14 @@ textarea.input {
     calc((100vw - 56px) / 390px)
   );
   flex-shrink: 0;
-  margin: auto;
+  margin: auto auto 0;
+}
+.previewDialog[data-expanded] > small {
+  margin-bottom: auto;
+}
+.previewTitle {
+  align-self: flex-start;
+  flex: 0 0 auto;
 }
 .previewDialog::backdrop {
   background: #f3f3f7;

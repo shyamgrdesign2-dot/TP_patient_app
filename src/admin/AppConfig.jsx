@@ -195,6 +195,9 @@ export default function AppConfig({ config, setConfig, flash }) {
               setExpanded(false);
             }}
           >
+            {expanded && (
+              <strong className={s.previewTitle}>Patient app preview</strong>
+            )}
             <div className={s.device}>
               <iframe
                 ref={frame}
@@ -203,7 +206,6 @@ export default function AppConfig({ config, setConfig, flash }) {
               />
             </div>
             <div className={s.previewToolbar}>
-              {expanded && <strong>Patient app preview</strong>}
               <Button
                 ref={previewToggle}
                 variant="outline"
