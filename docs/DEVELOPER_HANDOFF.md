@@ -210,7 +210,9 @@ The last five sections populate when the doctor or hospital publishes relevant i
 
 ### 5.1 Active modules and edit behavior
 
-`/admin` redirects to `/admin/app`; `/admin/doctors` and `/admin/feedback` are also active. Production should mount these modules in Tatva Practice's shell and remove the separate demo identity/navigation scaffolding as appropriate.
+`/admin` redirects to `/admin/app`; `/admin/doctors` and `/admin/feedback` are also active.
+
+**Responsive shell.** The console adapts in three steps, driven by `matchMedia` in `AdminApp.jsx` and matching media queries in `Admin.module.css`: above 1100 px the full 264 px Tesseract `Sidebar`; 901–1100 px (iPad landscape) the 80 px collapsed rail; at or below 900 px (iPad portrait, phones) a white top bar with the brand, **Open patient app** and the sections as horizontally scrollable Tesseract `Tabs`. The main pane keeps scrolling in every mode (sticky headers rely on it) and exposes its padding as `--main-pad-x` / `--main-pad-y` (32 px; 16/20 px at or below 900 px) for full-bleed elements. Wide tables sit in a `.tableScroll` wrapper that scrolls sideways rather than overflowing. The App configuration preview `<dialog>` is opened without moving focus, because `show()` otherwise scrolls the pane to the phone on tablets. Production should mount these modules in Tatva Practice's shell and remove the separate demo identity/navigation scaffolding as appropriate.
 
 App configuration starts with a saved summary. Each **Edit** link is underlined with an edit icon. Edit mode has Hospital, Theme, Fonts, Contacts, Appointments and Features sections. Draft changes preview immediately; **Save changes** commits, **Cancel** restores saved configuration.
 
@@ -395,6 +397,7 @@ Use existing unit/domain tests and targeted Playwright tests before broad regres
 - Viewer: image/PDF errors, source attribution, document actions, permissions and return to the original records tab.
 - ABHA: linked/unlinked transitions, sync deduplication, member isolation, consent failures/revocation, no intermediate chooser.
 - Admin: saved/draft/cancel isolation, validated contacts/colors/fonts, logo replacement without tiny artwork, flexible crop frame, website no-result/partial-result/error, preview toggle preserving iframe route and focus.
+- Responsive console: at 390, 768, 1024 and 1440 px check App configuration (summary and editor open at the top, no auto-scroll to the phone), Doctors & clinics (clinic facts never overlap, doctor table scrolls sideways on phones) and Patient feedback (pinned header flush, toolbar wraps cleanly, KPIs 1/2/4 columns); no horizontal page overflow anywhere; top-bar tabs scroll and disabled sections stay disabled.
 - Feedback: submit from each family member and confirm the name, age, gender and patient ID on the admin page; every period preset and a custom range, including the previous-period deltas and the day/week/month bucket switch; Filter chips, search by comment/name/ID, sort, Reset all; CSV columns match the table; header stays pinned with no top gap; all toolbar controls 42 px on one line at 1136 px and 1440 px; sentiment rule visible on every sentiment surface and in the tooltip; empty states for no feedback and for no matches.
 - API integration: expired session, forbidden entity, cross-tenant IDs, pagination, stale responses after switching member, interrupted writes, idempotent retry and no demo fallback.
 - Store build: no admin/demo access, real-device accessibility, secure credentials, verified native file/share behavior and release configuration.
