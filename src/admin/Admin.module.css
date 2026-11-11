@@ -1657,12 +1657,13 @@ textarea.input {
 .stars [data-on] {
   color: var(--tesseract-amber-500);
 }
-/* Title, CTA and filters form one white header pinned at the top of the
+/* Title and filters form one white header pinned at the top of the
    scrolling console pane, full-bleed across the pane so it reads as chrome
-   rather than a floating card. Content below keeps the page background. */
+   rather than a floating card. The negative margins cancel the pane padding;
+   sticky offsets are measured on the margin box, so `top` cancels it too. */
 .fbSticky {
   position: sticky;
-  top: 0;
+  top: calc(var(--tesseract-space-8) * -1);
   z-index: 5;
   display: flex;
   flex-direction: column;
@@ -1670,22 +1671,46 @@ textarea.input {
   margin: calc(var(--tesseract-space-8) * -1) calc(var(--tesseract-space-8) * -1) 0;
   padding: var(--tesseract-space-5) var(--tesseract-space-8) var(--tesseract-space-4);
   background: var(--tesseract-bg-surface);
-  border-bottom: 1px solid var(--tesseract-border-soft);
+  border-bottom: 1px solid var(--tesseract-border-neutral);
 }
+/* One row: search on the left, period · sort · filter · export on the right.
+   Every control is the same 42px (Tesseract md) tall. */
 .fbToolbar {
+  --fb-control: var(--tesseract-size-42, 42px);
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--tesseract-space-3);
 }
-.fbToolbar > * {
+.fbSearch {
+  flex: 1 1 180px;
+  min-width: 180px;
+  max-width: 420px;
+}
+.fbTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  margin-left: auto;
+}
+.fbTools > * {
   min-width: 0;
 }
 .fbRange {
-  width: 240px;
+  width: 200px;
 }
 .fbSort {
-  width: 200px;
+  width: 180px;
+}
+.fbRange button,
+.fbFilter button[aria-haspopup],
+.fbFilter button:first-child,
+.fbExport,
+.fbTools > button {
+  box-sizing: border-box;
+  min-height: var(--fb-control);
+  height: var(--fb-control);
 }
 .fbKpis {
   display: grid;

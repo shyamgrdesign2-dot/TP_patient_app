@@ -428,41 +428,42 @@ export default function Feedback() {
       {/* Title and filters stay pinned while the analytics scroll underneath,
           so the admin always sees which period and filters apply. */}
       <div className={s.fbSticky}>
-        <PageTitle
-          title="Patient feedback"
-          sub="Ratings and comments patients share from Account → Feedback in the app."
-          action={
-            <Button variant="outline" size="sm" leftIcon={<Icon name="document-download" size={16} />} onClick={exportCsv} disabled={!filtered.length}>
-              Export CSV
-            </Button>
-          }
-        />
+        <PageTitle title="Patient feedback" sub="Ratings and comments patients share from Account → Feedback in the app." />
         {all.length > 0 && (
           <div className={s.fbToolbar} role="region" aria-label="Filters">
-            <div className={s.fbRange}>
-              <DateRangePicker
-                mode="range"
-                size="sm"
-                months={2}
-                showPresets
-                presets={presets}
-                aria-label="Period"
-                placeholder="Period"
-                maxDate={dayDate(today)}
-                value={period.preset ? period.preset : { start: dayDate(period.from), end: dayDate(period.to) }}
-                onChange={onPeriod}
-              />
+            <div className={s.fbSearch}>
+              <InputBox type="search" size="md" surface="muted" fullWidth leftIcon={<Icon name="search-normal" size={16} />} placeholder="Search comments, patients, IDs" aria-label="Search comments, patients and patient IDs" clearable value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
-            <InputBox type="search" size="sm" surface="muted" leftIcon={<Icon name="search-normal" size={16} />} minWidth={220} placeholder="Search comments, patients, IDs" aria-label="Search comments, patients and patient IDs" clearable value={query} onChange={(e) => setQuery(e.target.value)} />
-            <div className={s.fbSort}>
-              <Dropdown ariaLabel="Sort" label="" width="trigger" leadingIcon={<Icon name="sort" size={16} />} options={SORTS} value={sort} onChange={(v) => setSort(typeof v === "string" ? v : v?.value || "newest")} />
+            <div className={s.fbTools}>
+              {filtersActive ? (
+                <Button variant="ghost" size="sm" onClick={reset}>
+                  Reset all
+                </Button>
+              ) : null}
+              <div className={s.fbRange}>
+                <DateRangePicker
+                  mode="range"
+                  size="md"
+                  months={2}
+                  showPresets
+                  presets={presets}
+                  aria-label="Period"
+                  placeholder="Period"
+                  maxDate={dayDate(today)}
+                  value={period.preset ? period.preset : { start: dayDate(period.from), end: dayDate(period.to) }}
+                  onChange={onPeriod}
+                />
+              </div>
+              <div className={s.fbSort}>
+                <Dropdown ariaLabel="Sort" label="" width="trigger" leadingIcon={<Icon name="sort" size={16} />} options={SORTS} value={sort} onChange={(v) => setSort(typeof v === "string" ? v : v?.value || "newest")} />
+              </div>
+              <Filter className={s.fbFilter} groups={FILTER_GROUPS} value={filters} onChange={setFilters} />
+              <Tooltip content={filtered.length ? `Download the ${filtered.length} filtered response${filtered.length === 1 ? "" : "s"} as CSV` : "Nothing to export"} side="bottom">
+                <Button variant="outline" size="sm" className={s.fbExport} aria-label="Export CSV" leftIcon={<Icon name="document-download" size={16} />} onClick={exportCsv} disabled={!filtered.length}>
+                  CSV
+                </Button>
+              </Tooltip>
             </div>
-            <Filter groups={FILTER_GROUPS} value={filters} onChange={setFilters} />
-            {filtersActive ? (
-              <Button variant="ghost" size="sm" onClick={reset}>
-                Reset all
-              </Button>
-            ) : null}
           </div>
         )}
       </div>
