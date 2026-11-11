@@ -201,10 +201,45 @@ export const packages = [
   },
 ];
 const hoursAgo = (h) => new Date(Date.now() - h * 3600000).toISOString();
+// Ratings and comments patients have shared from Account → Feedback. The app
+// stores no identity with feedback, so these are hospital-wide for the demo.
+// Days are relative so the Feedback analytics page always has recent data.
+const demoFeedback = [
+  [1, 5, "Booking was quick and Dr. Mehta explained everything clearly."],
+  [2, 4, "Good experience overall. Waiting area was a little crowded."],
+  [4, 2, "Waited 45 minutes past my appointment time at Indiranagar."],
+  [6, 5, ""],
+  [9, 3, "Video consult kept dropping for the first few minutes."],
+  [12, 5, "Lab report came on the app the same evening. Very convenient."],
+  [15, 4, "Pharmacy queue could be shorter, otherwise smooth."],
+  [21, 1, "Could not find parking and the front desk was unhelpful."],
+  [26, 5, "The nurse at the vaccination desk was very gentle with my son."],
+  [33, 4, ""],
+  [41, 3, "Bill details were confusing. Would like a clearer breakdown."],
+  [48, 5, "Reminders before the visit are really useful."],
+  [57, 2, "Report upload failed twice before it worked."],
+  [66, 4, "Doctor was on time. The app made rebooking easy."],
+  [78, 5, ""],
+  [91, 3, "Hard to reach the billing desk on the phone."],
+  [104, 4, "Discharge summary was available on the app the next day."],
+  [119, 5, "Smooth ABHA linking. Took less than two minutes."],
+  [133, 2, "Appointment got rescheduled without a call."],
+  [148, 4, ""],
+  [162, 5, "Great care during my father's stay."],
+  [181, 3, "Cafeteria timings are not visible anywhere in the app."],
+  [199, 4, "Front desk was polite and the wait was short."],
+  [226, 5, "Physiotherapy sessions were excellent."],
+].map(([days, rating, message], i) => ({
+  id: `demo-fb-${String(i + 1).padStart(2, "0")}`,
+  rating,
+  message,
+  createdAt: hoursAgo(days * 24 + ((i * 7) % 11)),
+  demo: true,
+}));
 export function initialState() {
   return {
     version: 1,
-    seedVersion: 7,
+    seedVersion: 8,
     activeMember: "self",
     location: "indiranagar",
     members: [
@@ -1161,7 +1196,7 @@ export function initialState() {
       },
     ],
     preferences: { reminders: true, reports: true, promotions: false },
-    feedback: [],
+    feedback: demoFeedback,
     // Rajesh has a sample ABHA linked so the linked state can be explored.
     healthLinks: {
       father: {

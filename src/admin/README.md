@@ -3,7 +3,8 @@
 The desktop web console mounted by `src/main.jsx` for `/admin/*`
 (`AdminRoot.jsx` → `AdminApp.jsx`). Routes: `/admin/overview`, `/admin/app`
 (app configuration and theme), `/admin/doctors`, `/admin/feedback`
-(ratings and comments patients submit in the app), `/admin/packages`,
+(feedback analytics: ratings and comments patients submit in the app, with
+period/rating/sentiment filters, trends and CSV export), `/admin/packages`,
 `/admin/notifications`.
 
 The demo opens directly in the Hospital admin workspace, without a role picker.

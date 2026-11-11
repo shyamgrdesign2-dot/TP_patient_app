@@ -194,9 +194,21 @@ export function AppProvider({ children }) {
         ? { ...m, history: s.history }
         : m;
     });
+    // Demo feedback for the Feedback analytics page, once, for the demo
+    // profiles only. Feedback newly registered patients submit stays theirs.
+    if ((saved.seedVersion || 0) < 8) {
+      const isDemo = saved.members.some((m) =>
+        seed.members.some((s) => s.id === m.id && s.mrn === m.mrn),
+      );
+      const have = new Set((saved.feedback || []).map((f) => f.id));
+      saved.feedback = [
+        ...(saved.feedback || []),
+        ...(isDemo ? seed.feedback.filter((f) => !have.has(f.id)) : []),
+      ];
+    }
     // Records saved under the older document categories move to their tab.
     saved.records = (saved.records || []).map(normalizeRecord);
-    saved.seedVersion = 7;
+    saved.seedVersion = 8;
     return saved;
   });
   const stateRef = useRef(state);
