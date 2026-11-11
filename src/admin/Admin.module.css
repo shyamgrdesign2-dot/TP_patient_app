@@ -1657,28 +1657,26 @@ textarea.input {
 .stars [data-on] {
   color: var(--tesseract-amber-500);
 }
-/* Title + filters stay pinned at the top of the scrolling console pane. */
+/* Title, CTA and filters form one white header pinned at the top of the
+   scrolling console pane, full-bleed across the pane so it reads as chrome
+   rather than a floating card. Content below keeps the page background. */
 .fbSticky {
   position: sticky;
-  top: calc(var(--tesseract-space-8) * -1);
+  top: 0;
   z-index: 5;
   display: flex;
   flex-direction: column;
   gap: var(--tesseract-space-4);
-  margin: calc(var(--tesseract-space-8) * -1) calc(var(--tesseract-space-4) * -1) 0;
-  padding: var(--tesseract-space-8) var(--tesseract-space-4) var(--tesseract-space-3);
-  background: var(--tesseract-bg-page);
-  box-shadow: 0 1px 0 var(--tesseract-border-soft);
+  margin: calc(var(--tesseract-space-8) * -1) calc(var(--tesseract-space-8) * -1) 0;
+  padding: var(--tesseract-space-5) var(--tesseract-space-8) var(--tesseract-space-4);
+  background: var(--tesseract-bg-surface);
+  border-bottom: 1px solid var(--tesseract-border-soft);
 }
 .fbToolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--tesseract-space-3);
-  padding: var(--tesseract-space-3) var(--tesseract-space-4);
-  border: 1px solid var(--tesseract-border-soft);
-  border-radius: var(--tesseract-radius-12);
-  background: var(--tesseract-bg-surface);
 }
 .fbToolbar > * {
   min-width: 0;
