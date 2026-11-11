@@ -484,7 +484,7 @@ export function Emergency() {
   );
 }
 export function Feedback() {
-  const { dispatch, notify } = useApp();
+  const { dispatch, notify, activeMember } = useApp();
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
   const [done, setDone] = useState(false);
@@ -526,6 +526,12 @@ export function Feedback() {
                   rating,
                   message: text,
                   createdAt: new Date().toISOString(),
+                  // Who is giving the rating, so the hospital can follow up.
+                  memberId: activeMember.id,
+                  patientName: activeMember.name,
+                  phone: activeMember.phone,
+                  mrn: activeMember.mrn,
+                  relation: activeMember.relation,
                 },
               });
               setDone(true);

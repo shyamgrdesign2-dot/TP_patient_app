@@ -201,45 +201,53 @@ export const packages = [
   },
 ];
 const hoursAgo = (h) => new Date(Date.now() - h * 3600000).toISOString();
-// Ratings and comments patients have shared from Account → Feedback. The app
-// stores no identity with feedback, so these are hospital-wide for the demo.
-// Days are relative so the Feedback analytics page always has recent data.
+// Ratings and comments patients have shared from Account → Feedback, with
+// who gave them (member id plus a snapshot of name, phone and patient ID so
+// the console can show it even if the member is later edited). Days are
+// relative so the Feedback analytics page always has recent data.
+const demoPatients = {
+  self: { patientName: "Aarav Sharma", phone: "9000000001", mrn: "TP-10482", relation: "Self" },
+  father: { patientName: "Rajesh Sharma", phone: "9000000002", mrn: "TP-10483", relation: "Father" },
+  mother: { patientName: "Sunita Sharma", phone: "9000000003", mrn: "TP-10484", relation: "Mother" },
+};
 const demoFeedback = [
-  [1, 5, "Booking was quick and Dr. Mehta explained everything clearly."],
-  [2, 4, "Good experience overall. Waiting area was a little crowded."],
-  [4, 2, "Waited 45 minutes past my appointment time at Indiranagar."],
-  [6, 5, ""],
-  [9, 3, "Video consult kept dropping for the first few minutes."],
-  [12, 5, "Lab report came on the app the same evening. Very convenient."],
-  [15, 4, "Pharmacy queue could be shorter, otherwise smooth."],
-  [21, 1, "Could not find parking and the front desk was unhelpful."],
-  [26, 5, "The nurse at the vaccination desk was very gentle with my son."],
-  [33, 4, ""],
-  [41, 3, "Bill details were confusing. Would like a clearer breakdown."],
-  [48, 5, "Reminders before the visit are really useful."],
-  [57, 2, "Report upload failed twice before it worked."],
-  [66, 4, "Doctor was on time. The app made rebooking easy."],
-  [78, 5, ""],
-  [91, 3, "Hard to reach the billing desk on the phone."],
-  [104, 4, "Discharge summary was available on the app the next day."],
-  [119, 5, "Smooth ABHA linking. Took less than two minutes."],
-  [133, 2, "Appointment got rescheduled without a call."],
-  [148, 4, ""],
-  [162, 5, "Great care during my father's stay."],
-  [181, 3, "Cafeteria timings are not visible anywhere in the app."],
-  [199, 4, "Front desk was polite and the wait was short."],
-  [226, 5, "Physiotherapy sessions were excellent."],
-].map(([days, rating, message], i) => ({
+  [1, 5, "Booking was quick and Dr. Mehta explained everything clearly.", "self"],
+  [2, 4, "Good experience overall. Waiting area was a little crowded.", "father"],
+  [4, 2, "Waited 45 minutes past my appointment time at Indiranagar.", "self"],
+  [6, 5, "", "mother"],
+  [9, 3, "Video consult kept dropping for the first few minutes.", "self"],
+  [12, 5, "Lab report came on the app the same evening. Very convenient.", "father"],
+  [15, 4, "Pharmacy queue could be shorter, otherwise smooth.", "mother"],
+  [21, 1, "Could not find parking and the front desk was unhelpful.", "father"],
+  [26, 5, "The nurse at the vaccination desk was very gentle with my son.", "self"],
+  [33, 4, "", "self"],
+  [41, 3, "Bill details were confusing. Would like a clearer breakdown.", "mother"],
+  [48, 5, "Reminders before the visit are really useful.", "self"],
+  [57, 2, "Report upload failed twice before it worked.", "father"],
+  [66, 4, "Doctor was on time. The app made rebooking easy.", "self"],
+  [78, 5, "", "father"],
+  [91, 3, "Hard to reach the billing desk on the phone.", "mother"],
+  [104, 4, "Discharge summary was available on the app the next day.", "father"],
+  [119, 5, "Smooth ABHA linking. Took less than two minutes.", "father"],
+  [133, 2, "Appointment got rescheduled without a call.", "mother"],
+  [148, 4, "", "self"],
+  [162, 5, "Great care during my father's stay.", "self"],
+  [181, 3, "Cafeteria timings are not visible anywhere in the app.", "mother"],
+  [199, 4, "Front desk was polite and the wait was short.", "self"],
+  [226, 5, "Physiotherapy sessions were excellent.", "father"],
+].map(([days, rating, message, memberId], i) => ({
   id: `demo-fb-${String(i + 1).padStart(2, "0")}`,
   rating,
   message,
   createdAt: hoursAgo(days * 24 + ((i * 7) % 11)),
+  memberId,
+  ...demoPatients[memberId],
   demo: true,
 }));
 export function initialState() {
   return {
     version: 1,
-    seedVersion: 8,
+    seedVersion: 9,
     activeMember: "self",
     location: "indiranagar",
     members: [

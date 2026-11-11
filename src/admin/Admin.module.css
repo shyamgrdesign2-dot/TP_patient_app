@@ -1657,43 +1657,37 @@ textarea.input {
 .stars [data-on] {
   color: var(--tesseract-amber-500);
 }
-.fbToolbar {
+/* Title + filters stay pinned at the top of the scrolling console pane. */
+.fbSticky {
+  position: sticky;
+  top: calc(var(--tesseract-space-8) * -1);
+  z-index: 5;
   display: flex;
   flex-direction: column;
+  gap: var(--tesseract-space-4);
+  margin: calc(var(--tesseract-space-8) * -1) calc(var(--tesseract-space-4) * -1) 0;
+  padding: var(--tesseract-space-8) var(--tesseract-space-4) var(--tesseract-space-3);
+  background: var(--tesseract-bg-page);
+  box-shadow: 0 1px 0 var(--tesseract-border-soft);
+}
+.fbToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: var(--tesseract-space-3);
   padding: var(--tesseract-space-3) var(--tesseract-space-4);
   border: 1px solid var(--tesseract-border-soft);
   border-radius: var(--tesseract-radius-12);
   background: var(--tesseract-bg-surface);
 }
-.fbToolbarRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--tesseract-space-3);
-}
-.fbToolbarGroup {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--tesseract-space-2);
-}
-.fbToolbarGroup > * {
+.fbToolbar > * {
   min-width: 0;
+}
+.fbRange {
+  width: 240px;
 }
 .fbSort {
   width: 200px;
-}
-/* Period segments: keep selection on the option itself, as the patient app
-   does, since the library's measured overlay can go stale after a re-render. */
-.fbPeriod.fbPeriod[data-variant][data-size] > span[aria-hidden="true"] {
-  display: none;
-}
-.fbPeriod.fbPeriod[data-variant][data-size] > [role="radio"][aria-checked="true"] {
-  background: var(--tesseract-bg-surface);
-  box-shadow: var(--tesseract-shadow-xs);
-  color: var(--tesseract-fg-heading);
 }
 .fbKpis {
   display: grid;

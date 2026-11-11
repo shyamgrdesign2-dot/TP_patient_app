@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import {
   BarChart,
   DataTable,
-  DatePicker,
   DateRangePicker,
   DonutChart,
   Dropdown,
@@ -11,7 +10,6 @@ import {
   InputBox,
   LineChart,
   SectionCard,
-  SegmentedControl,
   StatCard,
   Tooltip,
 } from "@dhspl-tatvacare/tesseract-ui";
@@ -71,6 +69,21 @@ function SentimentInfo({ side = "top" }) {
   );
 }
 
+// Who gave the rating. The app stores the member id plus a snapshot of the
+// name, phone and patient ID at submission time; the live member record wins
+// when it is still in this account. The mobile number is masked to its last
+// four digits in the console; the full number stays in the patient record.
+const maskPhone = (phone) => (phone ? `+91 •••••• ${String(phone).slice(-4)}` : null);
+const whoOf = (f, members = []) => {
+  const m = f.memberId ? members.find((x) => x.id === f.memberId) : null;
+  return {
+    name: m?.name || f.patientName || "Not recorded",
+    mrn: m?.mrn || f.mrn || null,
+    phone: maskPhone(m?.phone || f.phone),
+    relation: m?.relation || f.relation || null,
+  };
+};
+
 // Gold stars. Filled = amber, empty = slate outline. Colour is never the only
 // signal: every instance carries the numeric rating in its label.
 export function Stars({ value, size = 14, label }) {
@@ -90,7 +103,7 @@ export const ratingRows = (list) =>
   [5, 4, 3, 2, 1].map((n) => [`${n} star${n === 1 ? "" : "s"}`, list.filter((f) => f.rating === n).length, n >= 4 ? "brand" : n === 3 ? "soft" : "neutral"]);
 
 // Compact summary used by the Overview card (not the analytics page).
-export function FeedbackPanel({ feedback, limit = 6 }) {
+export function FeedbackPanel({ feedback, members = [], limit = 6 }) {
   if (!feedback.length) {
     return <p className={s.hint}>No feedback yet. It appears here as soon as a patient submits a rating.</p>;
   }
@@ -108,61 +121,86 @@ export function FeedbackPanel({ feedback, limit = 6 }) {
         <Bars label="Responses by rating" rows={ratingRows(feedback)} />
       </div>
       <ul className={s.feedbackList} aria-label="Recent feedback">
-        {feedback.slice(0, limit).map((f) => (
-          <li key={f.id}>
-            <div className={s.feedbackMeta}>
-              <Stars value={f.rating} />
-              <small>{timeAgo(f.createdAt)}</small>
-            </div>
-            <p>{f.message?.trim() ? f.message : <em>Rating only, no comment</em>}</p>
-          </li>
-        ))}
+        {feedback.slice(0, limit).map((f) => {
+          const who = whoOf(f, members);
+          return (
+            <li key={f.id}>
+              <div className={s.feedbackMeta}>
+                <span className={s.fbRatingCell}>
+                  <Stars value={f.rating} />
+                  <small>
+                    {who.name}
+                    {who.mrn ? ` · ${who.mrn}` : ""}
+                  </small>
+                </span>
+                <small>{timeAgo(f.createdAt)}</small>
+              </div>
+              <p>{f.message?.trim() ? f.message : <em>Rating only, no comment</em>}</p>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Period. A window is { from, to } of inclusive local day keys (null = open),
-// plus the previous window of the same length for the change figures.
-const PERIODS = [
-  { value: "all", label: "All time" },
-  { value: "30d", label: "Last 30 days" },
-  { value: "month", label: "Month" },
-  { value: "year", label: "Year" },
-  { value: "range", label: "Date range" },
-];
+// Period. One Tesseract range picker carries the quick presets (All time,
+// Last 30 days, This month, …) and the calendars for a custom range. State is
+// either { preset } or { from, to } (inclusive local day keys). A window also
+// knows the previous window it is compared against.
+const PRESET_LABELS = {
+  all: "All time",
+  "last-30": "Last 30 days",
+  "this-month": "This month",
+  "last-month": "Last month",
+  "this-year": "This year",
+  "last-year": "Last year",
+};
 
-function periodWindow(period, today) {
-  switch (period.mode) {
-    case "30d":
-      return { from: addDays(today, -29), to: today, prev: { from: addDays(today, -59), to: addDays(today, -30) }, label: "Last 30 days", prevLabel: "the previous 30 days" };
-    case "month": {
-      const ym = period.month || today.slice(0, 7);
+function presetWindow(id, today, earliest) {
+  const ym = today.slice(0, 7);
+  const y = Number(today.slice(0, 4));
+  switch (id) {
+    case "last-30":
+      return { from: addDays(today, -29), to: today, prev: { from: addDays(today, -59), to: addDays(today, -30) }, prevLabel: "the previous 30 days" };
+    case "this-month": {
       const prev = shiftMonth(ym, -1);
-      return { from: `${ym}-01`, to: monthEnd(ym), prev: { from: `${prev}-01`, to: monthEnd(prev) }, label: longMonth(ym), prevLabel: longMonth(prev) };
+      return { from: `${ym}-01`, to: today, prev: { from: `${prev}-01`, to: monthEnd(prev) }, prevLabel: longMonth(prev) };
     }
-    case "year": {
-      const y = Number(period.year || today.slice(0, 4));
-      return { from: `${y}-01-01`, to: `${y}-12-31`, prev: { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` }, label: String(y), prevLabel: String(y - 1) };
+    case "last-month": {
+      const m = shiftMonth(ym, -1);
+      const prev = shiftMonth(ym, -2);
+      return { from: `${m}-01`, to: monthEnd(m), prev: { from: `${prev}-01`, to: monthEnd(prev) }, prevLabel: longMonth(prev) };
     }
-    case "range": {
-      const { from = null, to = null } = period;
-      let prev = null;
-      if (from && to) {
-        const days = Math.round((dayDate(to) - dayDate(from)) / 86400000) + 1;
-        prev = { from: addDays(from, -days), to: addDays(from, -1) };
-      }
-      const label = from && to ? `${shortDate(dayDate(from))} – ${shortDate(dayDate(to))}` : from ? `From ${shortDate(dayDate(from))}` : to ? `Until ${shortDate(dayDate(to))}` : "All time (pick a date range)";
-      return { from, to, prev, label, prevLabel: "the previous period of the same length" };
-    }
+    case "this-year":
+      return { from: `${y}-01-01`, to: today, prev: { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` }, prevLabel: String(y - 1) };
+    case "last-year":
+      return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31`, prev: { from: `${y - 2}-01-01`, to: `${y - 2}-12-31` }, prevLabel: String(y - 2) };
     default:
-      return { from: null, to: null, prev: null, label: "All time", prevLabel: null };
+      return { from: earliest, to: today, prev: null, prevLabel: null, open: true };
   }
+}
+
+function periodWindow(period, today, earliest) {
+  if (period.preset) {
+    const w = presetWindow(period.preset, today, earliest);
+    return { ...w, label: PRESET_LABELS[period.preset] || "All time" };
+  }
+  const { from, to } = period;
+  const days = Math.round((dayDate(to) - dayDate(from)) / 86400000) + 1;
+  return {
+    from,
+    to,
+    prev: { from: addDays(from, -days), to: addDays(from, -1) },
+    prevLabel: `the previous ${days} day${days === 1 ? "" : "s"}`,
+    label: from === to ? shortDate(dayDate(from)) : `${shortDate(dayDate(from))} – ${shortDate(dayDate(to))}`,
+  };
 }
 
 const inWindow = (f, w) => {
   if (!w) return false;
+  if (w.open) return true;
   const d = localDay(f.createdAt);
   return (!w.from || d >= w.from) && (!w.to || d <= w.to);
 };
@@ -171,7 +209,7 @@ const inWindow = (f, w) => {
 // month. Empty buckets are kept so gaps show in the bar chart.
 function trendBuckets(list, w, today) {
   const first = list.length ? localDay(list[list.length - 1].createdAt) : today;
-  const from = w.from || first;
+  const from = w.open ? first : w.from;
   const to = w.to || today;
   const span = Math.round((dayDate(to) - dayDate(from)) / 86400000);
   const unit = span <= 14 ? "day" : span <= 120 ? "week" : "month";
@@ -205,11 +243,6 @@ function trendBuckets(list, w, today) {
   };
 }
 
-// Date pickers emit a Date or a small object depending on mode; normalise.
-const pickedMonth = (v) => (v instanceof Date ? `${v.getFullYear()}-${pad(v.getMonth() + 1)}` : v?.year != null ? `${v.year}-${pad((v.month ?? 0) + 1)}` : v?.start ? localDay(v.start).slice(0, 7) : null);
-const pickedYear = (v) => (v instanceof Date ? v.getFullYear() : v?.year ?? v?.start?.getFullYear?.() ?? (Number(v) || null));
-const pickedRange = (v) => (v instanceof Date ? { from: localDay(v), to: localDay(v) } : v?.start ? { from: localDay(v.start), to: v.end ? localDay(v.end) : localDay(v.start) } : { from: null, to: null });
-
 const FILTER_GROUPS = [
   { id: "rating", label: "Rating", options: [5, 4, 3, 2, 1].map((n) => ({ value: String(n), label: `${n} star${n === 1 ? "" : "s"}` })) },
   {
@@ -240,9 +273,15 @@ const SORTS = [
   { value: "lowest", label: "Lowest rating" },
 ];
 
-const csvOf = (list) => {
+const csvOf = (list, members) => {
   const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  return ["Submitted,Rating,Comment", ...list.map((f) => [esc(new Date(f.createdAt).toISOString()), f.rating, esc(f.message || "")].join(","))].join("\n");
+  return [
+    "Submitted,Rating,Comment,Patient,Patient ID,Mobile (masked)",
+    ...list.map((f) => {
+      const who = whoOf(f, members);
+      return [esc(new Date(f.createdAt).toISOString()), f.rating, esc(f.message || ""), esc(who.name), esc(who.mrn || ""), esc(who.phone || "")].join(",");
+    }),
+  ].join("\n");
 };
 
 // Patient feedback analytics. Everything patients submit from Account →
@@ -254,29 +293,54 @@ const csvOf = (list) => {
 export default function Feedback() {
   const { state } = useApp();
   const all = state.feedback || [];
+  const members = state.members || [];
   const today = dateKey();
-  const [period, setPeriod] = useState({ mode: "all" });
+  const earliest = all.length ? all.reduce((min, f) => (localDay(f.createdAt) < min ? localDay(f.createdAt) : min), today) : today;
+  const [period, setPeriod] = useState({ preset: "all" });
   const [filters, setFilters] = useState({});
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("newest");
 
-  const w = periodWindow(period, today);
+  // Quick presets inside the range picker. "All time" spans from the first
+  // response to today so the calendar still shows a highlighted range.
+  const presets = useMemo(
+    () =>
+      Object.entries(PRESET_LABELS).map(([id, label]) => ({
+        id,
+        label,
+        getRange: () => {
+          const w = presetWindow(id, today, earliest);
+          return { start: dayDate(w.from), end: dayDate(w.to) };
+        },
+      })),
+    [today, earliest],
+  );
+  const onPeriod = (v) => {
+    if (!v || v.range === null || (!v.start && !v.presetId)) return setPeriod({ preset: "all" });
+    if (v.type === "preset" && v.presetId) return setPeriod({ preset: v.presetId });
+    return setPeriod({ from: localDay(v.start), to: localDay(v.end || v.start) });
+  };
+
+  const w = periodWindow(period, today, earliest);
   const ratings = filters.rating || [];
   const mood = filters.sentiment?.[0];
   const comment = filters.comment?.[0];
   const q = query.trim().toLowerCase();
-  const matches = (f) =>
-    (!ratings.length || ratings.includes(String(f.rating))) &&
-    (!mood || sentiment(f.rating) === mood) &&
-    (!comment || (comment === "with" ? !!f.message?.trim() : !f.message?.trim())) &&
-    (!q || (f.message || "").toLowerCase().includes(q));
+  const matches = (f) => {
+    if (ratings.length && !ratings.includes(String(f.rating))) return false;
+    if (mood && sentiment(f.rating) !== mood) return false;
+    if (comment && (comment === "with" ? !f.message?.trim() : !!f.message?.trim())) return false;
+    if (!q) return true;
+    const who = whoOf(f, members);
+    return [f.message, who.name, who.mrn].some((v) => (v || "").toLowerCase().includes(q));
+  };
 
   const filtered = useMemo(() => {
     const byDate = (a, b) => new Date(b.createdAt) - new Date(a.createdAt);
     const cmp = { newest: byDate, oldest: (a, b) => -byDate(a, b), highest: (a, b) => b.rating - a.rating || byDate(a, b), lowest: (a, b) => a.rating - b.rating || byDate(a, b) }[sort];
     return all.filter((f) => matches(f) && inWindow(f, w)).sort(cmp);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [all, w.from, w.to, filters, q, sort]);
+  }, [all, members, w.from, w.to, w.open, filters, q, sort]);
   const previous = w.prev ? all.filter((f) => matches(f) && inWindow(f, w.prev)) : null;
 
   const avg = averageRating(filtered);
@@ -290,19 +354,19 @@ export default function Feedback() {
   const delta = (now, before) => (now == null || before == null ? undefined : Number((now - before).toFixed(1)));
   const compare = w.prev ? `vs ${w.prevLabel}` : w.label;
 
-  const { unit, buckets } = useMemo(() => trendBuckets(filtered, w, today), [filtered, w.from, w.to, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { unit, buckets } = useMemo(() => trendBuckets(filtered, w, today), [filtered, w.from, w.to, w.open, today]); // eslint-disable-line react-hooks/exhaustive-deps
   const ratingSeries = buckets.filter((b) => b.avg != null).map((b) => ({ x: b.x, avg: b.avg }));
   const spark = buckets.map((b) => b.count);
 
-  const filtersActive = period.mode !== "all" || ratings.length || mood || comment || q;
+  const filtersActive = period.preset !== "all" || ratings.length || mood || comment || q || sort !== "newest";
   const reset = () => {
-    setPeriod({ mode: "all" });
+    setPeriod({ preset: "all" });
     setFilters({});
     setQuery("");
     setSort("newest");
   };
   const exportCsv = () => {
-    const url = URL.createObjectURL(new Blob([csvOf(filtered)], { type: "text/csv;charset=utf-8" }));
+    const url = URL.createObjectURL(new Blob([csvOf(filtered, members)], { type: "text/csv;charset=utf-8" }));
     Object.assign(document.createElement("a"), { href: url, download: `patient-feedback-${today}.csv` }).click();
     URL.revokeObjectURL(url);
   };
@@ -320,6 +384,16 @@ export default function Feedback() {
       ),
     },
     {
+      id: "patient",
+      header: "Patient",
+      width: 220,
+      primary: (row) => whoOf(row, members).name,
+      secondary: (row) => {
+        const who = whoOf(row, members);
+        return [who.mrn, who.phone].filter(Boolean).join(" · ") || "No patient details";
+      },
+    },
+    {
       id: "message",
       header: "Comment",
       cell: (row) => (row.message?.trim() ? <p className={s.fbComment}>{row.message}</p> : <p className={s.fbComment} data-empty>Rating only, no comment</p>),
@@ -327,7 +401,7 @@ export default function Feedback() {
     {
       id: "createdAt",
       header: "Submitted",
-      width: 180,
+      width: 170,
       primary: (row) => shortDate(row.createdAt),
       secondary: (row) => `${fmt(row.createdAt, { hour: "numeric", minute: "2-digit" })} · ${timeAgo(row.createdAt)}`,
     },
@@ -343,17 +417,55 @@ export default function Feedback() {
     .filter(Boolean)
     .join(" · ");
 
+  const card = (title, subtitle, icon, body, extra = {}) => (
+    <SectionCard title={title} subtitle={subtitle} icon={<Icon name={icon} size={18} bulk />} tone="neutral" padding={20} divided={false} {...extra}>
+      {body}
+    </SectionCard>
+  );
+
   return (
     <>
-      <PageTitle
-        title="Patient feedback"
-        sub="Ratings and comments patients share from Account → Feedback in the app."
-        action={
-          <Button variant="outline" size="sm" leftIcon={<Icon name="document-download" size={16} />} onClick={exportCsv} disabled={!filtered.length}>
-            Export CSV
-          </Button>
-        }
-      />
+      {/* Title and filters stay pinned while the analytics scroll underneath,
+          so the admin always sees which period and filters apply. */}
+      <div className={s.fbSticky}>
+        <PageTitle
+          title="Patient feedback"
+          sub="Ratings and comments patients share from Account → Feedback in the app."
+          action={
+            <Button variant="outline" size="sm" leftIcon={<Icon name="document-download" size={16} />} onClick={exportCsv} disabled={!filtered.length}>
+              Export CSV
+            </Button>
+          }
+        />
+        {all.length > 0 && (
+          <div className={s.fbToolbar} role="region" aria-label="Filters">
+            <div className={s.fbRange}>
+              <DateRangePicker
+                mode="range"
+                size="sm"
+                months={2}
+                showPresets
+                presets={presets}
+                aria-label="Period"
+                placeholder="Period"
+                maxDate={dayDate(today)}
+                value={period.preset ? period.preset : { start: dayDate(period.from), end: dayDate(period.to) }}
+                onChange={onPeriod}
+              />
+            </div>
+            <InputBox type="search" size="sm" surface="muted" leftIcon={<Icon name="search-normal" size={16} />} minWidth={220} placeholder="Search comments, patients, IDs" aria-label="Search comments, patients and patient IDs" clearable value={query} onChange={(e) => setQuery(e.target.value)} />
+            <div className={s.fbSort}>
+              <Dropdown ariaLabel="Sort" label="" width="trigger" leadingIcon={<Icon name="sort" size={16} />} options={SORTS} value={sort} onChange={(v) => setSort(typeof v === "string" ? v : v?.value || "newest")} />
+            </div>
+            <Filter groups={FILTER_GROUPS} value={filters} onChange={setFilters} />
+            {filtersActive ? (
+              <Button variant="ghost" size="sm" onClick={reset}>
+                Reset all
+              </Button>
+            ) : null}
+          </div>
+        )}
+      </div>
 
       {all.length === 0 ? (
         <SectionCard tone="neutral" padding={40} divided={false}>
@@ -361,37 +473,6 @@ export default function Feedback() {
         </SectionCard>
       ) : (
         <>
-          <div className={s.fbToolbar} role="region" aria-label="Filters">
-            <div className={s.fbToolbarRow}>
-              <div className={s.fbToolbarGroup}>
-                <SegmentedControl aria-label="Period" className={s.fbPeriod} size="sm" variant="block" radius={10} options={PERIODS} value={period.mode} onValueChange={(mode) => setPeriod({ ...period, mode })} />
-                {period.mode === "month" && (
-                  <DatePicker mode="month" size="sm" fullWidth={false} aria-label="Month" maxDate={dayDate(today)} value={dayDate(`${period.month || today.slice(0, 7)}-01`)} onChange={(v) => setPeriod({ ...period, month: pickedMonth(v) || period.month })} />
-                )}
-                {period.mode === "year" && (
-                  <DatePicker mode="year" size="sm" fullWidth={false} aria-label="Year" maxDate={dayDate(today)} value={new Date(Number(period.year || today.slice(0, 4)), 0, 1)} onChange={(v) => setPeriod({ ...period, year: pickedYear(v) || period.year })} />
-                )}
-                {period.mode === "range" && (
-                  <DateRangePicker mode="range" size="sm" fullWidth={false} months={2} showPresets={false} aria-label="Date range" placeholder="Pick a date range" maxDate={dayDate(today)} value={period.from ? { start: dayDate(period.from), end: dayDate(period.to || period.from) } : null} onChange={(v) => setPeriod({ ...period, ...pickedRange(v) })} />
-                )}
-              </div>
-              <div className={s.fbToolbarGroup}>
-                <InputBox type="search" size="sm" surface="muted" leftIcon={<Icon name="search-normal" size={16} />} minWidth={240} placeholder="Search comments" aria-label="Search comments" clearable value={query} onChange={(e) => setQuery(e.target.value)} />
-                <div className={s.fbSort}>
-                  <Dropdown ariaLabel="Sort" label="" width="trigger" leadingIcon={<Icon name="sort" size={16} />} options={SORTS} value={sort} onChange={(v) => setSort(typeof v === "string" ? v : v?.value || "newest")} />
-                </div>
-              </div>
-            </div>
-            <div className={s.fbToolbarRow}>
-              <Filter groups={FILTER_GROUPS} value={filters} onChange={setFilters} />
-              {filtersActive ? (
-                <Button variant="ghost" size="sm" onClick={reset}>
-                  Reset all
-                </Button>
-              ) : null}
-            </div>
-          </div>
-
           <div className={s.fbKpis}>
             <StatCard
               label="Average rating"
@@ -426,15 +507,22 @@ export default function Feedback() {
           </div>
 
           <div className={s.fbCharts}>
-            <SectionCard title="Average rating over time" subtitle={`${w.label} · per ${unit}${unit === "week" ? " (week starting)" : ""}`} icon={<Icon name="star" size={18} bulk />} iconColor="var(--tesseract-amber-600)" tone="neutral" padding={20} divided={false}>
-              {ratingSeries.length ? (
+            {card(
+              "Average rating over time",
+              `${w.label} · per ${unit}${unit === "week" ? " (week starting)" : ""}`,
+              "star",
+              ratingSeries.length ? (
                 <LineChart data={ratingSeries} xKey="x" series={[{ key: "avg", label: "Average rating", color: "var(--tesseract-amber-500)" }]} height={220} yMin={1} yMax={5} yTickCount={5} yFormat={(v) => String(v)} curve="linear" markers markerSize={3} area areaOpacity={0.1} showLegend={false} xTickCount={8} emptyText="No responses match these filters" />
               ) : (
                 <Empty size="sm" icon="search-normal" title="No responses match" description="Widen the period or clear a filter." />
-              )}
-            </SectionCard>
+              ),
+              { iconColor: "var(--tesseract-amber-600)" },
+            )}
 
-            <SectionCard title="Responses by sentiment" subtitle={`${w.label} · per ${unit} · ${SENTIMENT_RULE}`} icon={<Icon name="message-favorite" size={18} bulk />} headerActions={<SentimentInfo side="left" />} tone="neutral" padding={20} divided={false}>
+            {card(
+              "Responses by sentiment",
+              `${w.label} · per ${unit} · ${SENTIMENT_RULE}`,
+              "message-favorite",
               <BarChart
                 data={buckets}
                 xKey="x"
@@ -451,14 +539,22 @@ export default function Feedback() {
                 valueFormat={(v) => String(v)}
                 legendPosition="bottom"
                 emptyText="No responses match these filters"
-              />
-            </SectionCard>
+              />,
+              { headerActions: <SentimentInfo side="left" /> },
+            )}
 
-            <SectionCard title="Rating distribution" subtitle={`${filtered.length} response${filtered.length === 1 ? "" : "s"}`} icon={<Icon name="star" size={18} bulk />} iconColor="var(--tesseract-amber-600)" tone="neutral" padding={20} divided={false}>
-              <BarChart data={[5, 4, 3, 2, 1].map((n) => ({ x: `${n} ★`, count: filtered.filter((f) => f.rating === n).length }))} xKey="x" series={[{ key: "count", label: "Responses", color: "var(--tesseract-amber-500)" }]} horizontal height={200} barRadius={4} barPadding={0.35} valueLabels showLegend={false} showGrid={false} yTickCount={4} valueFormat={(v) => String(v)} emptyText="No responses match these filters" />
-            </SectionCard>
+            {card(
+              "Rating distribution",
+              `${filtered.length} response${filtered.length === 1 ? "" : "s"}`,
+              "star",
+              <BarChart data={[5, 4, 3, 2, 1].map((n) => ({ x: `${n} ★`, count: filtered.filter((f) => f.rating === n).length }))} xKey="x" series={[{ key: "count", label: "Responses", color: "var(--tesseract-amber-500)" }]} horizontal height={200} barRadius={4} barPadding={0.35} valueLabels showLegend={false} showGrid={false} yTickCount={4} valueFormat={(v) => String(v)} emptyText="No responses match these filters" />,
+              { iconColor: "var(--tesseract-amber-600)" },
+            )}
 
-            <SectionCard title="Sentiment split" subtitle={`${positivePct ?? 0}% positive · ${SENTIMENT_RULE}`} icon={<Icon name="heart" size={18} bulk />} headerActions={<SentimentInfo side="left" />} tone="neutral" padding={20} divided={false}>
+            {card(
+              "Sentiment split",
+              `${positivePct ?? 0}% positive · ${SENTIMENT_RULE}`,
+              "heart",
               <DonutChart
                 data={[
                   { label: "Positive", value: positive, color: "var(--tesseract-success-500)" },
@@ -472,18 +568,24 @@ export default function Feedback() {
                 showValue
                 valueFormat={(v) => String(v)}
                 emptyText="No responses match these filters"
-              />
-            </SectionCard>
+              />,
+              { headerActions: <SentimentInfo side="left" /> },
+            )}
           </div>
 
-          <SectionCard title="Responses" subtitle={`${filtered.length} of ${all.length} · ${summary}`} icon={<Icon name="message-text" size={18} bulk />} tone="neutral" padding={20} divided={false}>
-            {filtered.length ? (
-              <DataTable className={s.fbTable} columns={columns} data={filtered} rowHeight="lg" pageSize={8} pageSizeOptions={[8, 16, 32]} hoverable={false} />
-            ) : (
-              <Empty size="sm" icon="search-normal" title="No responses match" description="Widen the period or clear a filter." action={<Button variant="outline" size="sm" onClick={reset}>Reset filters</Button>} />
-            )}
-            <p className={s.hint}>Patients are not identified. The app stores only the rating, the comment and the time it was submitted.</p>
-          </SectionCard>
+          {card(
+            "Responses",
+            `${filtered.length} of ${all.length} · ${summary}`,
+            "message-text",
+            <>
+              {filtered.length ? (
+                <DataTable className={s.fbTable} columns={columns} data={filtered} rowHeight="lg" pageSize={8} pageSizeOptions={[8, 16, 32]} hoverable={false} />
+              ) : (
+                <Empty size="sm" icon="search-normal" title="No responses match" description="Widen the period or clear a filter." action={<Button variant="outline" size="sm" onClick={reset}>Reset filters</Button>} />
+              )}
+              <p className={s.hint}>Each response shows the patient who submitted it, their patient ID and a masked mobile number so the hospital can follow up. The full number stays in the patient record.</p>
+            </>,
+          )}
         </>
       )}
     </>

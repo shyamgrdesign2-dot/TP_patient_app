@@ -203,7 +203,7 @@ export default function Overview({ config }) {
               : "Ratings and comments patients share from Account → Feedback in the patient app"
           }
         >
-          <FeedbackPanel feedback={feedback} />
+          <FeedbackPanel feedback={feedback} members={members} />
         </Card>
       </div>
     </>
