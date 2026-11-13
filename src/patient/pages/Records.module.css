@@ -1281,7 +1281,7 @@
 }
 .visitToggle {
   flex-shrink: 0;
-  padding: 0 var(--tesseract-space-4) var(--tesseract-space-2-5);
+  padding: var(--tesseract-space-2-5) var(--tesseract-space-4);
   background: var(--tesseract-bg-surface);
   border-bottom: 1px solid var(--tesseract-border-soft);
 }

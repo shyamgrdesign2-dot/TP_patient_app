@@ -560,7 +560,7 @@ export default function Records() {
                       <Icon
                         name={v.video ? "video" : "hospital"}
                         family={v.video ? "video-audio-image" : "building"}
-                        size={16}
+                        size={14}
                         bulk
                       />
                     </>
