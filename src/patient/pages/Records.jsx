@@ -486,8 +486,10 @@ export default function Records() {
             aria-label={`Search ${RECORD_TABS.find((t) => t.id === tab).label.toLowerCase()}`}
             placeholder={
               tab === "visits"
-                ? "Search by doctor, medicine or diagnosis"
-                : "Search by title or source"
+                ? "Search by doctor"
+                : tab === "labs"
+                  ? "Search by test name"
+                  : "Search by name"
             }
             leftIcon={<Icon name="search-normal" />}
             value={search}
