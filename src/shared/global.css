@@ -57,6 +57,13 @@ input:focus-visible {
   outline: 2px solid var(--tesseract-border-focus);
   outline-offset: var(--tesseract-space-1);
 }
+/* Tesseract InputBox already marks focus on its outer field row
+   (border + ring via :focus-within); the inner input must not add a second
+   outline inside it. The library's row class is "_fieldRow_<hash>". */
+[class*="_fieldRow_"] input:focus-visible,
+[class*="_fieldRow_"] textarea:focus-visible {
+  outline: none;
+}
 button:disabled {
   cursor: not-allowed;
 }
