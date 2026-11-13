@@ -1247,7 +1247,6 @@
   gap: var(--tesseract-space-1-5) var(--tesseract-space-4);
   padding: var(--tesseract-space-2-5) var(--tesseract-space-4);
   background: var(--tesseract-bg-surface);
-  border-bottom: 1px solid var(--tesseract-border-soft);
   font-size: var(--tesseract-text-body-xs);
   line-height: var(--tesseract-text-body-xs-lh);
   color: var(--tesseract-fg-secondary);
@@ -1266,9 +1265,11 @@
 .visitSheet {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100% + var(--tesseract-space-3));
   min-height: 0;
-  margin-inline: calc(-1 * var(--tesseract-page-inset, 16px));
+  /* Cancel the sheet body's 12px padding so the strip sits flush under the
+     header, divided only by the header's own hairline. */
+  margin: calc(-1 * var(--tesseract-space-3)) calc(-1 * var(--tesseract-space-3)) 0;
 }
 .visitToggle {
   flex-shrink: 0;
