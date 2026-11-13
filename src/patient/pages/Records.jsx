@@ -552,9 +552,19 @@ export default function Records() {
                   key={record.id}
                   record={record}
                   onOpen={openRecord}
-                  tag={formatDate(record.date, { year: "numeric" })}
+                  tag={v.specialty || "Prescription"}
                   title={v.name}
-                  meta={[v.specialty, v.type].filter(Boolean).join(" · ")}
+                  meta={
+                    <>
+                      <Icon
+                        name={v.video ? "video" : "hospital"}
+                        family={v.video ? undefined : "building"}
+                        size={14}
+                      />
+                      <time dateTime={record.date}>{formatDate(record.date, { year: "numeric" })}</time>
+                    </>
+                  }
+                  metaLabel={[formatDate(record.date, { year: "numeric" }), v.type].filter(Boolean).join(" · ")}
                 />
               );
             })}

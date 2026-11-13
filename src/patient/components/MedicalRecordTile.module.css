@@ -318,3 +318,18 @@ button.actions {
 .documentAction.documentAction + .documentAction.documentAction {
   border-top: 1px solid var(--tesseract-border-soft);
 }
+
+/* Visits: the date with the in-clinic or video icon, on one line. */
+.metaText {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tesseract-space-1);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.metaText > [data-tp-icon] {
+  flex-shrink: 0;
+  color: var(--tesseract-fg-tertiary);
+}

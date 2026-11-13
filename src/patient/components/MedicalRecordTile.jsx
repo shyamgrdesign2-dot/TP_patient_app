@@ -12,7 +12,7 @@ import s from "./MedicalRecordTile.module.css";
 // `tag`, `title` and `meta` override what the tile shows for a record: the
 // Visits tab uses the date as the tag, the doctor as the title and the
 // specialty and visit type as the footer line.
-export default function MedicalRecordTile({ record, onOpen, line, tag, title, meta }) {
+export default function MedicalRecordTile({ record, onOpen, line, tag, tagLabel, title, meta, metaLabel }) {
   const { activeMember, brand, notify } = useApp();
   const analysisId = useId();
   const statusId = useId();
@@ -94,7 +94,7 @@ export default function MedicalRecordTile({ record, onOpen, line, tag, title, me
         <span className={s.preview}>
           <RecordThumbnail record={record} />
           {category && (
-            <span className={s.category} title={category}>
+            <span className={s.category} title={tagLabel ?? (typeof category === "string" ? category : undefined)}>
               {category}
               {record.source === "abha" && <AbhaLogo />}
             </span>
@@ -111,7 +111,7 @@ export default function MedicalRecordTile({ record, onOpen, line, tag, title, me
       </button>
       <div className={s.footer}>
         <div className={s.metadata}>
-          {meta ?? <time dateTime={record.date}>{formatDate(record.date)}</time>}
+          {meta ? <span className={s.metaText} title={metaLabel ?? (typeof meta === "string" ? meta : undefined)}>{meta}</span> : <time dateTime={record.date}>{formatDate(record.date)}</time>}
         </div>
         <button
           type="button"

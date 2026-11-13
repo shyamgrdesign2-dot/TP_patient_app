@@ -8,7 +8,7 @@ import { doctors, formatDate } from "../../shared/data";
 import { locations } from "../../shared/brand";
 import DocumentViewer from "./DocumentViewer";
 import SegmentedControl from "./SegmentedControl";
-import { Avatar, Icon, Notice, Sheet } from "./ui";
+import { Avatar, Icon, Sheet } from "./ui";
 import r from "../pages/Records.module.css";
 
 // Past visits: one prescription per visit. The Visits tab shows the usual
@@ -26,9 +26,11 @@ export function visitContext(record, appointments) {
     locations.find((l) => l.id === appointment?.location)?.name ||
     (doctor && locations.find((l) => doctor.locations?.includes(l.id))?.name) ||
     null;
-  const type = appointment?.type === "Video" ? "Video consultation" : appointment || doctor ? "In-clinic" : null;
+  const video = appointment?.type === "Video";
+  const type = video ? "Video consultation" : appointment || doctor ? "In-clinic" : null;
   return {
     doctor,
+    video,
     name: doctor?.name || record.author || "Hospital",
     specialty: doctor?.specialty,
     clinic,
@@ -93,14 +95,38 @@ export function VisitViewer({ record, onClose }) {
       title={
         v ? (
           <span className={r.visitTitle}>
-            <Avatar src={v.doctor?.image} name={v.name} size={36} />
+            <Avatar src={v.doctor?.image} name={v.name} size={40} />
             <span>{v.name}</span>
           </span>
         ) : (
           "Past visit"
         )
       }
-      description={v ? [v.specialty, v.clinic, v.type, v.when].filter(Boolean).join(" · ") : undefined}
+      description={
+        v ? (
+          <span className={r.visitSub}>
+            {v.specialty && <span className={r.visitSpecialty}>{v.specialty}</span>}
+            <span className={r.visitFacts}>
+              {v.clinic && (
+                <span>
+                  <Icon name="location" size={14} />
+                  {v.clinic}
+                </span>
+              )}
+              <span>
+                <Icon name="calendar-2" size={14} />
+                {v.when}
+              </span>
+              {v.type && (
+                <span>
+                  <Icon name={v.video ? "video" : "hospital"} family={v.video ? undefined : "building"} size={14} />
+                  {v.type}
+                </span>
+              )}
+            </span>
+          </span>
+        ) : undefined
+      }
       documentView
     >
       {record && (
@@ -119,11 +145,6 @@ export function VisitViewer({ record, onClose }) {
                   { value: "digital", label: "Digital Rx", icon: <Icon name="document-text" size={16} bulk={view === "digital"} /> },
                 ]}
               />
-            </div>
-          )}
-          {format === "written" && (
-            <div className={r.visitToggle}>
-              <Notice tone="neutral">Written at the visit. A digital copy is not available for this prescription.</Notice>
             </div>
           )}
           <div className={r.visitDoc}>
