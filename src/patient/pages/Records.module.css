@@ -1222,6 +1222,13 @@
   gap: var(--tesseract-space-3);
   min-width: 0;
 }
+/* Square profile photo with soft corners; the library leaves the inner
+   image box unrounded, so clip both layers here. */
+.visitTitle > span:first-child,
+.visitTitle > span:first-child > span {
+  border-radius: var(--tesseract-radius-14) !important;
+  overflow: hidden;
+}
 .visitTitleText {
   display: flex;
   min-width: 0;
@@ -1245,8 +1252,9 @@
   flex-shrink: 0;
   flex-wrap: wrap;
   gap: var(--tesseract-space-1-5) var(--tesseract-space-4);
-  padding: var(--tesseract-space-2-5) var(--tesseract-space-4);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4) var(--tesseract-space-2-5);
   background: var(--tesseract-bg-surface);
+  border-bottom: 1px solid var(--tesseract-border-soft);
   font-size: var(--tesseract-text-body-xs);
   line-height: var(--tesseract-text-body-xs-lh);
   color: var(--tesseract-fg-secondary);
@@ -1273,9 +1281,21 @@
 }
 .visitToggle {
   flex-shrink: 0;
-  padding: var(--tesseract-space-2) var(--tesseract-space-4);
+  padding: 0 var(--tesseract-space-4) var(--tesseract-space-2-5);
   background: var(--tesseract-bg-surface);
   border-bottom: 1px solid var(--tesseract-border-soft);
+}
+/* A compact segmented control here: the phone-sized 44px options are more
+   than a two-way copy switch needs. Specificity beats the wrapper's rules. */
+.visitToggle > [role="radiogroup"][data-variant][data-size][data-theme] {
+  min-height: 36px;
+  padding: 2px;
+  gap: 2px;
+}
+.visitToggle > [role="radiogroup"][data-variant][data-size][data-theme] > [role="radio"] {
+  min-height: 32px;
+  padding: 4px 8px;
+  font-size: var(--tesseract-text-body-xs);
 }
 .visitDoc {
   display: flex;
