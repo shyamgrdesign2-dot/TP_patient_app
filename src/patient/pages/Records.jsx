@@ -186,7 +186,7 @@ export default function Records() {
       (r) =>
         !search ||
         matches(
-          `${r.title} ${r.author || ""} ${r.rx?.diagnosis || ""}`,
+          `${r.title} ${r.author || ""} ${r.rx?.diagnosis || ""} ${(r.rx?.medicines || []).map(([name]) => name).join(" ")}`,
           search,
         ),
     );
@@ -486,7 +486,7 @@ export default function Records() {
             aria-label={`Search ${RECORD_TABS.find((t) => t.id === tab).label.toLowerCase()}`}
             placeholder={
               tab === "visits"
-                ? "Search by doctor or diagnosis"
+                ? "Search by doctor, medicine or diagnosis"
                 : "Search by title or source"
             }
             leftIcon={<Icon name="search-normal" />}

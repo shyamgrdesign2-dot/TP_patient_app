@@ -154,7 +154,7 @@ A separate session adapter in `src/patient/services/agentSession.js` supports a 
 | Section | Content owner | Empty-state action / patient editing |
 | --- | --- | --- |
 | Medical records | Patient uploads and permitted hospital/ABHA documents | **Upload Records** when enabled |
-| Visits | Past visits, one per row (doctor photo/initials, specialty · clinic · in-clinic or video, date and time, diagnosis, Rx format chip, medicine count); opening one shows the prescription in the visit viewer | **Book appointment**; no patient upload |
+| Visits | Past visits, one per row: doctor photo/initials and name, then icon-led lines for date and time, the medicines prescribed (truncated), and clinic · in-clinic or video (building or video icon; the doctor's own clinic when no appointment is linked). Diagnosis and Rx-format chips stay in the viewer. Opening a row shows the prescription in the visit viewer | **Book appointment**; no patient upload |
 | Lab results | Released hospital/lab results | **Book appointment**; no patient upload |
 | Medical history | Doctor/hospital-maintained clinical history | **Book appointment**; no patient upload |
 | Discharge summary | Hospital-issued discharge documents | **Book appointment**; no patient upload |
@@ -394,7 +394,7 @@ Use existing unit/domain tests and targeted Playwright tests before broad regres
 - Booking: past/unavailable slots, conflicts, cancellation window, rescheduling preserving ID, video flags and pending/skipped/completed symptoms.
 - Home: all 15 variants, long names, narrow 320 px layouts, one-line heading/subtext and inert carousel clones.
 - Records: all six tabs, correct upload ownership, orange/normal empty-state copy, no repeated CTAs, no info icon in empty notices.
-- Visits: one row per visit with the right doctor, clinic, visit type, date, diagnosis and Rx chip; viewer stepper order (newest first; left = older, right = newer; ends disabled), jump list, counter; Written/Digital toggle only when both exist; written-only notice; share, download (PNG for the written copy, PDF for digital) and print; selected-member isolation when switching profiles with the sheet open.
+- Visits: one row per visit with the right doctor, date and time, medicines (truncated with the full list on hover), clinic and visit-type icon; search matches doctor, medicine and diagnosis; viewer stepper order (newest first; left = older, right = newer; ends disabled), jump list, counter; Written/Digital toggle only when both exist; written-only notice; share, download (PNG for the written copy, PDF for digital) and print; selected-member isolation when switching profiles with the sheet open.
 - Upload: 0/1/5 files, sixth file, invalid/empty/oversized file, retry, failed storage, missing fields, future dates, 300-character notes, compact image/PDF thumbnail, remove-last-file and sticky footer transitions.
 - Viewer: image/PDF errors, source attribution, document actions, permissions and return to the original records tab.
 - ABHA: linked/unlinked transitions, sync deduplication, member isolation, consent failures/revocation, no intermediate chooser.

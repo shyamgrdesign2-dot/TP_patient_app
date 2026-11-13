@@ -3,12 +3,12 @@ import { useApp } from "../state/AppContext";
 import { getFile } from "../services/files";
 import { makeSamplePdf } from "../services/recordPdf";
 import { makeWrittenRxImage } from "../services/writtenRx";
-import { rxFormatOf, RX_FORMAT_LABEL } from "../services/records";
+import { rxFormatOf } from "../services/records";
 import { doctors, formatDate } from "../../shared/data";
 import { locations } from "../../shared/brand";
 import DocumentViewer from "./DocumentViewer";
 import SegmentedControl from "./SegmentedControl";
-import { Avatar, Button, Icon, Notice, Sheet, Tag } from "./ui";
+import { Avatar, Button, Icon, Notice, Sheet } from "./ui";
 import r from "../pages/Records.module.css";
 
 // Past visits: one prescription per visit. The list shows one visit per row
@@ -17,14 +17,18 @@ import r from "../pages/Records.module.css";
 // Written Rx / Digital Rx toggle when the hospital has both, and download,
 // print and share. Mirrors the Past Visits view of the Tatva Practice app.
 
-const FORMAT_TONE = { digital: "primary", written: "warning", both: "success" };
 const pad2 = (n) => String(n).padStart(2, "0");
 
 function visitContext(record, appointments) {
   const doctor = doctors.find((d) => d.id === record.doctorId);
   const appointment = appointments.find((a) => a.id === record.appointmentId);
-  const clinic = locations.find((l) => l.id === appointment?.location)?.name;
-  const type = appointment?.type === "Video" ? "Video consultation" : appointment ? "In-clinic" : null;
+  // Without a linked appointment (a prescription the hospital added to the
+  // record), fall back to the doctor's own clinic.
+  const clinic =
+    locations.find((l) => l.id === appointment?.location)?.name ||
+    (doctor && locations.find((l) => doctor.locations?.includes(l.id))?.name) ||
+    null;
+  const type = appointment?.type === "Video" ? "Video consultation" : appointment || doctor ? "In-clinic" : null;
   return {
     doctor,
     name: doctor?.name || record.author || "Hospital",
@@ -46,28 +50,32 @@ export function VisitList({ records, onOpen }) {
   );
 }
 
+// One visit: who, when, what was prescribed, and where (with how). Each
+// detail leads with its icon and truncates on one line; the viewer has the
+// rest.
 function VisitRow({ record, appointments, onOpen }) {
   const v = visitContext(record, appointments);
-  const format = rxFormatOf(record);
-  const medicines = record.rx?.medicines?.length || 0;
+  const medicines = (record.rx?.medicines || []).map(([name]) => name);
+  const video = v.type === "Video consultation";
   return (
     <li>
       <button type="button" className={r.visitRow} onClick={() => onOpen(record)} aria-label={`Open prescription from ${v.name}, ${v.when}`}>
         <Avatar src={v.doctor?.image} name={v.name} size={44} />
         <span className={r.visitBody}>
           <strong>{v.name}</strong>
-          <span className={r.visitMeta}>{[v.specialty, v.clinic, v.type].filter(Boolean).join(" · ")}</span>
-          <span className={r.visitWhen}>{v.when}</span>
-          {record.rx?.diagnosis && (
-            <span className={r.visitDx}>
-              <span>Diagnosis</span> {record.rx.diagnosis}
+          <span className={r.visitLine}>
+            <Icon name="calendar-2" size={16} />
+            <span>{v.when}</span>
+          </span>
+          <span className={r.visitLine} data-medicines>
+            <Icon name="pill" family="medical" size={16} />
+            <span title={medicines.join(", ")}>{medicines.length ? medicines.join(", ") : "No medicines prescribed"}</span>
+          </span>
+          <span className={r.visitLine}>
+            <Icon name={video ? "video" : "hospital"} family={video ? undefined : "building"} size={16} />
+            <span title={[v.clinic, v.type].filter(Boolean).join(" · ")}>
+              {v.clinic ? `${v.clinic}${v.type ? ` · ${v.type}` : ""}` : v.type || (record.source === "abha" ? "Shared via ABHA" : "Hospital")}
             </span>
-          )}
-          <span className={r.visitTags}>
-            <Tag color={FORMAT_TONE[format]}>{RX_FORMAT_LABEL[format]}</Tag>
-            <Tag>{medicines ? `${medicines} medicine${medicines === 1 ? "" : "s"}` : "No medicines"}</Tag>
-            {record.rx?.tests ? <Tag>Tests advised</Tag> : null}
-            {record.source === "abha" ? <Tag color="violet">Via ABHA</Tag> : null}
           </span>
         </span>
         <Icon name="chevron-right" size={18} className={r.visitChevron} />
