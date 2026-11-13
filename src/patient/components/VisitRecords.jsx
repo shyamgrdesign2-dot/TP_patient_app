@@ -8,18 +8,16 @@ import { doctors, formatDate } from "../../shared/data";
 import { locations } from "../../shared/brand";
 import DocumentViewer from "./DocumentViewer";
 import SegmentedControl from "./SegmentedControl";
-import { Avatar, Button, Icon, Notice, Sheet } from "./ui";
+import { Avatar, Icon, Notice, Sheet } from "./ui";
 import r from "../pages/Records.module.css";
 
-// Past visits: one prescription per visit. The list shows one visit per row
-// with who saw the patient, where, when and what was found; opening a visit
-// shows the prescription itself with a date stepper across visits, a
-// Written Rx / Digital Rx toggle when the hospital has both, and download,
-// print and share. Mirrors the Past Visits view of the Tatva Practice app.
+// Past visits: one prescription per visit. The Visits tab shows the usual
+// record tiles (PDF preview, date, doctor); opening one shows the
+// prescription in a sheet headed by the doctor, with a Written Rx /
+// Digital Rx toggle when the hospital has both, and share, download and
+// print.
 
-const pad2 = (n) => String(n).padStart(2, "0");
-
-function visitContext(record, appointments) {
+export function visitContext(record, appointments) {
   const doctor = doctors.find((d) => d.id === record.doctorId);
   const appointment = appointments.find((a) => a.id === record.appointmentId);
   // Without a linked appointment (a prescription the hospital added to the
@@ -37,51 +35,6 @@ function visitContext(record, appointments) {
     type,
     when: `${formatDate(record.date, { year: "numeric" })}${record.time ? ` · ${record.time}` : ""}`,
   };
-}
-
-export function VisitList({ records, onOpen }) {
-  const { state } = useApp();
-  return (
-    <ul className={r.visitList} aria-label="Past visits">
-      {records.map((record) => (
-        <VisitRow key={record.id} record={record} appointments={state.appointments || []} onOpen={onOpen} />
-      ))}
-    </ul>
-  );
-}
-
-// One visit: who, when, what was prescribed, and where (with how). Each
-// detail leads with its icon and truncates on one line; the viewer has the
-// rest.
-function VisitRow({ record, appointments, onOpen }) {
-  const v = visitContext(record, appointments);
-  const medicines = (record.rx?.medicines || []).map(([name]) => name);
-  const video = v.type === "Video consultation";
-  return (
-    <li>
-      <button type="button" className={r.visitRow} onClick={() => onOpen(record)} aria-label={`Open prescription from ${v.name}, ${v.when}`}>
-        <Avatar src={v.doctor?.image} name={v.name} size={44} />
-        <span className={r.visitBody}>
-          <strong>{v.name}</strong>
-          <span className={r.visitLine}>
-            <Icon name="calendar-2" size={16} />
-            <span>{v.when}</span>
-          </span>
-          <span className={r.visitLine} data-medicines>
-            <Icon name="pill" family="medical" size={16} />
-            <span title={medicines.join(", ")}>{medicines.length ? medicines.join(", ") : "No medicines prescribed"}</span>
-          </span>
-          <span className={r.visitLine}>
-            <Icon name={video ? "video" : "hospital"} family={video ? undefined : "building"} size={16} />
-            <span title={[v.clinic, v.type].filter(Boolean).join(" · ")}>
-              {v.clinic ? `${v.clinic}${v.type ? ` · ${v.type}` : ""}` : v.type || (record.source === "abha" ? "Shared via ABHA" : "Hospital")}
-            </span>
-          </span>
-        </span>
-        <Icon name="chevron-right" size={18} className={r.visitChevron} />
-      </button>
-    </li>
-  );
 }
 
 // The document for a visit in the chosen view. Written = the scanned sheet
@@ -117,9 +70,8 @@ function useVisitFile(record, view, doctor) {
   return { file, error };
 }
 
-export function VisitViewer({ records, record, onClose, onSelect }) {
+export function VisitViewer({ record, onClose }) {
   const { state } = useApp();
-  const index = Math.max(0, records.findIndex((x) => x.id === record?.id));
   const format = rxFormatOf(record || {});
   // Written first, as the hospital issued it; the digital copy is one tap away.
   const [view, setView] = useState(format === "digital" ? "digital" : "written");
@@ -128,8 +80,6 @@ export function VisitViewer({ records, record, onClose, onSelect }) {
   }, [record?.id]);
   const v = record ? visitContext(record, state.appointments || []) : null;
   const { file, error } = useVisitFile(record, view, v?.doctor);
-  const older = records[index + 1];
-  const newer = records[index - 1];
   const slug = record ? record.title.replace(/\W+/g, "-") : "prescription";
   // The viewer names downloads after the record; a written copy is a PNG.
   const viewRecord =
@@ -137,43 +87,24 @@ export function VisitViewer({ records, record, onClose, onSelect }) {
       ? { ...record, uploaded: true, fileName: `${slug}-written.png`, note: undefined }
       : record;
   return (
-    <Sheet open={!!record} onClose={onClose} title="Past visit" documentView>
+    <Sheet
+      open={!!record}
+      onClose={onClose}
+      title={
+        v ? (
+          <span className={r.visitTitle}>
+            <Avatar src={v.doctor?.image} name={v.name} size={36} />
+            <span>{v.name}</span>
+          </span>
+        ) : (
+          "Past visit"
+        )
+      }
+      description={v ? [v.specialty, v.clinic, v.type, v.when].filter(Boolean).join(" · ") : undefined}
+      documentView
+    >
       {record && (
         <div className={r.visitSheet}>
-          <div className={r.visitDateNav}>
-            <Button variant="ghost" aria-label="Older visit" disabled={!older} onClick={() => older && onSelect(older.id)}>
-              <Icon name="chevron-left" />
-            </Button>
-            <label className={r.datePicker}>
-              <Icon name="calendar-2" size={16} />
-              <span aria-hidden="true">
-                {formatDate(record.date, { year: "numeric" })}
-                {record.time ? ` | ${record.time}` : ""}
-              </span>
-              <Icon name="chevron-down" size={14} />
-              <select aria-label="Visit date" value={record.id} onChange={(e) => onSelect(e.target.value)}>
-                {records.map((rx) => (
-                  <option key={rx.id} value={rx.id}>
-                    {formatDate(rx.date, { year: "numeric" })}
-                    {rx.time ? ` | ${rx.time}` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button variant="ghost" aria-label="Newer visit" disabled={!newer} onClick={() => newer && onSelect(newer.id)}>
-              <Icon name="chevron-right" />
-            </Button>
-          </div>
-          <div className={r.visitDoctor}>
-            <Avatar src={v.doctor?.image} name={v.name} size={36} />
-            <div className={r.visitDoctorText}>
-              <strong>{v.name}</strong>
-              <span>{[v.specialty, v.clinic, v.type].filter(Boolean).join(" · ")}</span>
-            </div>
-            <span className={r.visitCounter} aria-label={`Visit ${index + 1} of ${records.length}`}>
-              {pad2(index + 1)}/{pad2(records.length)}
-            </span>
-          </div>
           {format === "both" && (
             <div className={r.visitToggle}>
               <SegmentedControl

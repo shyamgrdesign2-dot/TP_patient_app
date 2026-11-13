@@ -9,11 +9,15 @@ import { AiSpark } from "./AiNote";
 import { AbhaLogo, Button, Sheet, Icon } from "./ui";
 import s from "./MedicalRecordTile.module.css";
 
-export default function MedicalRecordTile({ record, onOpen, line }) {
+// `tag`, `title` and `meta` override what the tile shows for a record: the
+// Visits tab uses the date as the tag, the doctor as the title and the
+// specialty and visit type as the footer line.
+export default function MedicalRecordTile({ record, onOpen, line, tag, title, meta }) {
   const { activeMember, brand, notify } = useApp();
   const analysisId = useId();
   const statusId = useId();
-  const category = recordTag(record);
+  const category = tag ?? recordTag(record);
+  const heading = title ?? record.title;
   const hasAnalysis = !!(
     record.params?.length ||
     (record.summary && ["Radiology", "Pathology"].includes(record.type))
@@ -101,13 +105,13 @@ export default function MedicalRecordTile({ record, onOpen, line }) {
             </span>
           )}
         </span>
-        <strong className={s.title} title={record.title}>
-          {record.title}
+        <strong className={s.title} title={heading}>
+          {heading}
         </strong>
       </button>
       <div className={s.footer}>
         <div className={s.metadata}>
-          <time dateTime={record.date}>{formatDate(record.date)}</time>
+          {meta ?? <time dateTime={record.date}>{formatDate(record.date)}</time>}
         </div>
         <button
           type="button"

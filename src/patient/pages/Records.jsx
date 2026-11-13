@@ -1,6 +1,6 @@
 import BrandHeaderPattern from "../components/BrandHeaderPattern";
 import MedicalRecordTile from "../components/MedicalRecordTile";
-import { VisitList, VisitViewer } from "../components/VisitRecords";
+import { VisitViewer, visitContext } from "../components/VisitRecords";
 import { FileThumbnail } from "../components/RecordDocuments";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@dhspl-tatvacare/tesseract-ui";
@@ -544,7 +544,21 @@ export default function Records() {
           </div>
         )}
         {tab === "visits" && count > 0 && (
-          <VisitList records={prescriptions} onOpen={openRecord} />
+          <div className={r.documentGrid}>
+            {prescriptions.map((record) => {
+              const v = visitContext(record, state.appointments || []);
+              return (
+                <MedicalRecordTile
+                  key={record.id}
+                  record={record}
+                  onOpen={openRecord}
+                  tag={formatDate(record.date, { year: "numeric" })}
+                  title={v.name}
+                  meta={[v.specialty, v.type].filter(Boolean).join(" · ")}
+                />
+              );
+            })}
+          </div>
         )}
         {tab === "labs" && count > 0 && (
           <div className={r.documentGrid}>
@@ -686,18 +700,7 @@ export default function Records() {
         }}
       />
       {selected?.category === CATEGORY.prescription ? (
-        <VisitViewer
-          records={sortRecords(
-            records.filter((x) => x.category === CATEGORY.prescription),
-          )}
-          record={selected}
-          onClose={closeRecord}
-          onSelect={(id) => {
-            const p = new URLSearchParams(params);
-            p.set("record", id);
-            setParams(p, { replace: true });
-          }}
-        />
+        <VisitViewer record={selected} onClose={closeRecord} />
       ) : (
         <ReportSheet record={selected} onClose={closeRecord} />
       )}
