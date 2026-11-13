@@ -331,5 +331,6 @@ button.actions {
 }
 .metaText > [data-tp-icon] {
   flex-shrink: 0;
-  color: var(--tesseract-fg-tertiary);
+  margin-left: var(--tesseract-space-0-5);
+  color: var(--tesseract-fg-link);
 }

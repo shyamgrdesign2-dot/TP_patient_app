@@ -119,7 +119,7 @@ export function VisitViewer({ record, onClose }) {
               </span>
               {v.type && (
                 <span>
-                  <Icon name={v.video ? "video" : "hospital"} family={v.video ? undefined : "building"} size={14} />
+                  <Icon name={v.video ? "video" : "hospital"} family={v.video ? "video-audio-image" : "building"} size={14} bulk />
                   {v.type}
                 </span>
               )}

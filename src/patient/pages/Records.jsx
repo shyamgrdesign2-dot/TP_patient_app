@@ -556,12 +556,13 @@ export default function Records() {
                   title={v.name}
                   meta={
                     <>
+                      <time dateTime={record.date}>{formatDate(record.date, { year: "numeric" })}</time>
                       <Icon
                         name={v.video ? "video" : "hospital"}
-                        family={v.video ? undefined : "building"}
-                        size={14}
+                        family={v.video ? "video-audio-image" : "building"}
+                        size={16}
+                        bulk
                       />
-                      <time dateTime={record.date}>{formatDate(record.date, { year: "numeric" })}</time>
                     </>
                   }
                   metaLabel={[formatDate(record.date, { year: "numeric" }), v.type].filter(Boolean).join(" · ")}
