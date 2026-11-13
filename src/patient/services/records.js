@@ -150,6 +150,19 @@ export function visitsFor({ appointments = [], records = [] }, memberId) {
   return visits.sort(byDateDesc);
 }
 
+// How a prescription was issued: typed in the portal ("digital"), handwritten
+// and scanned ("written"), or written and later digitised ("both"), which is
+// when the app offers a Written Rx / Digital Rx toggle.
+export function rxFormatOf(record) {
+  if (record?.rxFormat !== "written") return "digital";
+  return record.digitised ? "both" : "written";
+}
+export const RX_FORMAT_LABEL = {
+  digital: "Digital Rx",
+  written: "Written Rx",
+  both: "Written + Digital Rx",
+};
+
 export function sortRecords(records) {
   return [...records].sort(byDateDesc);
 }

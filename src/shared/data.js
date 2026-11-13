@@ -247,7 +247,7 @@ const demoFeedback = [
 export function initialState() {
   return {
     version: 1,
-    seedVersion: 10,
+    seedVersion: 11,
     activeMember: "self",
     location: "indiranagar",
     members: [
@@ -902,6 +902,10 @@ export function initialState() {
         doctorId: "ananya",
         appointmentId: "TP-23874",
         format: "PDF",
+        // Handwritten at the visit (Smart Rx scan), then digitised by the
+        // hospital, so the app offers both the written and the digital copy.
+        rxFormat: "written",
+        digitised: true,
         rx: {
           complaints:
             "Itchy red rash on both forearms for 10 days, worse after gardening.",

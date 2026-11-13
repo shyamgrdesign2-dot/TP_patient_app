@@ -217,9 +217,18 @@ export function AppProvider({ children }) {
           : rest;
       });
     }
+    // Prescriptions gained a written/digital format (v11); copy the flags
+    // onto hospital records already saved, never onto patient uploads.
+    if ((saved.seedVersion || 0) < 11) {
+      saved.records = (saved.records || []).map((r) => {
+        if (r.uploaded) return r;
+        const s = seed.records.find((x) => x.id === r.id);
+        return s?.rxFormat ? { ...r, ...pick(s, ["rxFormat", "digitised"]) } : r;
+      });
+    }
     // Records saved under the older document categories move to their tab.
     saved.records = (saved.records || []).map(normalizeRecord);
-    saved.seedVersion = 10;
+    saved.seedVersion = 11;
     return saved;
   });
   const stateRef = useRef(state);

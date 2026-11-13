@@ -154,7 +154,7 @@ A separate session adapter in `src/patient/services/agentSession.js` supports a 
 | Section | Content owner | Empty-state action / patient editing |
 | --- | --- | --- |
 | Medical records | Patient uploads and permitted hospital/ABHA documents | **Upload Records** when enabled |
-| Visits | Doctor/hospital visit documents and prescriptions | **Book appointment**; no patient upload |
+| Visits | Past visits, one per row (doctor photo/initials, specialty · clinic · in-clinic or video, date and time, diagnosis, Rx format chip, medicine count); opening one shows the prescription in the visit viewer | **Book appointment**; no patient upload |
 | Lab results | Released hospital/lab results | **Book appointment**; no patient upload |
 | Medical history | Doctor/hospital-maintained clinical history | **Book appointment**; no patient upload |
 | Discharge summary | Hospital-issued discharge documents | **Book appointment**; no patient upload |
@@ -163,6 +163,7 @@ A separate session adapter in `src/patient/services/agentSession.js` supports a 
 The last five sections populate when the doctor or hospital publishes relevant information through Tatva Practice. Patients must not create or edit those clinical entries through the upload flow. Family demographics are a separate capability from clinical history.
 
 - Record filters, counts, search and tab-specific displays operate on the selected member. Medical-record categories include Pathology, Radiology, Prescription and Other.
+- **Visit viewer** (`src/patient/components/VisitRecords.jsx`, modelled on the Past Visits view of the Tatva Practice app): a full-height sheet with a date stepper (older · `DD MMM YYYY | hh:mm AM` with a jump-to list · newer), a doctor strip with a `02/04` position counter, the prescription document, and share / download / print. Prescriptions carry `rxFormat` (`"digital"` typed in the portal, or `"written"` handwritten and scanned, i.e. Tatva's Smart Rx / Tab Rx / Snap Rx) and `digitised`. Written + digitised shows a **Written Rx / Digital Rx** segmented toggle (written first, as issued); written-only shows a notice that no digital copy exists; digital shows the PDF. The demo draws the written scan on a canvas from the same structured `rx` data (`src/patient/services/writtenRx.js`); production serves the hospital's scan (image or PDF) and the digitised PDF from the document store.
 - Empty states center the icon, title, copy and action within their content area. Medical records use normal descriptive subtext explaining both hospital records and personal uploads. Other sections explain doctor/hospital updates using the orange notice treatment without an info icon. Avoid duplicate empty-state and sticky upload CTAs.
 - A populated Medical records section has a sticky upload action. Other sections do not get an upload action. Respect `recordUploads` in all entry points.
 - Document tiles have compact thumbnails, category/source/analysis indications and a slight top/bottom fade for legible overlays.
@@ -310,7 +311,7 @@ These are capability requirements, **not claims that a route already exists**:
 | Family authorization | Account-to-patient/guardian grants, invitations/revocation if supported, tenant-specific patient ID mapping |
 | Hospital app configuration | Versioned read/publish of brand assets, theme, contacts, flags, fees, policies and clinic extras; admin-only writes and patient-safe reads |
 | Doctor directory | Patient-visible doctor/clinic listing and availability; fees must agree with server policy |
-| Records aggregation | Authorized, paginated/searchable section feeds, release status, origin, category and protected file access; medical history and discharge schemas |
+| Records aggregation | Authorized, paginated/searchable section feeds, release status, origin, category and protected file access; medical history and discharge schemas. For visits: per prescription the issuing doctor, appointment (clinic, in-clinic/video, time), `rxFormat` (digital / written), `digitised`, the scan URL for written Rx and the PDF URL for digital Rx, plus prev/next ordering for the stepper |
 | Notifications | Preference storage, read state, device push registration, safe deep links and delivery events |
 | Symptoms / Mira | Authorized appointment session creation and completion status; production booking assistant orchestration if desired |
 | Lab analysis | Existing Tatva analysis job/results contract or explicit unavailable state |
@@ -393,6 +394,7 @@ Use existing unit/domain tests and targeted Playwright tests before broad regres
 - Booking: past/unavailable slots, conflicts, cancellation window, rescheduling preserving ID, video flags and pending/skipped/completed symptoms.
 - Home: all 15 variants, long names, narrow 320 px layouts, one-line heading/subtext and inert carousel clones.
 - Records: all six tabs, correct upload ownership, orange/normal empty-state copy, no repeated CTAs, no info icon in empty notices.
+- Visits: one row per visit with the right doctor, clinic, visit type, date, diagnosis and Rx chip; viewer stepper order (newest first; left = older, right = newer; ends disabled), jump list, counter; Written/Digital toggle only when both exist; written-only notice; share, download (PNG for the written copy, PDF for digital) and print; selected-member isolation when switching profiles with the sheet open.
 - Upload: 0/1/5 files, sixth file, invalid/empty/oversized file, retry, failed storage, missing fields, future dates, 300-character notes, compact image/PDF thumbnail, remove-last-file and sticky footer transitions.
 - Viewer: image/PDF errors, source attribution, document actions, permissions and return to the original records tab.
 - ABHA: linked/unlinked transitions, sync deduplication, member isolation, consent failures/revocation, no intermediate chooser.

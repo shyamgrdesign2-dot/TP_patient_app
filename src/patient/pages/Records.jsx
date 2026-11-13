@@ -1,5 +1,6 @@
 import BrandHeaderPattern from "../components/BrandHeaderPattern";
 import MedicalRecordTile from "../components/MedicalRecordTile";
+import { VisitList, VisitViewer } from "../components/VisitRecords";
 import { FileThumbnail } from "../components/RecordDocuments";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@dhspl-tatvacare/tesseract-ui";
@@ -525,8 +526,8 @@ export default function Records() {
               {count}{" "}
               {tab === "visits"
                 ? count === 1
-                  ? "prescription"
-                  : "prescriptions"
+                  ? "visit"
+                  : "visits"
                 : count === 1
                   ? "record"
                   : "records"}
@@ -543,15 +544,7 @@ export default function Records() {
           </div>
         )}
         {tab === "visits" && count > 0 && (
-          <div className={r.documentGrid}>
-            {prescriptions.map((record) => (
-              <MedicalRecordTile
-                key={record.id}
-                record={record}
-                onOpen={openRecord}
-              />
-            ))}
-          </div>
+          <VisitList records={prescriptions} onOpen={openRecord} />
         )}
         {tab === "labs" && count > 0 && (
           <div className={r.documentGrid}>
@@ -692,7 +685,22 @@ export default function Records() {
           openRecord(record);
         }}
       />
-      <ReportSheet record={selected} onClose={closeRecord} />
+      {selected?.category === CATEGORY.prescription ? (
+        <VisitViewer
+          records={sortRecords(
+            records.filter((x) => x.category === CATEGORY.prescription),
+          )}
+          record={selected}
+          onClose={closeRecord}
+          onSelect={(id) => {
+            const p = new URLSearchParams(params);
+            p.set("record", id);
+            setParams(p, { replace: true });
+          }}
+        />
+      ) : (
+        <ReportSheet record={selected} onClose={closeRecord} />
+      )}
       <Sheet
         open={upload}
         documentView

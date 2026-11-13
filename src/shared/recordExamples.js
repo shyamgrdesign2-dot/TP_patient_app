@@ -241,6 +241,9 @@ export function recordExamples(dateKey) {
       time: "11:00 AM",
       author: "Dr. Rohan Menon",
       doctorId: "rohan",
+      // Written on paper and scanned; the hospital has not digitised it.
+      rxFormat: "written",
+      digitised: false,
       rx: {
         complaints: "Ankle discomfort after a sports injury.",
         diagnosis: "Ankle injury follow-up",
