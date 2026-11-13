@@ -95,42 +95,39 @@ export function VisitViewer({ record, onClose }) {
       title={
         v ? (
           <span className={r.visitTitle}>
-            <Avatar src={v.doctor?.image} name={v.name} size={40} />
-            <span>{v.name}</span>
+            <Avatar src={v.doctor?.image} name={v.name} size={48} shape="rounded" radius="12" />
+            <span className={r.visitTitleText}>
+              <span>{v.name}</span>
+              {v.specialty && <small>{v.specialty}</small>}
+            </span>
           </span>
         ) : (
           "Past visit"
         )
       }
-      description={
-        v ? (
-          <span className={r.visitSub}>
-            {v.specialty && <span className={r.visitSpecialty}>{v.specialty}</span>}
-            <span className={r.visitFacts}>
-              {v.clinic && (
-                <span>
-                  <Icon name="location" size={14} />
-                  {v.clinic}
-                </span>
-              )}
-              <span>
-                <Icon name="calendar-2" size={14} />
-                {v.when}
-              </span>
-              {v.type && (
-                <span>
-                  <Icon name={v.video ? "video" : "hospital"} family={v.video ? "video-audio-image" : "building"} size={14} bulk />
-                  {v.type}
-                </span>
-              )}
-            </span>
-          </span>
-        ) : undefined
-      }
       documentView
     >
       {record && (
         <div className={r.visitSheet}>
+          {/* Where and when, as its own strip under the doctor header. */}
+          <div className={r.visitFacts} aria-label="Visit details">
+            {v.clinic && (
+              <span>
+                <Icon name="location" size={16} bulk />
+                {v.clinic}
+              </span>
+            )}
+            <span>
+              <Icon name="calendar-2" size={16} bulk />
+              {v.when}
+            </span>
+            {v.type && (
+              <span>
+                <Icon name={v.video ? "video" : "hospital"} family={v.video ? "video-audio-image" : "building"} size={16} bulk />
+                {v.type}
+              </span>
+            )}
+          </div>
           {format === "both" && (
             <div className={r.visitToggle}>
               <SegmentedControl
