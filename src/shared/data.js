@@ -1,6 +1,14 @@
 import { recordExamples } from "./recordExamples.js";
 import { withAdminOverrides } from "./hospitalConfig.js";
 import { soonSlot } from "./videoVisit.js";
+// The hospital's consultation page for a video visit. The link carries its
+// own short-lived token (no login); the app opens it in the in-app browser.
+// Production issues one per appointment. For the demo, put a real UAT link
+// in VITE_DEMO_JOIN_URL (.env.local, git-ignored); the placeholder below
+// reaches the page but the hospital will reject its token.
+export const DEMO_JOIN_URL =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_DEMO_JOIN_URL) ||
+  "https://pm-agents-pwa-uat.tatvacare.in/consultation/join?consultationId=demo&token=demo&role=patient";
 export const dateKey = (offset = 0) => {
   const d = new Date();
   d.setDate(d.getDate() + offset);
@@ -247,7 +255,7 @@ const demoFeedback = [
 export function initialState() {
   return {
     version: 1,
-    seedVersion: 11,
+    seedVersion: 12,
     activeMember: "self",
     location: "indiranagar",
     members: [
@@ -448,6 +456,7 @@ export function initialState() {
         type: "Video consultation",
         reason: "Follow-up on lab results",
         source: "Patient",
+        joinUrl: DEMO_JOIN_URL,
       },
       {
         id: "TP-24072",

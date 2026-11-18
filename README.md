@@ -72,7 +72,7 @@ npm run build
 npm run mobile:sync
 ```
 
-Native projects live in `ios/` and `android/`. Hospital-specific app IDs, names, app icons, signing and store accounts must be configured before release. If you change the bundle ID after native project generation, regenerate the platform for that tenant instead of assuming `cap sync` renames it.
+Video consultations open the hospital's consultation link in the system in-app browser through `@capacitor/browser`; run `npm run mobile:sync` after installing so the plugin is registered in both native projects. Native projects live in `ios/` and `android/`. Hospital-specific app IDs, names, app icons, signing and store accounts must be configured before release. If you change the bundle ID after native project generation, regenerate the platform for that tenant instead of assuming `cap sync` renames it.
 
 ## Data and integration boundaries
 

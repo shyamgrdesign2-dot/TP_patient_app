@@ -226,9 +226,22 @@ export function AppProvider({ children }) {
         return s?.rxFormat ? { ...r, ...pick(s, ["rxFormat", "digitised"]) } : r;
       });
     }
+    // Video visits gained a join link (v12). Copy it onto the saved demo
+    // visit and, if that visit's slot has passed, bring it back to today so
+    // the join window is live again for the demo.
+    if ((saved.seedVersion || 0) < 12) {
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      saved.appointments = (saved.appointments || []).map((a) => {
+        const s = seed.appointments.find((x) => x.id === a.id);
+        if (!s?.joinUrl) return a;
+        const stale = a.status === "Confirmed" && a.date < todayKey;
+        return { ...a, joinUrl: a.joinUrl || s.joinUrl, ...(stale ? { date: s.date, time: s.time } : {}) };
+      });
+    }
     // Records saved under the older document categories move to their tab.
     saved.records = (saved.records || []).map(normalizeRecord);
-    saved.seedVersion = 11;
+    saved.seedVersion = 12;
     return saved;
   });
   const stateRef = useRef(state);

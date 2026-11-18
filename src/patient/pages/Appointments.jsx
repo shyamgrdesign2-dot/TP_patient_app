@@ -2,6 +2,8 @@ import BrandHeaderPattern from "../components/BrandHeaderPattern";
 import banner from "../components/BrandHeader.module.css";
 import SegmentedControl from "../components/SegmentedControl";
 import VisitDocumentSheet from "../components/VisitDocumentSheet";
+import ConsultationBrowser from "../components/ConsultationBrowser";
+import { openConsultation } from "../services/videoCall";
 import { AiSpark } from "../components/AiNote";
 import { useEffect, useState } from "react";
 import {
@@ -767,21 +769,8 @@ function PatientPicker({ members, value, onChange }) {
   );
 }
 // One primary action per card, in order of what the patient needs next.
-function CardAction({ visit, upcoming, onDetails, onJoin }) {
+function CardAction({ visit, upcoming, onDetails }) {
   const { openAgent } = useApp();
-  const join = upcoming ? joinState(visit) : null;
-  if (join === "open")
-    return (
-      <Button size="sm" onClick={onJoin}>
-        <Icon
-          name="video"
-          family="video-audio-image"
-          corner="rounded"
-          size={16}
-        />
-        Join video call
-      </Button>
-    );
   if (upcoming && needsSymptoms(visit))
     return (
       <Button
@@ -793,19 +782,13 @@ function CardAction({ visit, upcoming, onDetails, onJoin }) {
         Add symptoms
       </Button>
     );
-  if (join === "early")
-    return (
-      <Button size="sm" variant="tonal" disabled>
-        Join from {clockLabel(joinOpensAt(visit))}
-      </Button>
-    );
   return (
     <Button size="sm" variant="tonal" onClick={onDetails}>
       View details
     </Button>
   );
 }
-function JoinVideoSheet({ visit, onClose }) {
+function JoinVideoSheet({ visit, onClose, onOpenBrowser }) {
   const { notify } = useApp();
   const doctor = visit && doctors.find((d) => d.id === visit.doctorId);
   return (
@@ -853,9 +836,16 @@ function JoinVideoSheet({ visit, onClose }) {
           <SymptomPrompt visit={visit} onOpen={onClose} />
           <Button
             fullWidth
-            onClick={() => {
-              notify("Connecting you to your doctor…");
-              onClose();
+            onClick={async () => {
+              try {
+                // Natively this opens the in-app browser and returns; on the
+                // web we show the consultation page in a sheet instead.
+                const mode = await openConsultation(visit.joinUrl);
+                onClose();
+                if (mode === "web") onOpenBrowser?.(visit);
+              } catch (issue) {
+                notify(issue.message, true);
+              }
             }}
           >
             <Icon name="video" family="video-audio-image" corner="rounded" />
@@ -876,6 +866,9 @@ export function AppointmentCard({
   className = "",
 }) {
   const d = doctors.find((x) => x.id === visit.doctorId);
+  // Video visits carry their own primary action: Join call, live from 15
+  // minutes before the slot. Everything else on the card stays secondary.
+  const join = upcoming ? joinState(visit) : null;
   if (!d) return null;
   return (
     <article className={`${s.appointmentCard} ${a.card} ${className}`}>
@@ -918,13 +911,18 @@ export function AppointmentCard({
             place={locations.find((l) => l.id === visit.location)?.name}
           />
         </span>
-        <CardAction
-          visit={visit}
-          upcoming={upcoming}
-          onDetails={onDetails}
-          onJoin={onJoin}
-        />
+        <CardAction visit={visit} upcoming={upcoming} onDetails={onDetails} />
       </div>
+      {join && (
+        <div className={a.joinRow}>
+          <Button fullWidth disabled={join !== "open"} onClick={onJoin}>
+            <Icon name="video" family="video-audio-image" corner="rounded" size={18} />
+            Join call
+          </Button>
+          {join === "early" && <small>You can join from {clockLabel(joinOpensAt(visit))}</small>}
+          {join === "ended" && <small>The join window for this call has closed. Contact the clinic to reschedule.</small>}
+        </div>
+      )}
     </article>
   );
 }
@@ -949,6 +947,7 @@ export function Appointments() {
   const [previousMemberId, setPreviousMemberId] = useState(activeMember.id);
   const [cancel, setCancel] = useState(null);
   const [joining, setJoining] = useState(null);
+  const [browser, setBrowser] = useState(null);
   const [document, setDocument] = useState(null);
   const [reschedule, setReschedule] = useState(false);
   const [date, setDate] = useState(dateKey(1));
@@ -976,6 +975,7 @@ export function Appointments() {
     setDocument(null);
     setCancel(null);
     setJoining(null);
+    setBrowser(null);
     setReschedule(false);
   }, [activeMember.id]);
   const selectedDoctor = doctors.find((d) => d.id === selected?.doctorId);
@@ -1358,7 +1358,8 @@ export function Appointments() {
         document={document}
         onClose={() => setDocument(null)}
       />
-      <JoinVideoSheet visit={joining} onClose={() => setJoining(null)} />
+      <JoinVideoSheet visit={joining} onClose={() => setJoining(null)} onOpenBrowser={setBrowser} />
+      <ConsultationBrowser visit={browser} onClose={() => setBrowser(null)} />
       <ConfirmDialog
         open={!!cancel}
         onOpenChange={(open) => !open && setCancel(null)}

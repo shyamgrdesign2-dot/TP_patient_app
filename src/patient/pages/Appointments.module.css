@@ -174,3 +174,18 @@
     gap: 4px;
   }
 }
+
+/* Video visits: the primary Join call action in its own row. */
+.joinRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tesseract-space-1-5);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4) var(--tesseract-space-4);
+  border-top: 1px solid var(--tesseract-border-soft);
+}
+.joinRow small {
+  text-align: center;
+  font-size: var(--tesseract-text-caption);
+  line-height: var(--tesseract-text-caption-lh);
+  color: var(--tesseract-fg-tertiary);
+}

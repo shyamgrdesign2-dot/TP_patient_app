@@ -156,3 +156,41 @@
   mask-composite: exclude;
   pointer-events: none;
 }
+
+/* In-app browser for the video consultation (web stand-in for the native
+   in-app browser): the consultation page fills the sheet. */
+.browser {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% + 2 * var(--tesseract-space-5));
+  min-height: 0;
+  margin: calc(-1 * var(--tesseract-space-5));
+  background: var(--tesseract-bg-surface);
+}
+.browserLoading {
+  display: flex;
+  align-items: center;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-3) var(--tesseract-space-4);
+  font-size: var(--tesseract-text-body-sm);
+  color: var(--tesseract-fg-secondary);
+  border-bottom: 1px solid var(--tesseract-border-soft);
+}
+.browserFrame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: var(--tesseract-bg-surface);
+}
+.browserFoot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tesseract-space-2);
+  padding: var(--tesseract-space-1) var(--tesseract-space-2) var(--tesseract-space-1) var(--tesseract-space-4);
+  border-top: 1px solid var(--tesseract-border-soft);
+  font-size: var(--tesseract-text-caption);
+  color: var(--tesseract-fg-tertiary);
+}
