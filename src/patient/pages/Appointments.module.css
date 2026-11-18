@@ -182,8 +182,8 @@
   align-items: center;
   gap: var(--tesseract-space-1-5);
   margin: 0 var(--tesseract-space-3-5);
-  padding: var(--tesseract-space-2-5) 0;
-  border-top: 1px solid var(--tesseract-border-soft);
+  padding: 0 0 var(--tesseract-space-2-5);
+  border-bottom: 1px solid var(--tesseract-border-soft);
   min-width: 0;
   font-size: var(--tesseract-text-body-xs);
   line-height: var(--tesseract-text-body-xs-lh);
@@ -202,7 +202,7 @@
 .cardFooter {
   display: flex;
   gap: var(--tesseract-space-2);
-  padding: var(--tesseract-space-1) var(--tesseract-space-3-5) var(--tesseract-space-3-5);
+  padding: var(--tesseract-space-3) var(--tesseract-space-3-5) var(--tesseract-space-3-5);
 }
 .cardFooter > * {
   flex: 1 1 0;

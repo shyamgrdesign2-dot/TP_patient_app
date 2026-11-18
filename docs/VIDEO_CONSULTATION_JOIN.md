@@ -41,7 +41,7 @@ for past consultations). Styles in `Appointments.module.css`.
 | --- | --- |
 | Date strip | Calendar icon, date and time, status badge. |
 | Doctor row | Photo or initials, name (years of experience), specialty; the whole row opens the visit details. |
-| Where row | Under a hairline divider: the clinic building icon with "Indiranagar clinic · 100 Feet Road, Indiranagar, Bengaluru" for in-clinic visits, or the video icon (`video`, family `video-audio-image`, bulk) with "Video consultation". One line, truncated, full text on hover. |
+| Where row | Below the doctor details, closed by a hairline divider above the footer: the clinic building icon with "Indiranagar · 100 Feet Road, Indiranagar, Bengaluru" for in-clinic visits, or the video icon (`video`, family `video-audio-image`, bulk) with "Video consultation". One line, truncated, full text on hover. |
 | Footer | Two actions. Left: **Add symptoms** (AI-accent button) while `needsSymptoms(visit)`; otherwise **View details** when there is a Join action. Right: **Join video call** for video visits (`joinState(visit)` decides enabled/disabled), otherwise **View details**. Past and cancelled visits show **View details** alone. |
 | Caption | Under the footer for video visits outside the join window. |
 

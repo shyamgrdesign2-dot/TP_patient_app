@@ -852,7 +852,7 @@ export function AppointmentCard({
   const where = video
     ? "Video consultation"
     : clinic
-      ? `${clinic.name} clinic · ${clinic.address}`
+      ? `${clinic.name} · ${clinic.address}`
       : "In clinic";
   // Video visits carry their own primary action: Join video call, live from
   // 15 minutes before the slot. The footer is a row of CTAs: Join (video)
