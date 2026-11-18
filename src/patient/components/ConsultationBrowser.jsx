@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ConfirmDialog } from "@dhspl-tatvacare/tesseract-ui";
 import { doctors } from "../../shared/data";
 import { openConsultationInTab } from "../services/videoCall";
 import { Button, Icon, Sheet } from "./ui";
@@ -11,11 +12,18 @@ import v from "./VisitExperience.module.css";
 export default function ConsultationBrowser({ visit, onClose }) {
   const doctor = visit && doctors.find((d) => d.id === visit.doctorId);
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => setLoaded(false), [visit?.id]);
+  // Closing the sheet drops the patient out of the call, so the close button,
+  // the overlay and Escape all ask first.
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => {
+    setLoaded(false);
+    setLeaving(false);
+  }, [visit?.id]);
   return (
+    <>
     <Sheet
       open={!!visit}
-      onClose={onClose}
+      onClose={() => setLeaving(true)}
       title="Video consultation"
       description={doctor ? `${doctor.name} · ${doctor.specialty}` : undefined}
       documentView
@@ -46,5 +54,21 @@ export default function ConsultationBrowser({ visit, onClose }) {
         </div>
       )}
     </Sheet>
+    <ConfirmDialog
+      open={leaving}
+      onOpenChange={setLeaving}
+      title="Leave the video consultation?"
+      description="If the call is in progress you will drop off. You can rejoin from My visits while the consultation is still open."
+      withCallout={false}
+      primaryLabel="Stay"
+      onPrimary={() => setLeaving(false)}
+      secondaryLabel="Leave"
+      secondaryTheme="error"
+      onSecondary={() => {
+        setLeaving(false);
+        onClose();
+      }}
+    />
+    </>
   );
 }

@@ -768,26 +768,6 @@ function PatientPicker({ members, value, onChange }) {
     </div>
   );
 }
-// One primary action per card, in order of what the patient needs next.
-function CardAction({ visit, upcoming, onDetails }) {
-  const { openAgent } = useApp();
-  if (upcoming && needsSymptoms(visit))
-    return (
-      <Button
-        size="sm"
-        className={v.aiAction}
-        leftIcon={<Icon name="add-plain" size={18} />}
-        onClick={() => openAgent({ kind: "symptoms", appointmentId: visit.id })}
-      >
-        Add symptoms
-      </Button>
-    );
-  return (
-    <Button size="sm" variant="tonal" onClick={onDetails}>
-      View details
-    </Button>
-  );
-}
 function JoinVideoSheet({ visit, onClose, onOpenBrowser }) {
   const { notify } = useApp();
   const doctor = visit && doctors.find((d) => d.id === visit.doctorId);
@@ -865,10 +845,15 @@ export function AppointmentCard({
   onJoin,
   className = "",
 }) {
+  const { openAgent } = useApp();
   const d = doctors.find((x) => x.id === visit.doctorId);
-  // Video visits carry their own primary action: Join call, live from 15
-  // minutes before the slot. Everything else on the card stays secondary.
+  const video = isVideo(visit);
+  const place = locations.find((l) => l.id === visit.location)?.name;
+  // Video visits carry their own primary action: Join video call, live from
+  // 15 minutes before the slot. The footer is a row of CTAs: Join (video)
+  // or Add symptoms first, then Add symptoms or View details.
   const join = upcoming ? joinState(visit) : null;
+  const symptoms = upcoming && needsSymptoms(visit);
   if (!d) return null;
   return (
     <article className={`${s.appointmentCard} ${a.card} ${className}`}>
@@ -879,6 +864,15 @@ export function AppointmentCard({
             {formatDate(visit.date)}
             {visit.time}
           </Meta>
+        </span>
+        <span
+          className={a.cardType}
+          role="img"
+          aria-label={video ? "Video consultation" : place ? `In clinic, ${place}` : "In clinic"}
+          title={video ? "Video consultation" : place ? `In clinic, ${place}` : "In clinic"}
+        >
+          <Icon name={video ? "video" : "hospital"} family={video ? "video-audio-image" : "building"} corner="rounded" bulk size={16} />
+          {!video && place && <span aria-hidden="true">{place}</span>}
         </span>
         <Status status={visit.status} />
       </div>
@@ -903,26 +897,31 @@ export function AppointmentCard({
         </span>
         <Icon name="chevron-right" size={16} />
       </button>
-      <div className={`${s.appointmentBottom} ${a.cardBottom}`}>
-        <span className={s.appointmentMeta}>
-          <VisitType
-            type={visit.type}
-            compact
-            place={locations.find((l) => l.id === visit.location)?.name}
-          />
-        </span>
-        <CardAction visit={visit} upcoming={upcoming} onDetails={onDetails} />
-      </div>
-      {join && (
-        <div className={a.joinRow}>
-          <Button fullWidth disabled={join !== "open"} onClick={onJoin}>
-            <Icon name="video" family="video-audio-image" corner="rounded" size={18} />
-            Join call
+      <div className={a.cardFooter}>
+        {join && (
+          <Button size="sm" disabled={join !== "open"} onClick={onJoin}>
+            <Icon name="video" family="video-audio-image" corner="rounded" size={16} />
+            Join video call
           </Button>
-          {join === "early" && <small>You can join from {clockLabel(joinOpensAt(visit))}</small>}
-          {join === "ended" && <small>The join window for this call has closed. Contact the clinic to reschedule.</small>}
-        </div>
-      )}
+        )}
+        {symptoms && (
+          <Button
+            size="sm"
+            className={v.aiAction}
+            leftIcon={<Icon name="add-plain" size={18} />}
+            onClick={() => openAgent({ kind: "symptoms", appointmentId: visit.id })}
+          >
+            Add symptoms
+          </Button>
+        )}
+        {!(join && symptoms) && (
+          <Button size="sm" variant="tonal" onClick={onDetails}>
+            View details
+          </Button>
+        )}
+      </div>
+      {join === "early" && <small className={a.joinNote}>You can join from {clockLabel(joinOpensAt(visit))}</small>}
+      {join === "ended" && <small className={a.joinNote}>The join window for this call has closed. Contact the clinic to reschedule.</small>}
     </article>
   );
 }
