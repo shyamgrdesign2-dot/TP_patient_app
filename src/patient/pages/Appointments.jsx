@@ -848,7 +848,12 @@ export function AppointmentCard({
   const { openAgent } = useApp();
   const d = doctors.find((x) => x.id === visit.doctorId);
   const video = isVideo(visit);
-  const place = locations.find((l) => l.id === visit.location)?.name;
+  const clinic = locations.find((l) => l.id === visit.location);
+  const where = video
+    ? "Video consultation"
+    : clinic
+      ? `${clinic.name} clinic · ${clinic.address}`
+      : "In clinic";
   // Video visits carry their own primary action: Join video call, live from
   // 15 minutes before the slot. The footer is a row of CTAs: Join (video)
   // or Add symptoms first, then Add symptoms or View details.
@@ -864,15 +869,6 @@ export function AppointmentCard({
             {formatDate(visit.date)}
             {visit.time}
           </Meta>
-        </span>
-        <span
-          className={a.cardType}
-          role="img"
-          aria-label={video ? "Video consultation" : place ? `In clinic, ${place}` : "In clinic"}
-          title={video ? "Video consultation" : place ? `In clinic, ${place}` : "In clinic"}
-        >
-          <Icon name={video ? "video" : "hospital"} family={video ? "video-audio-image" : "building"} corner="rounded" bulk size={16} />
-          {!video && place && <span aria-hidden="true">{place}</span>}
         </span>
         <Status status={visit.status} />
       </div>
@@ -894,17 +890,17 @@ export function AppointmentCard({
             <DoctorName doctor={d} />
           </h2>
           <span className={s.cardSubtitle}>{d.specialty}</span>
+          <span className={a.cardPlace} title={where}>
+            <Icon name={video ? "video" : "hospital"} family={video ? "video-audio-image" : "building"} corner="rounded" bulk size={14} />
+            <span>{where}</span>
+          </span>
         </span>
         <Icon name="chevron-right" size={16} />
       </button>
+      {/* Add symptoms always sits on the left; the other action (Join video
+          call, or View details) on the right. */}
       <div className={a.cardFooter}>
-        {join && (
-          <Button size="sm" disabled={join !== "open"} onClick={onJoin}>
-            <Icon name="video" family="video-audio-image" corner="rounded" size={16} />
-            Join video call
-          </Button>
-        )}
-        {symptoms && (
+        {symptoms ? (
           <Button
             size="sm"
             className={v.aiAction}
@@ -913,8 +909,17 @@ export function AppointmentCard({
           >
             Add symptoms
           </Button>
-        )}
-        {!(join && symptoms) && (
+        ) : join ? (
+          <Button size="sm" variant="tonal" onClick={onDetails}>
+            View details
+          </Button>
+        ) : null}
+        {join ? (
+          <Button size="sm" disabled={join !== "open"} onClick={onJoin}>
+            <Icon name="video" family="video-audio-image" corner="rounded" size={16} />
+            Join video call
+          </Button>
+        ) : (
           <Button size="sm" variant="tonal" onClick={onDetails}>
             View details
           </Button>

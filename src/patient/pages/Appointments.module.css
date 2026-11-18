@@ -175,24 +175,24 @@
   }
 }
 
-/* Visit type as an icon in the date strip (with the clinic name for
-   in-clinic visits), and a footer row of CTAs. */
-.cardType {
-  display: inline-flex;
+/* Where the visit happens, under the doctor: the clinic and its address, or
+   "Video consultation", each led by its icon. */
+.cardPlace {
+  display: flex;
   align-items: center;
   gap: var(--tesseract-space-1);
-  margin-left: auto;
+  margin-top: var(--tesseract-space-1);
   min-width: 0;
   font-size: var(--tesseract-text-caption);
   line-height: var(--tesseract-text-caption-lh);
   color: var(--tesseract-fg-secondary);
 }
-.cardType [data-tp-icon] {
+.cardPlace [data-tp-icon] {
   flex-shrink: 0;
   color: var(--tesseract-fg-tertiary);
 }
-.cardType > span {
-  max-width: 120px;
+.cardPlace > span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
