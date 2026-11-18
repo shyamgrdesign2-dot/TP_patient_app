@@ -180,11 +180,13 @@
 .cardPlace {
   display: flex;
   align-items: center;
-  gap: var(--tesseract-space-1);
-  margin-top: var(--tesseract-space-1);
+  gap: var(--tesseract-space-1-5);
+  margin: 0 var(--tesseract-space-3-5);
+  padding: var(--tesseract-space-2-5) 0;
+  border-top: 1px solid var(--tesseract-border-soft);
   min-width: 0;
-  font-size: var(--tesseract-text-caption);
-  line-height: var(--tesseract-text-caption-lh);
+  font-size: var(--tesseract-text-body-xs);
+  line-height: var(--tesseract-text-body-xs-lh);
   color: var(--tesseract-fg-secondary);
 }
 .cardPlace [data-tp-icon] {
@@ -200,7 +202,7 @@
 .cardFooter {
   display: flex;
   gap: var(--tesseract-space-2);
-  padding: 0 var(--tesseract-space-3-5) var(--tesseract-space-3-5);
+  padding: var(--tesseract-space-1) var(--tesseract-space-3-5) var(--tesseract-space-3-5);
 }
 .cardFooter > * {
   flex: 1 1 0;

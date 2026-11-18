@@ -890,13 +890,14 @@ export function AppointmentCard({
             <DoctorName doctor={d} />
           </h2>
           <span className={s.cardSubtitle}>{d.specialty}</span>
-          <span className={a.cardPlace} title={where}>
-            <Icon name={video ? "video" : "hospital"} family={video ? "video-audio-image" : "building"} corner="rounded" bulk size={14} />
-            <span>{where}</span>
-          </span>
         </span>
         <Icon name="chevron-right" size={16} />
       </button>
+      {/* Where the visit happens, on its own row under the doctor. */}
+      <div className={a.cardPlace} title={where}>
+        <Icon name={video ? "video" : "hospital"} family={video ? "video-audio-image" : "building"} corner="rounded" bulk size={16} />
+        <span>{where}</span>
+      </div>
       {/* Add symptoms always sits on the left; the other action (Join video
           call, or View details) on the right. */}
       <div className={a.cardFooter}>
