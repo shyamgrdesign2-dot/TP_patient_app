@@ -29,8 +29,10 @@ the app needs from Tatva Practice, and how to test it. Read with
      sheet with the page in an iframe that allows camera and microphone, and
      an **Open in browser** fallback.
 5. Closing the web sheet (close button, tap outside, Escape) asks **Leave the
-   video consultation?** with **Stay** and **Leave**, so a live call cannot be
-   dropped by accident. On device the in-app browser's own close applies.
+   video consultation?** as a bottom sheet with **Leave** and **Stay**, so a
+   live call cannot be dropped by accident. Confirmations in the patient app
+   are bottom sheets (`ConfirmSheet` in `components/ui.jsx`), never centred
+   dialogs, because the app runs on phones. On device the in-app browser's own close applies.
 
 ## 2. The visit card
 
@@ -54,7 +56,7 @@ action on the right.
 | --- | --- |
 | `src/patient/pages/Appointments.jsx` | `AppointmentCard` (card and footer), `JoinVideoSheet` (checklist + Join now), state for the join sheet and the web browser sheet. |
 | `src/patient/services/videoCall.js` | `openConsultation(url)`: on a native platform opens the Capacitor in-app browser and resolves `"native"`; on the web resolves `"web"` so the caller shows the sheet. `openConsultationInTab(url)`: plain new tab fallback. |
-| `src/patient/components/ConsultationBrowser.jsx` | The web in-app browser sheet: iframe with `allow="camera; microphone; autoplay; display-capture; fullscreen; speaker-selection"`, loading status, Open in browser, and the Leave confirmation (`ConfirmDialog`). |
+| `src/patient/components/ConsultationBrowser.jsx` | The web in-app browser sheet: iframe with `allow="camera; microphone; autoplay; display-capture; fullscreen; speaker-selection"`, loading status, Open in browser, and the Leave confirmation (`ConfirmSheet`). |
 | `src/shared/videoVisit.js` | `isVideo`, `joinState` (`"early" | "open" | "ended" | null`), `joinOpensAt`, `clockLabel`, `soonSlot`. |
 | `src/shared/data.js` | `DEMO_JOIN_URL` (from `VITE_DEMO_JOIN_URL`, else a placeholder) seeded as `joinUrl` on the sample video visit. |
 | `src/patient/state/AppContext.jsx` | seedVersion 12: copies `joinUrl` onto the saved sample visit and re-dates it to today if its slot has passed, so the demo join window is live. |

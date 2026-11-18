@@ -14,7 +14,6 @@ import {
   useParams,
 } from "react-router-dom";
 import {
-  ConfirmDialog,
   Chip,
   Divider,
   Tabs,
@@ -34,24 +33,25 @@ import {
 import { locations } from "../../shared/brand";
 import { download, calendarFile } from "../services/files";
 import {
-  Button,
-  PatientName,
-  DoctorName,
-  Badge,
   Avatar,
-  Icon,
-  PageHeader,
-  SectionTitle,
-  MemberContext,
-  Field,
+  Badge,
+  Button,
   ChoiceGroup,
+  ConfirmSheet,
+  DoctorName,
   Empty,
-  Sheet,
-  Notice,
   ErrorText,
-  Status,
+  Field,
+  Icon,
+  MemberContext,
   Meta,
+  Notice,
+  PageHeader,
+  PatientName,
+  SectionTitle,
   Sep,
+  Sheet,
+  Status,
   useAction,
 } from "../components/ui";
 import s from "../App.module.css";
@@ -1365,16 +1365,14 @@ export function Appointments() {
       />
       <JoinVideoSheet visit={joining} onClose={() => setJoining(null)} onOpenBrowser={setBrowser} />
       <ConsultationBrowser visit={browser} onClose={() => setBrowser(null)} />
-      <ConfirmDialog
+      <ConfirmSheet
         open={!!cancel}
-        onOpenChange={(open) => !open && setCancel(null)}
+        onClose={() => setCancel(null)}
         title="Cancel this appointment?"
         description="The slot will be released. You can always book another visit."
-        primaryLabel="Keep appointment"
-        onPrimary={() => setCancel(null)}
-        secondaryLabel="Cancel appointment"
-        secondaryTone="destructive"
-        onSecondary={() => {
+        keepLabel="Keep appointment"
+        actionLabel="Cancel appointment"
+        onAction={() => {
           try {
             dispatch({ type: "CANCEL", id: cancel.id });
             notify("Appointment cancelled.");

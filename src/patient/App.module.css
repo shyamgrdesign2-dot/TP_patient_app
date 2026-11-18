@@ -4045,3 +4045,14 @@
 .notice[data-tone="pending"] > span {
   color: #b45309;
 }
+
+/* Confirmation sheet: the two answers side by side, equal width. */
+.confirmActions {
+  display: flex;
+  width: 100%;
+  gap: var(--tesseract-space-2);
+}
+.confirmActions > * {
+  flex: 1 1 0;
+  min-width: 0;
+}

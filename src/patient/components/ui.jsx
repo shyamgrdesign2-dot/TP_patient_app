@@ -494,6 +494,38 @@ export function Sheet({
     </Drawer>
   );
 }
+// A confirmation as a bottom sheet. The app runs on phones, where a centred
+// dialog feels foreign; the question and its two answers slide up like every
+// other decision in the app. The destructive choice is the outlined button on
+// the left; the safe choice is the filled primary on the right.
+export function ConfirmSheet({
+  open,
+  onClose,
+  title,
+  description,
+  keepLabel,
+  onKeep,
+  actionLabel,
+  onAction,
+  tone = "error",
+}) {
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={title}
+      description={description}
+      footer={
+        <div className={s.confirmActions}>
+          <Button variant="outline" theme={tone} onClick={onAction}>
+            {actionLabel}
+          </Button>
+          <Button onClick={onKeep || onClose}>{keepLabel}</Button>
+        </div>
+      }
+    />
+  );
+}
 export function FamilySheet({ open, onClose }) {
   const { state, activeMember, dispatch } = useApp();
   const navigate = useNavigate();

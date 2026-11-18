@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Toggle, ConfirmDialog } from "@dhspl-tatvacare/tesseract-ui";
+import { Toggle } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../state/AppContext";
 import {
   defaultBrand,
@@ -11,26 +11,27 @@ import {
 import { getCredentialType, saveDemoCredential } from "../services/demoAuth";
 import { packagesEnabled } from "../../shared/catalog";
 import {
-  Button,
   AbhaLogo,
-  PatientName,
-  Badge,
   Avatar,
-  PatternAvatar,
-  Icon,
-  PageHeader,
-  SectionTitle,
-  MemberContext,
-  Field,
-  ChoiceGroup,
-  Empty,
-  Sheet,
-  Notice,
-  Meta,
-  ErrorText,
-  Row,
+  Badge,
   BrandLogo,
+  Button,
+  ChoiceGroup,
+  ConfirmSheet,
+  Empty,
+  ErrorText,
+  Field,
+  Icon,
+  MemberContext,
+  Meta,
+  Notice,
   NotificationItem,
+  PageHeader,
+  PatientName,
+  PatternAvatar,
+  Row,
+  SectionTitle,
+  Sheet,
   useAction,
 } from "../components/ui";
 import s from "../App.module.css";
@@ -367,16 +368,14 @@ export function Settings() {
           </Button>
         </form>
       </Sheet>
-      <ConfirmDialog
+      <ConfirmSheet
         open={reset}
-        onOpenChange={setReset}
+        onClose={() => setReset(false)}
         title="Reset app data?"
         description="Bookings, profiles and bills will return to their original state. Uploaded files will also be removed."
-        primaryLabel="Keep my changes"
-        onPrimary={() => setReset(false)}
-        secondaryLabel="Reset"
-        secondaryTone="destructive"
-        onSecondary={() => {
+        keepLabel="Keep my changes"
+        actionLabel="Reset"
+        onAction={() => {
           resetDemo();
           indexedDB.deleteDatabase("tatva-demo-files");
           setReset(false);

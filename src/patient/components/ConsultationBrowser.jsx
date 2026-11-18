@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { ConfirmDialog } from "@dhspl-tatvacare/tesseract-ui";
 import { doctors } from "../../shared/data";
 import { openConsultationInTab } from "../services/videoCall";
-import { Button, Icon, Sheet } from "./ui";
+import { Button, ConfirmSheet, Icon, Sheet } from "./ui";
 import v from "./VisitExperience.module.css";
 
 // The web stand-in for the phone's in-app browser: the hospital's
@@ -54,17 +53,14 @@ export default function ConsultationBrowser({ visit, onClose }) {
         </div>
       )}
     </Sheet>
-    <ConfirmDialog
+    <ConfirmSheet
       open={leaving}
-      onOpenChange={setLeaving}
+      onClose={() => setLeaving(false)}
       title="Leave the video consultation?"
       description="If the call is in progress you will drop off. You can rejoin from My visits while the consultation is still open."
-      withCallout={false}
-      primaryLabel="Stay"
-      onPrimary={() => setLeaving(false)}
-      secondaryLabel="Leave"
-      secondaryTheme="error"
-      onSecondary={() => {
+      keepLabel="Stay"
+      actionLabel="Leave"
+      onAction={() => {
         setLeaving(false);
         onClose();
       }}

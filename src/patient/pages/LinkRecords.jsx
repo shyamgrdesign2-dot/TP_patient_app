@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { ConfirmDialog } from "@dhspl-tatvacare/tesseract-ui";
 import { useApp } from "../state/AppContext";
 import {
   Badge,
   Button,
+  ConfirmSheet,
   Icon,
-  PageHeader,
   MemberContext,
+  PageHeader,
 } from "../components/ui";
 import { AbhaCard, AbhaSyncSheet } from "../components/abha/Abha";
 import s from "../App.module.css";
@@ -66,16 +66,14 @@ export default function LinkRecords() {
         member={activeMember}
         onDone={() => navigate("/records")}
       />
-      <ConfirmDialog
+      <ConfirmSheet
         open={unlink}
-        onOpenChange={setUnlink}
+        onClose={() => setUnlink(false)}
         title="Unlink ABHA?"
         description="This removes the connection for this profile. It does not delete medical records or your health account."
-        primaryLabel="Keep linked"
-        onPrimary={() => setUnlink(false)}
-        secondaryLabel="Unlink identity"
-        secondaryTone="destructive"
-        onSecondary={() => {
+        keepLabel="Keep linked"
+        actionLabel="Unlink identity"
+        onAction={() => {
           dispatch({
             type: "UNLINK_IDENTITY_DEMO",
             memberId: activeMember.id,
